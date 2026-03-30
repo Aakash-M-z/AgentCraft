@@ -6,7 +6,7 @@ import logging
 import httpx
 from datetime import datetime, timezone
 from typing import Any
-from ai import call_ai
+from .ai import call_ai
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,10 @@
 import os
 import logging
-from pathlib import Path
 from dotenv import load_dotenv
 
-# Load .env from repo root before anything else
-load_dotenv(Path(__file__).parent.parent / ".env")
+load_dotenv()  # no-op on Render where env vars are set via dashboard
 
-from openai import AsyncOpenAI  # noqa: E402
+from openai import AsyncOpenAI
 
 logger = logging.getLogger(__name__)
 

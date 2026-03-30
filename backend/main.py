@@ -5,20 +5,20 @@ Matches the frontend API contract exactly (generated from OpenAPI spec).
 import logging
 import os
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).parent.parent / ".env")
+# Load .env if present (local dev). On Render, env vars are set via dashboard.
+load_dotenv()
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 import asyncio
-from workflow_engine import run_workflow
-from ai import generate_workflow_from_prompt, explain_workflow
+from .workflow_engine import run_workflow
+from .ai import generate_workflow_from_prompt, explain_workflow
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
