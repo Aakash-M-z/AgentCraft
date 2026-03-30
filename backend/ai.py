@@ -1,31 +1,57 @@
 import os
+import re
+import json
 import logging
 from dotenv import load_dotenv
 
-load_dotenv()  # no-op on Render where env vars are set via dashboard
+load_dotenv()  # no-op on Render; env vars set via dashboard
 
 from openai import AsyncOpenAI
 
 logger = logging.getLogger(__name__)
 
-MODEL = "llama-3.3-70b-versatile"
+# Default model — currently active on Groq
+DEFAULT_MODEL = "llama-3.3-70b-versatile"
+
+# All supported Groq text models (updated 2026)
+SUPPORTED_MODELS = {
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
+    "meta-llama/llama-4-scout-17b-16e-instruct",
+    "qwen/qwen3-32b",
+    "moonshotai/kimi-k2-instruct",
+    "groq/compound",
+    "groq/compound-mini",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "allam-2-7b",
+}
 
 
-def _make_client() -> AsyncOpenAI:
-    key = os.environ.get("GROQ_API_KEY", "")
+def _client() -> AsyncOpenAI:
     return AsyncOpenAI(
-        api_key=key or "no-key",
-        base_url="https://api.groq.com/openai/v1",
+        api_key=os.environ.get("GROQ_API_KEY") or "no-key",
+        base_url=os.environ.get("GROQ_BASE_URL", "https://api.groq.com/openai/v1"),
     )
 
 
-async def call_ai(prompt: str) -> str:
-    """Call Groq. Returns a fallback string instead of raising on failure."""
-    logger.info("AI call | prompt: %.120s", prompt)
+def _safe_model(model: str | None) -> str:
+    """Return model if supported, else fall back to default."""
+    if model and model in SUPPORTED_MODELS:
+        return model
+    if model:
+        logger.warning("Model '%s' not in supported list, falling back to %s", model, DEFAULT_MODEL)
+    return DEFAULT_MODEL
+
+
+async def call_ai(prompt: str, model: str | None = None, temperature: float = 0.7) -> str:
+    """Call Groq. Returns a fallback string on any error — never raises."""
+    m = _safe_model(model)
+    logger.info("AI call | model=%s | prompt: %.120s", m, prompt)
     try:
-        client = _make_client()
-        response = await client.chat.completions.create(
-            model=MODEL,
+        response = await _client().chat.completions.create(
+            model=m,
+            temperature=temperature,
             messages=[{"role": "user", "content": prompt}],
         )
         result = response.choices[0].message.content or ""
@@ -43,19 +69,18 @@ async def generate_workflow_from_prompt(prompt: str) -> dict:
         "with keys: name (string), description (string), nodes (array), edges (array). "
         "Node shape: {id, type, label, config, position:{x,y}}. "
         "Edge shape: {id, source, target, label?}. "
-        "Node types: input | ai_agent | api_call | condition | loop | output."
+        "Node types: input | ai_agent | api_call | condition | loop | output. "
+        "Space nodes 250px apart horizontally. ai_agent config: {instruction, role, model}."
     )
     try:
-        client = _make_client()
-        response = await client.chat.completions.create(
-            model=MODEL,
+        response = await _client().chat.completions.create(
+            model=DEFAULT_MODEL,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": prompt},
             ],
         )
         raw = response.choices[0].message.content or "{}"
-        import json, re
         match = re.search(r"\{[\s\S]*\}", raw)
         return json.loads(match.group(0)) if match else {}
     except Exception as exc:
@@ -65,23 +90,20 @@ async def generate_workflow_from_prompt(prompt: str) -> dict:
 
 async def explain_workflow(nodes: list, edges: list, name: str) -> dict:
     """Ask Groq to explain a workflow in plain English."""
-    import json
     payload = json.dumps({"name": name, "nodes": nodes, "edges": edges})
     system = (
         "You are an expert at explaining AI workflows. "
-        "Return ONLY valid JSON with keys: explanation (string), steps (array of strings)."
+        "Return ONLY valid JSON: { \"explanation\": \"...\", \"steps\": [\"step 1\", ...] }"
     )
     try:
-        client = _make_client()
-        response = await client.chat.completions.create(
-            model=MODEL,
+        response = await _client().chat.completions.create(
+            model=DEFAULT_MODEL,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": f"Explain this workflow:\n{payload}"},
             ],
         )
         raw = response.choices[0].message.content or "{}"
-        import re
         match = re.search(r"\{[\s\S]*\}", raw)
         return json.loads(match.group(0)) if match else {"explanation": raw, "steps": []}
     except Exception as exc:

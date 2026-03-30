@@ -142,6 +142,21 @@ def _ex_detail_response(ex: dict) -> dict:
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
+@app.get("/")
+async def root():
+    return {
+        "message": "AgentCraft API is live 🚀",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/api/healthz",
+        "endpoints": {
+            "workflows": "/api/workflows",
+            "executions": "/api/executions",
+            "generate": "/api/workflows/generate",
+        }
+    }
+
+
 @app.get("/api/healthz")
 async def health():
     return {"status": "ok"}

@@ -75,9 +75,11 @@ async def run_workflow(
             # ── ai_agent ───────────────────────────────────────────────────
             elif node_type in _AI_TYPES:
                 instruction = str(config.get("instruction") or config.get("prompt") or "Process: {{input}}")
+                model = config.get("model") or None
+                temperature = float(config.get("temperature") or 0.7)
                 prompt = _inject(instruction, current)
-                log(f"  🤖 AI prompt: {prompt[:100]}")
-                output = await call_ai(prompt)
+                log(f"  🤖 AI prompt [{model or 'default'}]: {prompt[:100]}")
+                output = await call_ai(prompt, model=model, temperature=temperature)
                 log(f"  💬 AI output: {output[:100]}")
 
             # ── api_call ───────────────────────────────────────────────────
