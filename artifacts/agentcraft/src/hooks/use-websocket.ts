@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { API_BASE } from '@/lib/api';
 
 export type WSEvent = {
   type: 'node_start' | 'node_complete' | 'node_failed' | 'execution_complete' | 'log' | 'execution_cancelled';
@@ -18,14 +19,13 @@ export function useExecutionWebSocket(executionId: number | null) {
   useEffect(() => {
     if (!executionId) return;
 
-    const sseUrl = `/api/executions/${executionId}/stream`;
-    
+    // Use API_BASE so SSE works in both dev (proxy) and production (Render URL)
+    const sseUrl = `${API_BASE}/api/executions/${executionId}/stream`;
+
     const es = new EventSource(sseUrl);
     evtSourceRef.current = es;
 
-    es.onopen = () => {
-      setIsConnected(true);
-    };
+    es.onopen = () => setIsConnected(true);
 
     es.onmessage = (event) => {
       try {
@@ -36,9 +36,7 @@ export function useExecutionWebSocket(executionId: number | null) {
       }
     };
 
-    es.onerror = () => {
-      setIsConnected(false);
-    };
+    es.onerror = () => setIsConnected(false);
 
     return () => {
       es.close();
