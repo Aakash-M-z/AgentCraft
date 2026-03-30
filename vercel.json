@@ -1,0 +1,9 @@
+{
+    "buildCommand": "pnpm --filter agentcraft-frontend run build",
+    "installCommand": "pnpm install --frozen-lockfile",
+    "outputDirectory": "artifacts/agentcraft/dist/public",
+    "framework": null,
+    "env": {
+        "BASE_PATH": "/"
+    }
+}

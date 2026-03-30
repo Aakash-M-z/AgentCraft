@@ -10,6 +10,7 @@ catalog:
   '@replit/vite-plugin-cartographer': ^0.5.1
   '@replit/vite-plugin-dev-banner': ^0.1.1
   '@replit/vite-plugin-runtime-error-modal': ^0.0.6
+  '@tailwindcss/postcss': ^4.1.14
   '@tailwindcss/vite': ^4.1.14
   '@tanstack/react-query': ^5.90.21
   '@types/node': ^25.3.3
@@ -21,6 +22,7 @@ catalog:
   drizzle-orm: ^0.45.1
   framer-motion: 12.35.1
   lucide-react: 0.545.0
+  postcss: ^8.5.3
   react: 19.1.0
   react-dom: 19.1.0
   tailwind-merge: 3.5.0
@@ -37,6 +39,7 @@ minimumReleaseAgeExclude:
 
 onlyBuiltDependencies:
   - '@swc/core'
+  - '@tailwindcss/oxide'
   - esbuild
   - msw
   - unrs-resolver
@@ -62,7 +65,8 @@ overrides:
   '@tailwindcss/oxide>@tailwindcss/oxide-linux-arm64-musl': '-'
   '@tailwindcss/oxide>@tailwindcss/oxide-linux-x64-musl': '-'
   '@tailwindcss/oxide>@tailwindcss/oxide-win32-arm64-msvc': '-'
-  esbuild: 0.27.3
+  # NOTE: @tailwindcss/oxide-linux-x64-gnu is intentionally NOT excluded
+  # Render deploys on Linux x64 GNU and needs this native binary
   esbuild>@esbuild/aix-ppc64: '-'
   esbuild>@esbuild/android-arm: '-'
   esbuild>@esbuild/android-arm64: '-'

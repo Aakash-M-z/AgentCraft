@@ -2,11 +2,15 @@ services:
   - type: web
     name: agentcraft-frontend
     runtime: static
-    rootDir: artifacts/agentcraft
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist/public
+    buildCommand: >
+      npm install -g pnpm &&
+      pnpm install --frozen-lockfile &&
+      pnpm --filter agentcraft-frontend run build
+    staticPublishPath: artifacts/agentcraft/dist/public
     envVars:
       - key: VITE_API_URL
         value: https://agentcraft-kexf.onrender.com
       - key: NODE_VERSION
-        value: "18"
+        value: "20"
+      - key: BASE_PATH
+        value: /
