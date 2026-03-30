@@ -1,0 +1,151 @@
+Build a production-ready AI-powered workflow automation platform inspired by n8n, but enhanced with intelligent multi-agent orchestration.
+
+PROJECT NAME:
+AgentCraft – AI-Native Workflow Automation Platform
+
+CORE VISION:
+A system where users create workflows visually, but instead of static automation, AI agents dynamically decide, execute, and optimize tasks.
+
+TECH STACK:
+
+* Backend: Python (FastAPI, async)
+* Frontend: React + Tailwind + Zustand (state management)
+* AI: Groq API / OpenAI-compatible models
+* Database: SQLite (upgrade-ready)
+* Realtime: WebSockets (for live execution tracking)
+
+CORE FEATURES:
+
+1. VISUAL WORKFLOW BUILDER (n8n-style)
+
+* Drag-and-drop nodes (React Flow)
+* Connect nodes visually
+* Node types:
+
+  * Input Node
+  * AI Agent Node
+  * API Node
+  * Condition Node (if/else)
+  * Loop Node
+  * Output Node
+
+2. MULTI-AGENT SYSTEM (MAIN DIFFERENTIATOR)
+
+* Planner Agent:
+  Breaks user request into steps
+* Executor Agent:
+  Executes each step
+* Validator Agent:
+  Checks correctness
+* Optional:
+  Self-improving feedback loop
+
+3. SMART EXECUTION ENGINE
+
+* Dynamic workflow execution (not fixed)
+* Agents can modify workflow at runtime
+* Context memory between steps
+* Retry + fallback mechanisms
+
+4. API-FIRST ARCHITECTURE
+
+* POST /execute
+* Accepts:
+  {
+  "input": "User request",
+  "workflow": [...]
+  }
+* Returns:
+
+  * Final result
+  * Execution trace
+  * Agent reasoning (optional debug mode)
+
+5. REAL-TIME EXECUTION UI
+
+* Show node-by-node execution
+* Highlight active node
+* Display logs and outputs live
+* Timeline view of agent decisions
+
+6. TOOL INTEGRATION SYSTEM
+
+* Plug-and-play tools:
+
+  * HTTP requests
+  * Database queries
+  * File processing
+* Easily extendable tool registry
+
+7. MEMORY SYSTEM
+
+* Short-term context per workflow
+* Optional persistent memory (JSON/DB)
+
+8. ERROR HANDLING + RESILIENCE
+
+* Retry failed nodes
+* Fallback strategies (different model/tool)
+* Graceful failure reporting
+
+9. SAMPLE USE CASES (DEMO READY)
+
+* “Summarize + Translate + Send API”
+* “Research topic → Generate blog → Format output”
+* “User query → Plan → Execute → Validate”
+
+10. CLEAN ARCHITECTURE
+    /backend
+    main.py
+    agents/
+    planner.py
+    executor.py
+    validator.py
+    engine/
+    workflow_engine.py
+    tools/
+    http_tool.py
+    ai_tool.py
+    /frontend
+    src/
+    components/
+    workflow_builder/
+    execution_view/
+
+11. DEPLOYMENT READY
+
+* Run with:
+  uvicorn main:app --host 0.0.0.0 --port 8000
+* Must work on Replit deployment
+* Include requirements.txt
+
+12. UI DESIGN
+
+* Dark theme (modern, like n8n)
+* Smooth animations
+* Minimal but professional
+* Focus on clarity + flow visualization
+
+13. BONUS (HACKATHON WINNERS EDGE)
+
+* “Explain my workflow” button (AI explains graph)
+* Auto-generate workflow from text prompt
+* Save & reuse workflows
+* Shareable workflow link
+
+IMPORTANT REQUIREMENTS:
+
+* Clean, modular, scalable code
+* Fully working MVP (not mock)
+* Comments for clarity
+* Avoid over-engineering but keep extensibility
+
+FINAL GOAL:
+Deliver a working MVP where a user can:
+
+1. Build a workflow visually
+2. Run it
+3. See AI agents execute it step-by-step
+4. Get intelligent output
+
+Make it impressive for judges in under 2 minutes demo.

@@ -1,0 +1,19 @@
+packages:
+  "@xyflow/react": "Required for the drag-and-drop workflow builder canvas"
+  "zustand": "Required for complex workflow state management across canvas and sidebars"
+  "date-fns": "Required for formatting execution timestamps"
+  "framer-motion": "Required for smooth panel transitions and execution animations"
+  "uuid": "Required for generating unique node IDs on the client side"
+  "@types/uuid": "Types for uuid"
+  "lucide-react": "Icons"
+  "clsx": "Utility for constructing className strings"
+  "tailwind-merge": "Utility for merging tailwind classes"
+
+images:
+  - path: "artifacts/agentcraft/public/images/agentcraft-hero.png"
+    description: "Deep dark abstract background with glowing neon purple and cyan neural network nodes connecting in a 3D isometric grid, high tech, premium, sleek"
+    aspect_ratio: "16:9"
+
+notes:
+  - "Assuming React Flow css is imported directly via @xyflow/react/dist/style.css"
+  - "Using WebSocket endpoint at ws(s)://[host]/api/ws/executions/:id"

@@ -1,22 +1,24 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AgentCraft API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: workflows
+    description: Workflow management
+  - name: executions
+    description: Workflow execution
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +26,220 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /workflows:
+    get:
+      operationId: listWorkflows
+      tags: [workflows]
+      summary: List all saved workflows
+      responses:
+        "200":
+          description: List of workflows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workflow"
+    post:
+      operationId: createWorkflow
+      tags: [workflows]
+      summary: Create a new workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkflowBody"
+      responses:
+        "201":
+          description: Created workflow
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /workflows/{id}:
+    get:
+      operationId: getWorkflow
+      tags: [workflows]
+      summary: Get a workflow by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Workflow
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateWorkflow
+      tags: [workflows]
+      summary: Update a workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkflowBody"
+      responses:
+        "200":
+          description: Updated workflow
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+    delete:
+      operationId: deleteWorkflow
+      tags: [workflows]
+      summary: Delete a workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /workflows/generate:
+    post:
+      operationId: generateWorkflow
+      tags: [workflows]
+      summary: Auto-generate a workflow from a text prompt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateWorkflowBody"
+      responses:
+        "200":
+          description: Generated workflow nodes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedWorkflow"
+
+  /workflows/{id}/explain:
+    get:
+      operationId: explainWorkflow
+      tags: [workflows]
+      summary: Get an AI explanation of the workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Explanation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowExplanation"
+
+  /executions:
+    get:
+      operationId: listExecutions
+      tags: [executions]
+      summary: List all executions
+      parameters:
+        - name: workflowId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of executions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Execution"
+    post:
+      operationId: startExecution
+      tags: [executions]
+      summary: Start a workflow execution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartExecutionBody"
+      responses:
+        "202":
+          description: Execution started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Execution"
+
+  /executions/{id}:
+    get:
+      operationId: getExecution
+      tags: [executions]
+      summary: Get execution details and results
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Execution details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecutionDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /executions/{id}/cancel:
+    post:
+      operationId: cancelExecution
+      tags: [executions]
+      summary: Cancel a running execution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Execution"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +250,209 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    WorkflowNode:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [input, ai_agent, api_call, condition, loop, output]
+        label:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+          required: [x, y]
+      required: [id, type, label, position]
+
+    WorkflowEdge:
+      type: object
+      properties:
+        id:
+          type: string
+        source:
+          type: string
+        target:
+          type: string
+        label:
+          type: string
+      required: [id, source, target]
+
+    Workflow:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowNode"
+        edges:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowEdge"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, nodes, edges, createdAt, updatedAt]
+
+    CreateWorkflowBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowNode"
+        edges:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowEdge"
+      required: [name, nodes, edges]
+
+    GenerateWorkflowBody:
+      type: object
+      properties:
+        prompt:
+          type: string
+      required: [prompt]
+
+    GeneratedWorkflow:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowNode"
+        edges:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowEdge"
+      required: [name, nodes, edges]
+
+    WorkflowExplanation:
+      type: object
+      properties:
+        explanation:
+          type: string
+        steps:
+          type: array
+          items:
+            type: string
+      required: [explanation, steps]
+
+    NodeResult:
+      type: object
+      properties:
+        nodeId:
+          type: string
+        nodeType:
+          type: string
+        label:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, success, failed, skipped]
+        output:
+          type: object
+          additionalProperties: true
+        reasoning:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        durationMs:
+          type: integer
+      required: [nodeId, nodeType, label, status]
+
+    Execution:
+      type: object
+      properties:
+        id:
+          type: integer
+        workflowId:
+          type: integer
+        status:
+          type: string
+          enum: [pending, running, completed, failed, cancelled]
+        input:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, workflowId, status, input, createdAt, updatedAt]
+
+    ExecutionDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        workflowId:
+          type: integer
+        status:
+          type: string
+          enum: [pending, running, completed, failed, cancelled]
+        input:
+          type: string
+        finalOutput:
+          type: string
+        nodeResults:
+          type: array
+          items:
+            $ref: "#/components/schemas/NodeResult"
+        agentLogs:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, workflowId, status, input, nodeResults, agentLogs, createdAt, updatedAt]
+
+    StartExecutionBody:
+      type: object
+      properties:
+        workflowId:
+          type: integer
+        input:
+          type: string
+      required: [workflowId, input]

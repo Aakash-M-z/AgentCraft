@@ -1,8 +1,8 @@
-# Workspace
+# AgentCraft – AI-Native Workflow Automation Platform
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+Full-stack pnpm monorepo TypeScript workspace. AgentCraft is a visual AI workflow automation platform inspired by n8n, built with multi-agent orchestration.
 
 ## Stack
 
@@ -10,87 +10,99 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
-- **API framework**: Express 5
+- **Frontend**: React + Vite + Tailwind CSS v4 + @xyflow/react (ReactFlow)
+- **State management**: Zustand
+- **Backend**: Express 5 (TypeScript)
 - **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
+- **AI**: OpenAI via Replit AI Integrations (gpt-5.2)
+- **Validation**: Zod, drizzle-zod
 - **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Build**: esbuild (API server), Vite (frontend)
+- **Real-time**: SSE (Server-Sent Events) for live execution tracking
 
 ## Structure
 
 ```text
 artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
+├── artifacts/
+│   ├── agentcraft/         # React + Vite frontend (main app, at /)
+│   └── api-server/         # Express API server (at /api)
+├── lib/
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── scripts/                # Utility scripts
+├── pnpm-workspace.yaml
+├── tsconfig.base.json
+├── tsconfig.json
+└── package.json
 ```
 
-## TypeScript & Composite Projects
+## Features
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+### Visual Workflow Builder
+- Drag-and-drop React Flow canvas
+- Node types: Input, AI Agent, API Call, Condition, Loop, Output
+- Save/load workflows to database
+- Editable workflow name
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+### Multi-Agent Orchestration
+- **Planner Agent**: Breaks down task before execution
+- **Executor Agent**: Runs each node in topological order
+- **Validator Agent**: Reviews results after completion
+- Context memory between nodes
 
-## Root Scripts
+### AI Features
+- **AI Generate**: Create entire workflows from a text prompt
+- **Explain Workflow**: AI explains what the workflow does
+- Real-time execution with SSE streaming
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+### Real-Time Execution View
+- Live node highlighting (running/success/failed)
+- SSE-based streaming logs from agents
+- Final output display
+- Cancel running executions
 
-## Packages
+## API Routes
 
-### `artifacts/api-server` (`@workspace/api-server`)
+All routes under `/api`:
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+- `GET /api/workflows` - List all workflows
+- `POST /api/workflows` - Create workflow
+- `GET /api/workflows/:id` - Get workflow
+- `PUT /api/workflows/:id` - Update workflow
+- `DELETE /api/workflows/:id` - Delete workflow
+- `POST /api/workflows/generate` - AI-generate workflow from prompt
+- `GET /api/workflows/:id/explain` - Get AI explanation
+- `GET /api/executions` - List executions
+- `POST /api/executions` - Start execution
+- `GET /api/executions/:id` - Get execution details
+- `POST /api/executions/:id/cancel` - Cancel execution
+- `GET /api/executions/:id/stream` - SSE stream for real-time updates
 
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+## Database Schema
 
-### `lib/db` (`@workspace/db`)
+- `workflows` table: id, name, description, nodes (jsonb), edges (jsonb), timestamps
+- `executions` table: id, workflowId, status, input, finalOutput, nodeResults (jsonb), agentLogs (jsonb), timestamps
 
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
+## Environment Variables
 
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
+- `DATABASE_URL` - PostgreSQL connection string (auto-provisioned by Replit)
+- `AI_INTEGRATIONS_OPENAI_BASE_URL` - OpenAI proxy URL (auto-set by Replit AI Integrations)
+- `AI_INTEGRATIONS_OPENAI_API_KEY` - OpenAI proxy API key (auto-set by Replit AI Integrations)
+- `SESSION_SECRET` - Session secret
+- `PORT` - Service port (auto-assigned per artifact)
 
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
+## Development Commands
 
-### `lib/api-spec` (`@workspace/api-spec`)
+- `pnpm --filter @workspace/agentcraft run dev` - Start frontend dev server
+- `pnpm --filter @workspace/api-server run dev` - Start API dev server
+- `pnpm --filter @workspace/api-spec run codegen` - Regenerate API client from OpenAPI spec
+- `pnpm --filter @workspace/db run push` - Push DB schema changes
 
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
+## Demo Workflows (pre-seeded)
 
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+1. **Summarize & Translate** - Input → AI Summarizer → AI Translator → Output
+2. **Research & Blog Writer** - Input → Planner → Writer → Editor → Output
+3. **Query → Plan → Execute → Validate** - Full multi-agent pipeline with condition node
