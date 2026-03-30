@@ -6,27 +6,39 @@ const port = Number(process.env.PORT || "5173");
 const basePath = process.env.BASE_PATH || "/";
 const apiPort = process.env.API_PORT || "3001";
 
+// import.meta.dirname is available in Node 20+ (ESM)
+const dir = import.meta.dirname;
+
 export default defineConfig({
   base: basePath,
   plugins: [react()],
   css: {
-    // Tailwind v4 via PostCSS — no native bindings required
     postcss: "./postcss.config.js",
   },
   resolve: {
     alias: {
       "@workspace/api-client-react": path.resolve(
-        __dirname,
+        dir,
         "src/lib/workspace/api-client/index.ts",
       ),
-      "@": path.resolve(__dirname, "src"),
+      "@": path.resolve(dir, "src"),
     },
     dedupe: ["react", "react-dom"],
   },
-  root: __dirname,
+  root: dir,
   build: {
-    outDir: path.resolve(__dirname, "dist/public"),
+    outDir: path.resolve(dir, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // Code splitting for better caching
+        manualChunks: {
+          "react-vendor": ["react", "react-dom"],
+          "ui-vendor": ["@xyflow/react", "framer-motion", "lucide-react"],
+          "query-vendor": ["@tanstack/react-query"],
+        },
+      },
+    },
   },
   server: {
     port,
