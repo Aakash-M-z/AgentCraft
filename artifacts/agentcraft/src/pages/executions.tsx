@@ -6,7 +6,8 @@ import { Activity, Clock, CheckCircle2, XCircle, Loader2, Play } from "lucide-re
 import { cn } from "@/lib/utils";
 
 export default function ExecutionsPage() {
-  const { data: executions, isLoading } = useListExecutions();
+  const { data: executionsRaw, isLoading } = useListExecutions();
+  const executions = Array.isArray(executionsRaw) ? executionsRaw : [];
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -48,12 +49,12 @@ export default function ExecutionsPage() {
                 <div className="col-span-3">Started At</div>
                 <div className="col-span-2 text-right">Actions</div>
               </div>
-              
+
               <div className="divide-y divide-border">
                 {executions.map((exec) => {
                   const StatusIcon = getStatusConfig(exec.status).icon;
                   const config = getStatusConfig(exec.status);
-                  
+
                   return (
                     <div key={exec.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-secondary/30 transition-colors">
                       <div className="col-span-1 font-mono text-sm text-muted-foreground">#{exec.id}</div>
@@ -72,7 +73,7 @@ export default function ExecutionsPage() {
                         {format(new Date(exec.createdAt), 'MMM d, yyyy HH:mm:ss')}
                       </div>
                       <div className="col-span-2 text-right">
-                        <Link 
+                        <Link
                           href={`/executions/${exec.id}`}
                           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-foreground hover:bg-muted border border-border transition-colors"
                         >

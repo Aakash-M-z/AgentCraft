@@ -6,7 +6,8 @@ import { GitMerge, Plus, Trash2, Copy, Play, Loader2, Sparkles } from "lucide-re
 import { useToast } from "@/hooks/use-toast";
 
 export default function WorkflowsPage() {
-  const { data: workflows, isLoading, refetch } = useListWorkflows();
+  const { data: workflowsRaw, isLoading, refetch } = useListWorkflows();
+  const workflows = Array.isArray(workflowsRaw) ? workflowsRaw : [];
   const createMut = useCreateWorkflow();
   const deleteMut = useDeleteWorkflow();
   const { toast } = useToast();
@@ -48,7 +49,7 @@ export default function WorkflowsPage() {
               <h1 className="text-4xl font-display font-extrabold text-foreground tracking-tight">Workflows Library</h1>
               <p className="text-muted-foreground mt-2 text-lg">Manage your AI automation agents and data pipelines.</p>
             </div>
-            <button 
+            <button
               onClick={handleCreateNew}
               disabled={createMut.isPending}
               className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-primary text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-200"
@@ -69,7 +70,7 @@ export default function WorkflowsPage() {
               </div>
               <h2 className="text-2xl font-bold text-foreground mb-2">No workflows yet</h2>
               <p className="text-muted-foreground max-w-md mx-auto mb-8">Build your first AI-native automation workflow using our visual drag-and-drop canvas.</p>
-              <button 
+              <button
                 onClick={handleCreateNew}
                 className="px-6 py-3 rounded-xl font-semibold bg-secondary text-foreground hover:bg-muted transition-colors border border-border shadow-sm"
               >
@@ -82,7 +83,7 @@ export default function WorkflowsPage() {
                 <Link key={wf.id} href={`/workflows/${wf.id}`} className="block group">
                   <div className="bg-card rounded-2xl p-6 border border-border shadow-lg hover:shadow-xl hover:border-primary/50 hover:bg-secondary/30 transition-all duration-300 relative overflow-hidden h-full flex flex-col">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    
+
                     <div className="flex justify-between items-start mb-4">
                       <div className="w-12 h-12 rounded-xl bg-background border border-border flex items-center justify-center shadow-inner group-hover:bg-primary/10 group-hover:border-primary/30 transition-colors">
                         <GitMerge className="w-6 h-6 text-primary" />
@@ -96,15 +97,15 @@ export default function WorkflowsPage() {
                         </button>
                       </div>
                     </div>
-                    
+
                     <h3 className="text-xl font-bold text-foreground mb-2 line-clamp-1">{wf.name}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-6 flex-1">
                       {wf.description || 'No description provided.'}
                     </p>
-                    
+
                     <div className="flex items-center justify-between pt-4 border-t border-border mt-auto">
                       <div className="flex gap-4 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1"><GitMerge size={14}/> {wf.nodes.length} nodes</span>
+                        <span className="flex items-center gap-1"><GitMerge size={14} /> {wf.nodes.length} nodes</span>
                       </div>
                       <span className="text-xs text-muted-foreground">Updated {format(new Date(wf.updatedAt), 'MMM d, yyyy')}</span>
                     </div>
