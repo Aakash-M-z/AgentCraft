@@ -234,7 +234,7 @@ function BuilderCanvas() {
                 }
               }}
               maskColor="rgba(0, 0, 0, 0.7)"
-              className="!bg-card"
+              style={{ background: 'hsl(240 10% 6%)' }}
             />
           </ReactFlow>
         </div>

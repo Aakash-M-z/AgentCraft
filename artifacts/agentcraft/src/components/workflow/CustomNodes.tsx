@@ -73,8 +73,8 @@ export function BaseCustomNode({ data, type, selected }: { data: AppNodeData, ty
       {config.hasTarget && (
         <Handle 
           type="target" 
-          position={Position.Left} 
-          className="!w-3 !h-3 !bg-card !border-2 !border-muted-foreground group-hover:!border-foreground transition-colors" 
+          position={Position.Left}
+          style={{ width: 12, height: 12, background: 'hsl(240 10% 6%)', border: '2px solid hsl(240 5% 35%)' }}
         />
       )}
       
@@ -91,8 +91,8 @@ export function BaseCustomNode({ data, type, selected }: { data: AppNodeData, ty
       {config.hasSource && (
         <Handle 
           type="source" 
-          position={Position.Right} 
-          className="!w-3 !h-3 !bg-card !border-2 !border-muted-foreground group-hover:!border-foreground transition-colors" 
+          position={Position.Right}
+          style={{ width: 12, height: 12, background: 'hsl(240 10% 6%)', border: '2px solid hsl(240 5% 35%)' }}
         />
       )}
     </div>
