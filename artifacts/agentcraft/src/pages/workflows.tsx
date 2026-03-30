@@ -1,8 +1,8 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useListWorkflows, useCreateWorkflow, useDeleteWorkflow } from "@workspace/api-client-react";
 import { format } from "date-fns";
-import { Link } from "wouter";
-import { GitMerge, Plus, Trash2, Copy, Play, Loader2, Sparkles } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { GitMerge, Plus, Trash2, Copy, Loader2, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function WorkflowsPage() {
@@ -11,13 +11,14 @@ export default function WorkflowsPage() {
   const createMut = useCreateWorkflow();
   const deleteMut = useDeleteWorkflow();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const handleCreateNew = () => {
     createMut.mutate(
       { data: { name: "New Workflow", nodes: [], edges: [] } },
       {
         onSuccess: (res) => {
-          window.location.href = `/workflows/${res.id}`;
+          navigate(`/workflows/${res.id}`);
         }
       }
     );

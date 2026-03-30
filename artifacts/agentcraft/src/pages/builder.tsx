@@ -1,12 +1,11 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
-import { useRoute } from 'wouter';
+import { useRoute, useLocation } from 'wouter';
 import {
   ReactFlow,
   ReactFlowProvider,
   Background,
   Controls,
   MiniMap,
-  Panel,
   useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -17,10 +16,10 @@ import { ConfigPanel } from '@/components/workflow/ConfigPanel';
 import { nodeTypes } from '@/components/workflow/CustomNodes';
 import { useWorkflowStore } from '@/lib/store';
 import { generateId } from '@/lib/utils';
-import { 
-  useGetWorkflow, 
-  useCreateWorkflow, 
-  useUpdateWorkflow, 
+import {
+  useGetWorkflow,
+  useCreateWorkflow,
+  useUpdateWorkflow,
   useGenerateWorkflow,
   useStartExecution,
   useExplainWorkflow
@@ -31,9 +30,10 @@ function BuilderCanvas() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   const { toast } = useToast();
-  
-  const { 
-    nodes, edges, onNodesChange, onEdgesChange, onConnect, 
+  const [, navigate] = useLocation();
+
+  const {
+    nodes, edges, onNodesChange, onEdgesChange, onConnect,
     addNode, setSelectedNodeId, workflowId, workflowName, setWorkflowMeta,
     getApiFormat, loadApiFormat
   } = useWorkflowStore();
@@ -41,14 +41,15 @@ function BuilderCanvas() {
   const [promptOpen, setPromptOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [explainOpen, setExplainOpen] = useState(false);
-
+  const [runInputOpen, setRunInputOpen] = useState(false);
+  const [runInput, setRunInput] = useState("");
   const createMut = useCreateWorkflow();
   const updateMut = useUpdateWorkflow();
   const generateMut = useGenerateWorkflow();
   const executeMut = useStartExecution();
-  
+
   const { data: explanationData, refetch: fetchExplain, isFetching: isExplaining } = useExplainWorkflow(
-    workflowId || 0, 
+    workflowId || 0,
     { query: { enabled: false } }
   );
 
@@ -70,9 +71,9 @@ function BuilderCanvas() {
       event.preventDefault();
       const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
       const dataStr = event.dataTransfer.getData('application/reactflow');
-      
+
       if (!dataStr || !reactFlowBounds) return;
-      
+
       const { type, label } = JSON.parse(dataStr);
       const position = screenToFlowPosition({
         x: event.clientX,
@@ -137,20 +138,51 @@ function BuilderCanvas() {
     fetchExplain().then(() => setExplainOpen(true));
   };
 
-  const handleExecute = () => {
-    if (!workflowId) {
-      toast({ title: "Please save the workflow before running", variant: "destructive" });
-      return;
-    }
-    executeMut.mutate(
-      { data: { workflowId, input: "{}" } },
-      {
-        onSuccess: (res) => {
-          toast({ title: "Execution started!" });
-          window.location.href = `/executions/${res.id}`;
+  const handleExecute = async () => {
+    setRunInputOpen(true);
+  };
+
+  const doExecute = async () => {
+    setRunInputOpen(false);
+    // Auto-save first if not yet saved, then run
+    const apiData = getApiFormat();
+    const inputText = runInput.trim() || "Run workflow";
+
+    const doRun = (id: number) => {
+      executeMut.mutate(
+        { data: { workflowId: id, input: inputText } },
+        {
+          onSuccess: (res) => {
+            toast({ title: "Execution started!" });
+            navigate(`/executions/${res.id}`);
+          },
+          onError: () => {
+            toast({ title: "Failed to start execution", variant: "destructive" });
+          }
         }
-      }
-    );
+      );
+    };
+
+    if (workflowId) {
+      updateMut.mutate(
+        { id: workflowId, data: { name: workflowName, ...apiData } },
+        { onSuccess: () => doRun(workflowId) }
+      );
+    } else {
+      createMut.mutate(
+        { data: { name: workflowName, ...apiData } },
+        {
+          onSuccess: (res) => {
+            setWorkflowMeta({ id: res.id });
+            window.history.replaceState(null, '', `/workflows/${res.id}`);
+            doRun(res.id);
+          },
+          onError: () => {
+            toast({ title: "Failed to save workflow", variant: "destructive" });
+          }
+        }
+      );
+    }
   };
 
   return (
@@ -158,8 +190,8 @@ function BuilderCanvas() {
       {/* Top Toolbar */}
       <div className="h-16 border-b border-border bg-card/80 backdrop-blur flex items-center justify-between px-6 z-20">
         <div className="flex items-center gap-4">
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={workflowName}
             onChange={(e) => setWorkflowMeta({ name: e.target.value })}
             className="bg-transparent text-xl font-display font-bold text-foreground border-none outline-none focus:ring-2 focus:ring-primary/50 rounded px-2 py-1 w-64"
@@ -167,21 +199,21 @@ function BuilderCanvas() {
           {workflowId && <span className="text-xs px-2 py-1 bg-secondary text-muted-foreground rounded-full">ID: {workflowId}</span>}
         </div>
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={() => setPromptOpen(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-secondary text-foreground hover:bg-muted transition-colors border border-border"
           >
             <Sparkles size={16} className="text-amber-400" />
             AI Generate
           </button>
-          <button 
+          <button
             onClick={handleExplain}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-secondary text-foreground hover:bg-muted transition-colors border border-border"
           >
             <Wand2 size={16} className="text-accent" />
             Explain
           </button>
-          <button 
+          <button
             onClick={handleSave}
             disabled={createMut.isPending || updateMut.isPending}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 transition-colors"
@@ -189,13 +221,15 @@ function BuilderCanvas() {
             {createMut.isPending || updateMut.isPending ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
             Save
           </button>
-          <button 
+          <button
             onClick={handleExecute}
-            disabled={executeMut.isPending}
-            className="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold bg-gradient-to-r from-accent to-primary text-white shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all"
+            disabled={executeMut.isPending || createMut.isPending || updateMut.isPending}
+            className="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold bg-gradient-to-r from-accent to-primary text-white shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
-            {executeMut.isPending ? <RefreshCw size={16} className="animate-spin" /> : <Play size={16} className="fill-white" />}
-            Run Workflow
+            {(executeMut.isPending || createMut.isPending || updateMut.isPending)
+              ? <RefreshCw size={16} className="animate-spin" />
+              : <Play size={16} className="fill-white" />}
+            {createMut.isPending ? 'Saving...' : executeMut.isPending ? 'Starting...' : 'Run Workflow'}
           </button>
         </div>
       </div>
@@ -221,9 +255,9 @@ function BuilderCanvas() {
           >
             <Background color="#2a2a2a" gap={24} size={2} />
             <Controls className="bg-card border border-border rounded-xl overflow-hidden" showInteractive={false} />
-            <MiniMap 
+            <MiniMap
               nodeColor={(n) => {
-                switch(n.type) {
+                switch (n.type) {
                   case 'input': return '#34d399';
                   case 'ai_agent': return '#8b5cf6';
                   case 'api_call': return '#60a5fa';
@@ -260,7 +294,7 @@ function BuilderCanvas() {
             />
             <div className="flex justify-end gap-3">
               <button onClick={() => setPromptOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground">Cancel</button>
-              <button 
+              <button
                 onClick={handleGenerate}
                 disabled={generateMut.isPending || !prompt}
                 className="px-6 py-2 rounded-lg text-sm font-bold bg-primary text-white shadow-lg shadow-primary/25 disabled:opacity-50 flex items-center gap-2"
@@ -289,11 +323,43 @@ function BuilderCanvas() {
               <ul className="space-y-2">
                 {explanationData.steps.map((step, i) => (
                   <li key={i} className="flex gap-3 text-muted-foreground bg-secondary/50 p-3 rounded-lg border border-border">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">{i+1}</span>
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">{i + 1}</span>
                     <span>{step}</span>
                   </li>
                 ))}
               </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Run Workflow Input Dialog */}
+      {runInputOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
+          <div className="bg-card border border-border p-6 rounded-2xl shadow-2xl shadow-black max-w-lg w-full relative">
+            <button onClick={() => setRunInputOpen(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+              <X size={20} />
+            </button>
+            <h3 className="text-xl font-bold text-foreground mb-2 flex items-center gap-2">
+              <Play size={18} className="text-primary fill-primary" /> Run Workflow
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">Provide the input text that will be passed into the first node of your workflow.</p>
+            <textarea
+              autoFocus
+              value={runInput}
+              onChange={e => setRunInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) doExecute(); }}
+              placeholder="E.g., Artificial intelligence is transforming every industry..."
+              className="w-full bg-background border border-border rounded-xl p-4 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 min-h-[100px] mb-4 resize-none"
+            />
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setRunInputOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground">Cancel</button>
+              <button
+                onClick={doExecute}
+                className="px-6 py-2 rounded-lg text-sm font-bold bg-gradient-to-r from-accent to-primary text-white shadow-lg shadow-primary/25 flex items-center gap-2"
+              >
+                <Play size={16} className="fill-white" /> Run Now
+              </button>
             </div>
           </div>
         </div>

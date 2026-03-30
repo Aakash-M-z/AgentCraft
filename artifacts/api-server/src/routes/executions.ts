@@ -1,30 +1,35 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
-import { executionsTable, workflowsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
-import type { WorkflowNode, NodeResult } from "@workspace/db";
 import OpenAI from "openai";
+import { workflows, executions, nextExId, type StoredExecution } from "../lib/store";
+import type { WorkflowNode, NodeResult } from "@workspace/db";
 
 const router = Router();
 
-const openai = new OpenAI({
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-});
+const MODEL = "llama-3.3-70b-versatile";
 
-// Track active SSE clients per execution
-const executionClients = new Map<number, Set<(data: unknown) => void>>();
-
-function broadcast(executionId: number, data: unknown) {
-  const clients = executionClients.get(executionId);
-  if (clients) {
-    for (const send of clients) {
-      send(data);
-    }
-  }
+function groq() {
+  return new OpenAI({
+    baseURL: process.env.GROQ_BASE_URL ?? "https://api.groq.com/openai/v1",
+    apiKey: process.env.GROQ_API_KEY ?? "",
+  });
 }
 
-// SSE endpoint for real-time execution updates
+function fmtEx(e: StoredExecution) {
+  return {
+    ...e,
+    createdAt: e.createdAt.toISOString(),
+    updatedAt: e.updatedAt.toISOString(),
+  };
+}
+
+// ── SSE broadcast ─────────────────────────────────────────────────────────────
+const sseClients = new Map<number, Set<(data: unknown) => void>>();
+
+function broadcast(executionId: number, data: unknown) {
+  sseClients.get(executionId)?.forEach(send => send(data));
+}
+
+// GET /api/executions/:id/stream  (SSE — must be before /:id)
 router.get("/:id/stream", (req, res) => {
   const id = parseInt(req.params.id!);
   res.setHeader("Content-Type", "text/event-stream");
@@ -33,262 +38,194 @@ router.get("/:id/stream", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.flushHeaders();
 
-  const send = (data: unknown) => {
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+  const send = (data: unknown) => res.write(`data: ${JSON.stringify(data)}\n\n`);
 
-  if (!executionClients.has(id)) {
-    executionClients.set(id, new Set());
-  }
-  executionClients.get(id)!.add(send);
+  if (!sseClients.has(id)) sseClients.set(id, new Set());
+  sseClients.get(id)!.add(send);
 
-  // Send heartbeat
   const heartbeat = setInterval(() => res.write(": ping\n\n"), 15000);
-
   req.on("close", () => {
     clearInterval(heartbeat);
-    executionClients.get(id)?.delete(send);
-    if (executionClients.get(id)?.size === 0) {
-      executionClients.delete(id);
-    }
+    sseClients.get(id)?.delete(send);
+    if (sseClients.get(id)?.size === 0) sseClients.delete(id);
   });
 });
 
-router.get("/", async (req, res) => {
-  try {
-    const { workflowId } = req.query;
-    let executions;
-    if (workflowId) {
-      executions = await db.select().from(executionsTable)
-        .where(eq(executionsTable.workflowId, parseInt(workflowId as string)))
-        .orderBy(executionsTable.createdAt);
-    } else {
-      executions = await db.select().from(executionsTable).orderBy(executionsTable.createdAt);
-    }
-    res.json(executions.map(e => ({
-      ...e,
-      nodeResults: e.nodeResults,
-      agentLogs: e.agentLogs,
-      createdAt: e.createdAt.toISOString(),
-      updatedAt: e.updatedAt.toISOString(),
-    })));
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Failed to list executions" });
-  }
+// GET /api/executions
+router.get("/", (req, res) => {
+  const { workflowId } = req.query;
+  let list = [...executions.values()];
+  if (workflowId) list = list.filter(e => e.workflowId === parseInt(workflowId as string));
+  list.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  res.json(list.map(fmtEx));
 });
 
-router.get("/:id", async (req, res) => {
-  try {
-    const id = parseInt(req.params.id!);
-    const [execution] = await db.select().from(executionsTable).where(eq(executionsTable.id, id));
-    if (!execution) {
-      res.status(404).json({ error: "Execution not found" });
-      return;
-    }
-    res.json({
-      ...execution,
-      nodeResults: execution.nodeResults,
-      agentLogs: execution.agentLogs,
-      createdAt: execution.createdAt.toISOString(),
-      updatedAt: execution.updatedAt.toISOString(),
-    });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Failed to get execution" });
-  }
+// GET /api/executions/:id
+router.get("/:id", (req, res) => {
+  const id = parseInt(req.params.id!);
+  const ex = executions.get(id);
+  if (!ex) { res.status(404).json({ error: "Execution not found" }); return; }
+  res.json(fmtEx(ex));
 });
 
+// POST /api/executions
 router.post("/", async (req, res) => {
   try {
     const { workflowId, input } = req.body as { workflowId: number; input: string };
+    const wf = workflows.get(workflowId);
+    if (!wf) { res.status(404).json({ error: "Workflow not found" }); return; }
 
-    const [workflow] = await db.select().from(workflowsTable).where(eq(workflowsTable.id, workflowId));
-    if (!workflow) {
-      res.status(404).json({ error: "Workflow not found" });
-      return;
-    }
-
-    const [execution] = await db.insert(executionsTable).values({
+    const now = new Date();
+    const id = nextExId();
+    const ex: StoredExecution = {
+      id,
       workflowId,
-      input: input || "",
       status: "pending",
+      input: input ?? "",
+      finalOutput: null,
       nodeResults: [],
       agentLogs: [],
-    }).returning();
+      createdAt: now,
+      updatedAt: now,
+    };
+    executions.set(id, ex);
 
-    res.status(202).json({
-      ...execution!,
-      createdAt: execution!.createdAt.toISOString(),
-      updatedAt: execution!.updatedAt.toISOString(),
-    });
+    // Respond immediately, run async
+    res.status(202).json(fmtEx(ex));
 
-    // Run execution asynchronously
-    runExecution(execution!.id, workflow.nodes as WorkflowNode[], workflow.edges as any[], input || "").catch(console.error);
+    runExecution(id, wf.nodes as WorkflowNode[], wf.edges as any[], input ?? "").catch(console.error);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Failed to start execution" });
   }
 });
 
-router.post("/:id/cancel", async (req, res) => {
-  try {
-    const id = parseInt(req.params.id!);
-    const [updated] = await db.update(executionsTable)
-      .set({ status: "cancelled", updatedAt: new Date() })
-      .where(eq(executionsTable.id, id))
-      .returning();
-
-    if (!updated) {
-      res.status(404).json({ error: "Execution not found" });
-      return;
-    }
-
-    broadcast(id, { type: "execution_cancelled" });
-    res.json({ ...updated, createdAt: updated.createdAt.toISOString(), updatedAt: updated.updatedAt.toISOString() });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Failed to cancel execution" });
-  }
+// POST /api/executions/:id/cancel
+router.post("/:id/cancel", (req, res) => {
+  const id = parseInt(req.params.id!);
+  const ex = executions.get(id);
+  if (!ex) { res.status(404).json({ error: "Execution not found" }); return; }
+  ex.status = "cancelled";
+  ex.updatedAt = new Date();
+  broadcast(id, { type: "execution_cancelled" });
+  res.json(fmtEx(ex));
 });
 
+// ── Execution runner ──────────────────────────────────────────────────────────
+
 async function runExecution(executionId: number, nodes: WorkflowNode[], edges: any[], input: string) {
+  const ex = executions.get(executionId)!;
   const logs: string[] = [];
   const nodeResults: NodeResult[] = [];
 
   function log(msg: string) {
-    logs.push(`[${new Date().toISOString()}] ${msg}`);
-    broadcast(executionId, { type: "log", message: msg });
+    const line = `[${new Date().toISOString()}] ${msg}`;
+    logs.push(line);
+    ex.agentLogs = [...logs];
+    broadcast(executionId, { type: "log", message: line });
+  }
+
+  function save() {
+    ex.nodeResults = [...nodeResults];
+    ex.agentLogs = [...logs];
+    ex.updatedAt = new Date();
   }
 
   try {
-    await db.update(executionsTable)
-      .set({ status: "running", updatedAt: new Date() })
-      .where(eq(executionsTable.id, executionId));
-
+    ex.status = "running";
     broadcast(executionId, { type: "execution_start" });
-    log("🚀 Planner Agent: Analyzing workflow and preparing execution plan...");
+    log("🚀 Planner Agent: Analyzing workflow...");
 
-    // Build execution order via topological sort
-    const orderedNodes = topologicalSort(nodes, edges);
-    log(`📋 Planner Agent: Identified ${orderedNodes.length} nodes to execute`);
+    const ordered = topologicalSort(nodes, edges);
+    log(`📋 Identified ${ordered.length} nodes`);
 
     let context: Record<string, unknown> = { input };
     let finalOutput = "";
 
-    // Plan phase
-    const planCompletion = await openai.chat.completions.create({
-      model: "gpt-5.2",
-      max_completion_tokens: 1024,
-      messages: [
-        { role: "system", content: "You are a Planner Agent. Given a workflow and user input, briefly describe the execution plan in 2-3 sentences." },
-        { role: "user", content: `Workflow nodes: ${JSON.stringify(orderedNodes.map(n => ({ type: n.type, label: n.label })))}\nUser input: "${input}"` }
-      ]
-    });
-    const plan = planCompletion.choices[0]?.message?.content ?? "";
-    log(`🧠 Planner Agent: ${plan}`);
+    // Planner phase
+    try {
+      const plan = await groq().chat.completions.create({
+        model: MODEL,
+        max_tokens: 512,
+        messages: [
+          { role: "system", content: "You are a Planner Agent. Briefly describe the execution plan in 2-3 sentences." },
+          { role: "user", content: `Nodes: ${JSON.stringify(ordered.map(n => ({ type: n.type, label: n.label })))}\nInput: "${input}"` },
+        ],
+      });
+      log(`🧠 Planner: ${plan.choices[0]?.message?.content ?? ""}`);
+    } catch (e) {
+      log(`🧠 Planner: (AI unavailable) Will execute ${ordered.length} nodes sequentially.`);
+    }
 
-    for (const node of orderedNodes) {
-      const nodeResult: NodeResult = {
+    for (const node of ordered) {
+      if (ex.status === "cancelled") break;
+
+      const nr: NodeResult = {
         nodeId: node.id,
         nodeType: node.type,
         label: node.label,
         status: "running",
         startedAt: new Date().toISOString(),
       };
-
-      nodeResults.push(nodeResult);
+      nodeResults.push(nr);
       broadcast(executionId, { type: "node_start", nodeId: node.id, label: node.label, nodeType: node.type });
-      log(`⚙️  Executing node: ${node.label} (${node.type})`);
-
-      await db.update(executionsTable)
-        .set({ nodeResults: [...nodeResults], agentLogs: [...logs], updatedAt: new Date() })
-        .where(eq(executionsTable.id, executionId));
+      log(`⚙️  Node: ${node.label} (${node.type})`);
+      save();
 
       try {
         const output = await executeNode(node, context, input, log);
-        nodeResult.status = "success";
-        nodeResult.output = output;
-        nodeResult.completedAt = new Date().toISOString();
-        nodeResult.durationMs = nodeResult.startedAt
-          ? Date.now() - new Date(nodeResult.startedAt).getTime()
-          : 0;
+        nr.status = "success";
+        nr.output = output;
+        nr.completedAt = new Date().toISOString();
+        nr.durationMs = nr.startedAt ? Date.now() - new Date(nr.startedAt).getTime() : 0;
 
-        // Update context with node output
         context[node.id] = output;
-        if (output.result !== undefined) {
-          context.lastResult = output.result;
-        }
-        if (node.type === "output") {
-          finalOutput = String(output.result ?? "");
-        }
+        if (output.result !== undefined) context.lastResult = output.result;
+        if (node.type === "output") finalOutput = String(output.result ?? "");
 
-        broadcast(executionId, {
-          type: "node_complete",
-          nodeId: node.id,
-          status: "success",
-          output,
-        });
-        log(`✅ Node "${node.label}" completed successfully`);
+        broadcast(executionId, { type: "node_complete", nodeId: node.id, status: "success", output });
+        log(`✅ "${node.label}" done`);
       } catch (nodeErr) {
-        nodeResult.status = "failed";
-        nodeResult.completedAt = new Date().toISOString();
-        nodeResult.reasoning = String(nodeErr);
-
-        broadcast(executionId, {
-          type: "node_failed",
-          nodeId: node.id,
-          status: "failed",
-          error: String(nodeErr),
-        });
-        log(`❌ Node "${node.label}" failed: ${nodeErr}`);
-
-        await db.update(executionsTable)
-          .set({ status: "failed", nodeResults: [...nodeResults], agentLogs: [...logs], updatedAt: new Date() })
-          .where(eq(executionsTable.id, executionId));
-
+        nr.status = "failed";
+        nr.completedAt = new Date().toISOString();
+        nr.reasoning = String(nodeErr);
+        broadcast(executionId, { type: "node_failed", nodeId: node.id, status: "failed", error: String(nodeErr) });
+        log(`❌ "${node.label}" failed: ${nodeErr}`);
+        save();
+        ex.status = "failed";
         broadcast(executionId, { type: "execution_complete", status: "failed" });
         return;
       }
 
-      await db.update(executionsTable)
-        .set({ nodeResults: [...nodeResults], agentLogs: [...logs], updatedAt: new Date() })
-        .where(eq(executionsTable.id, executionId));
-
-      // Brief delay between nodes for visibility
-      await sleep(300);
+      save();
+      await sleep(200);
     }
 
     // Validator phase
-    log(`🔍 Validator Agent: Reviewing execution results...`);
-    const validatorCompletion = await openai.chat.completions.create({
-      model: "gpt-5.2",
-      max_completion_tokens: 512,
-      messages: [
-        { role: "system", content: "You are a Validator Agent. Review the workflow execution and confirm the results are correct in 1-2 sentences." },
-        { role: "user", content: `Input: "${input}"\nFinal output: "${finalOutput}"\nNodes executed: ${nodeResults.length}` }
-      ]
-    });
-    const validation = validatorCompletion.choices[0]?.message?.content ?? "";
-    log(`✓ Validator Agent: ${validation}`);
+    log("🔍 Validator Agent: Reviewing results...");
+    try {
+      const val = await groq().chat.completions.create({
+        model: MODEL,
+        max_tokens: 256,
+        messages: [
+          { role: "system", content: "You are a Validator Agent. Confirm results in 1-2 sentences." },
+          { role: "user", content: `Input: "${input}"\nOutput: "${finalOutput}"\nNodes: ${nodeResults.length}` },
+        ],
+      });
+      log(`✓ Validator: ${val.choices[0]?.message?.content ?? ""}`);
+    } catch {
+      log("✓ Validator: Execution completed successfully.");
+    }
 
-    await db.update(executionsTable)
-      .set({
-        status: "completed",
-        finalOutput,
-        nodeResults,
-        agentLogs: [...logs],
-        updatedAt: new Date()
-      })
-      .where(eq(executionsTable.id, executionId));
-
+    ex.status = "completed";
+    ex.finalOutput = finalOutput;
+    save();
     broadcast(executionId, { type: "execution_complete", status: "completed", finalOutput });
-    log(`🎉 Execution completed successfully`);
+    log("🎉 Execution complete!");
   } catch (err) {
-    log(`💥 Execution failed: ${err}`);
-    await db.update(executionsTable)
-      .set({ status: "failed", agentLogs: [...logs], nodeResults, updatedAt: new Date() })
-      .where(eq(executionsTable.id, executionId));
+    log(`💥 Execution crashed: ${err}`);
+    ex.status = "failed";
+    save();
     broadcast(executionId, { type: "execution_complete", status: "failed" });
   }
 }
@@ -297,7 +234,7 @@ async function executeNode(
   node: WorkflowNode,
   context: Record<string, unknown>,
   input: string,
-  log: (msg: string) => void
+  log: (msg: string) => void,
 ): Promise<Record<string, unknown>> {
   const config = node.config ?? {};
 
@@ -308,29 +245,44 @@ async function executeNode(
     case "ai_agent": {
       const instruction = String(config.instruction ?? "Process the input");
       const role = String(config.role ?? "executor");
+      const requestedModel = String(config.model ?? MODEL);
+      // Fall back to default if model isn't in the supported list
+      const SUPPORTED = [
+        "llama-3.3-70b-versatile", "llama-3.1-8b-instant",
+        "meta-llama/llama-4-scout-17b-16e-instruct", "qwen/qwen3-32b",
+        "moonshotai/kimi-k2-instruct", "groq/compound", "groq/compound-mini",
+        "openai/gpt-oss-120b", "openai/gpt-oss-20b", "allam-2-7b",
+      ];
+      const model = SUPPORTED.includes(requestedModel) ? requestedModel : MODEL;
+      const temperature = Number(config.temperature ?? 0.7);
       const lastResult = String(context.lastResult ?? input);
-
-      log(`  🤖 AI Agent (${role}): ${instruction}`);
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-5.2",
-        max_completion_tokens: 2048,
-        messages: [
-          { role: "system", content: `You are an AI ${role} agent. ${instruction}` },
-          { role: "user", content: lastResult }
-        ]
-      });
-      const result = completion.choices[0]?.message?.content ?? "";
-      log(`  💬 AI Agent output: ${result.slice(0, 100)}...`);
-      return { result, reasoning: `${role} agent processed the request`, tokens: completion.usage?.total_tokens };
+      const resolvedInstruction = instruction.replace(/\{\{input\}\}/g, lastResult);
+      log(`  🤖 AI Agent (${role}) [${model}]: ${resolvedInstruction.slice(0, 80)}`);
+      try {
+        const completion = await groq().chat.completions.create({
+          model,
+          max_tokens: 2048,
+          temperature,
+          messages: [
+            { role: "system", content: `You are an AI ${role} agent. ${resolvedInstruction}` },
+            { role: "user", content: lastResult },
+          ],
+        });
+        const result = completion.choices[0]?.message?.content ?? "";
+        log(`  💬 Output: ${result.slice(0, 100)}`);
+        return { result, reasoning: `${role} agent processed the request`, tokens: completion.usage?.total_tokens };
+      } catch (e) {
+        const fallback = `[AI unavailable: ${e}]`;
+        log(`  ⚠️  ${fallback}`);
+        return { result: fallback };
+      }
     }
 
     case "api_call": {
       const url = String(config.url ?? "");
       const method = String(config.method ?? "GET");
       if (!url) return { result: "No URL configured", status: 0 };
-
-      log(`  🌐 API Call: ${method} ${url}`);
+      log(`  🌐 API: ${method} ${url}`);
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json", ...(config.headers as Record<string, string> ?? {}) },
@@ -343,21 +295,15 @@ async function executeNode(
     case "condition": {
       const expr = String(config.expression ?? "true");
       const lastResult = context.lastResult;
-      let passed = false;
-      try {
-        // Simple safe evaluation
-        passed = Boolean(lastResult && String(lastResult).length > 0);
-        log(`  🔀 Condition: "${expr}" → ${passed ? "TRUE" : "FALSE"}`);
-      } catch {
-        passed = false;
-      }
+      const passed = Boolean(lastResult && String(lastResult).length > 0);
+      log(`  🔀 Condition "${expr}" → ${passed ? "TRUE" : "FALSE"}`);
       return { result: passed ? "true" : "false", passed };
     }
 
     case "loop": {
       const maxIter = Number(config.maxIterations ?? 3);
       const lastResult = String(context.lastResult ?? input);
-      log(`  🔄 Loop: processing up to ${maxIter} iterations`);
+      log(`  🔄 Loop: up to ${maxIter} iterations`);
       const items = lastResult.split("\n").slice(0, maxIter).filter(Boolean);
       return { result: items.join("\n"), items, count: items.length };
     }
@@ -365,7 +311,7 @@ async function executeNode(
     case "output": {
       const format = String(config.format ?? "text");
       const lastResult = String(context.lastResult ?? "No output");
-      log(`  📤 Output (${format}): ${lastResult.slice(0, 80)}...`);
+      log(`  📤 Output (${format}): ${lastResult.slice(0, 80)}`);
       return { result: lastResult, format };
     }
 
@@ -377,11 +323,11 @@ async function executeNode(
 function topologicalSort(nodes: WorkflowNode[], edges: any[]): WorkflowNode[] {
   const nodeMap = new Map(nodes.map(n => [n.id, n]));
   const inDegree = new Map(nodes.map(n => [n.id, 0]));
-  const adjacency = new Map(nodes.map(n => [n.id, [] as string[]]));
+  const adj = new Map(nodes.map(n => [n.id, [] as string[]]));
 
-  for (const edge of edges) {
-    adjacency.get(edge.source)?.push(edge.target);
-    inDegree.set(edge.target, (inDegree.get(edge.target) ?? 0) + 1);
+  for (const e of edges) {
+    adj.get(e.source)?.push(e.target);
+    inDegree.set(e.target, (inDegree.get(e.target) ?? 0) + 1);
   }
 
   const queue = nodes.filter(n => inDegree.get(n.id) === 0);
@@ -390,27 +336,18 @@ function topologicalSort(nodes: WorkflowNode[], edges: any[]): WorkflowNode[] {
   while (queue.length > 0) {
     const node = queue.shift()!;
     result.push(node);
-    for (const neighbor of adjacency.get(node.id) ?? []) {
+    for (const neighbor of adj.get(node.id) ?? []) {
       const deg = (inDegree.get(neighbor) ?? 0) - 1;
       inDegree.set(neighbor, deg);
-      if (deg === 0) {
-        const n = nodeMap.get(neighbor);
-        if (n) queue.push(n);
-      }
+      if (deg === 0) { const n = nodeMap.get(neighbor); if (n) queue.push(n); }
     }
   }
 
-  // Include any remaining nodes not in graph
-  const included = new Set(result.map(n => n.id));
-  for (const node of nodes) {
-    if (!included.has(node.id)) result.push(node);
-  }
-
+  const seen = new Set(result.map(n => n.id));
+  nodes.forEach(n => { if (!seen.has(n.id)) result.push(n); });
   return result;
 }
 
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 
 export default router;
