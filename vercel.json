@@ -4,6 +4,7 @@
     "outputDirectory": "artifacts/agentcraft/dist/public",
     "framework": null,
     "env": {
-        "BASE_PATH": "/"
+        "BASE_PATH": "/",
+        "NODE_VERSION": "20"
     }
 }
