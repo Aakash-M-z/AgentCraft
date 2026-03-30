@@ -1,0 +1,1404 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js
+1 info using npm@10.9.2
+2 info using node@v22.16.0
+3 silly config load:file:C:\Program Files\nodejs\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\Aakash\Downloads\Agentcraft\artifacts\agentcraft\.npmrc
+5 silly config load:file:C:\Users\Aakash\.npmrc
+6 silly config load:file:C:\Users\Aakash\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm install
+8 verbose argv "install"
+9 verbose logfile logs-max:10 dir:C:\Users\Aakash\Downloads\Agentcraft\artifacts\agentcraft\.npm-cache\_logs\2026-03-30T09_32_16_862Z-
+10 verbose logfile C:\Users\Aakash\Downloads\Agentcraft\artifacts\agentcraft\.npm-cache\_logs\2026-03-30T09_32_16_862Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+13 silly idealTree buildDeps
+14 silly reify moves {}
+15 silly reify mark deleted [
+15 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\code-frame'
+15 silly reify ]
+16 silly reify mark deleted [
+16 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\compat-data'
+16 silly reify ]
+17 silly reify mark deleted [
+17 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\core'
+17 silly reify ]
+18 silly reify mark deleted [
+18 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\generator'
+18 silly reify ]
+19 silly reify mark deleted [
+19 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\helper-compilation-targets'
+19 silly reify ]
+20 silly reify mark deleted [
+20 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\helper-globals'
+20 silly reify ]
+21 silly reify mark deleted [
+21 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\helper-module-imports'
+21 silly reify ]
+22 silly reify mark deleted [
+22 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\helper-module-transforms'
+22 silly reify ]
+23 silly reify mark deleted [
+23 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\helper-plugin-utils'
+23 silly reify ]
+24 silly reify mark deleted [
+24 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\helper-string-parser'
+24 silly reify ]
+25 silly reify mark deleted [
+25 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\helper-validator-identifier'
+25 silly reify ]
+26 silly reify mark deleted [
+26 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\helper-validator-option'
+26 silly reify ]
+27 silly reify mark deleted [
+27 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\helpers'
+27 silly reify ]
+28 silly reify mark deleted [
+28 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\parser',
+28 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\parser',
+28 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\parser.cmd',
+28 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\parser.ps1'
+28 silly reify ]
+29 silly reify mark deleted [
+29 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\plugin-transform-react-jsx-self'
+29 silly reify ]
+30 silly reify mark deleted [
+30 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\plugin-transform-react-jsx-source'
+30 silly reify ]
+31 silly reify mark deleted [
+31 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\runtime'
+31 silly reify ]
+32 silly reify mark deleted [
+32 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\template'
+32 silly reify ]
+33 silly reify mark deleted [
+33 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\traverse'
+33 silly reify ]
+34 silly reify mark deleted [
+34 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@babel\\types'
+34 silly reify ]
+35 silly reify mark deleted [
+35 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@date-fns\\tz'
+35 silly reify ]
+36 silly reify mark deleted [
+36 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\aix-ppc64'
+36 silly reify ]
+37 silly reify mark deleted [
+37 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\android-arm'
+37 silly reify ]
+38 silly reify mark deleted [
+38 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\android-arm64'
+38 silly reify ]
+39 silly reify mark deleted [
+39 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\android-x64'
+39 silly reify ]
+40 silly reify mark deleted [
+40 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\darwin-arm64'
+40 silly reify ]
+41 silly reify mark deleted [
+41 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\darwin-x64'
+41 silly reify ]
+42 silly reify mark deleted [
+42 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\freebsd-arm64'
+42 silly reify ]
+43 silly reify mark deleted [
+43 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\freebsd-x64'
+43 silly reify ]
+44 silly reify mark deleted [
+44 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\linux-arm'
+44 silly reify ]
+45 silly reify mark deleted [
+45 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\linux-arm64'
+45 silly reify ]
+46 silly reify mark deleted [
+46 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\linux-ia32'
+46 silly reify ]
+47 silly reify mark deleted [
+47 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\linux-loong64'
+47 silly reify ]
+48 silly reify mark deleted [
+48 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\linux-mips64el'
+48 silly reify ]
+49 silly reify mark deleted [
+49 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\linux-ppc64'
+49 silly reify ]
+50 silly reify mark deleted [
+50 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\linux-riscv64'
+50 silly reify ]
+51 silly reify mark deleted [
+51 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\linux-s390x'
+51 silly reify ]
+52 silly reify mark deleted [
+52 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\linux-x64'
+52 silly reify ]
+53 silly reify mark deleted [
+53 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\netbsd-arm64'
+53 silly reify ]
+54 silly reify mark deleted [
+54 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\netbsd-x64'
+54 silly reify ]
+55 silly reify mark deleted [
+55 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\openbsd-arm64'
+55 silly reify ]
+56 silly reify mark deleted [
+56 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\openbsd-x64'
+56 silly reify ]
+57 silly reify mark deleted [
+57 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\openharmony-arm64'
+57 silly reify ]
+58 silly reify mark deleted [
+58 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\sunos-x64'
+58 silly reify ]
+59 silly reify mark deleted [
+59 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\win32-arm64'
+59 silly reify ]
+60 silly reify mark deleted [
+60 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\win32-ia32'
+60 silly reify ]
+61 silly reify mark deleted [
+61 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@esbuild\\win32-x64'
+61 silly reify ]
+62 silly reify mark deleted [
+62 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@floating-ui\\core'
+62 silly reify ]
+63 silly reify mark deleted [
+63 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@floating-ui\\dom'
+63 silly reify ]
+64 silly reify mark deleted [
+64 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@floating-ui\\react-dom'
+64 silly reify ]
+65 silly reify mark deleted [
+65 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@floating-ui\\utils'
+65 silly reify ]
+66 silly reify mark deleted [
+66 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@hookform\\resolvers'
+66 silly reify ]
+67 silly reify mark deleted [
+67 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@jridgewell\\gen-mapping'
+67 silly reify ]
+68 silly reify mark deleted [
+68 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@jridgewell\\remapping'
+68 silly reify ]
+69 silly reify mark deleted [
+69 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@jridgewell\\resolve-uri'
+69 silly reify ]
+70 silly reify mark deleted [
+70 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@jridgewell\\sourcemap-codec'
+70 silly reify ]
+71 silly reify mark deleted [
+71 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@jridgewell\\trace-mapping'
+71 silly reify ]
+72 silly reify mark deleted [
+72 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\number'
+72 silly reify ]
+73 silly reify mark deleted [
+73 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\primitive'
+73 silly reify ]
+74 silly reify mark deleted [
+74 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-accordion'
+74 silly reify ]
+75 silly reify mark deleted [
+75 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-alert-dialog'
+75 silly reify ]
+76 silly reify mark deleted [
+76 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-alert-dialog\\node_modules\\@radix-ui\\react-slot'
+76 silly reify ]
+77 silly reify mark deleted [
+77 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-arrow'
+77 silly reify ]
+78 silly reify mark deleted [
+78 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-aspect-ratio'
+78 silly reify ]
+79 silly reify mark deleted [
+79 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-aspect-ratio\\node_modules\\@radix-ui\\react-primitive'
+79 silly reify ]
+80 silly reify mark deleted [
+80 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-avatar'
+80 silly reify ]
+81 silly reify mark deleted [
+81 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-avatar\\node_modules\\@radix-ui\\react-context'
+81 silly reify ]
+82 silly reify mark deleted [
+82 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-avatar\\node_modules\\@radix-ui\\react-primitive'
+82 silly reify ]
+83 silly reify mark deleted [
+83 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-checkbox'
+83 silly reify ]
+84 silly reify mark deleted [
+84 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-collapsible'
+84 silly reify ]
+85 silly reify mark deleted [
+85 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-collection'
+85 silly reify ]
+86 silly reify mark deleted [
+86 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-collection\\node_modules\\@radix-ui\\react-slot'
+86 silly reify ]
+87 silly reify mark deleted [
+87 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-compose-refs'
+87 silly reify ]
+88 silly reify mark deleted [
+88 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-context'
+88 silly reify ]
+89 silly reify mark deleted [
+89 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-context-menu'
+89 silly reify ]
+90 silly reify mark deleted [
+90 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-dialog'
+90 silly reify ]
+91 silly reify mark deleted [
+91 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-dialog\\node_modules\\@radix-ui\\react-slot'
+91 silly reify ]
+92 silly reify mark deleted [
+92 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-direction'
+92 silly reify ]
+93 silly reify mark deleted [
+93 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-dismissable-layer'
+93 silly reify ]
+94 silly reify mark deleted [
+94 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-dropdown-menu'
+94 silly reify ]
+95 silly reify mark deleted [
+95 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-focus-guards'
+95 silly reify ]
+96 silly reify mark deleted [
+96 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-focus-scope'
+96 silly reify ]
+97 silly reify mark deleted [
+97 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-hover-card'
+97 silly reify ]
+98 silly reify mark deleted [
+98 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-id'
+98 silly reify ]
+99 silly reify mark deleted [
+99 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-label'
+99 silly reify ]
+100 silly reify mark deleted [
+100 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-label\\node_modules\\@radix-ui\\react-primitive'
+100 silly reify ]
+101 silly reify mark deleted [
+101 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-menu'
+101 silly reify ]
+102 silly reify mark deleted [
+102 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-menu\\node_modules\\@radix-ui\\react-slot'
+102 silly reify ]
+103 silly reify mark deleted [
+103 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-menubar'
+103 silly reify ]
+104 silly reify mark deleted [
+104 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-navigation-menu'
+104 silly reify ]
+105 silly reify mark deleted [
+105 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-popover'
+105 silly reify ]
+106 silly reify mark deleted [
+106 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-popover\\node_modules\\@radix-ui\\react-slot'
+106 silly reify ]
+107 silly reify mark deleted [
+107 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-popper'
+107 silly reify ]
+108 silly reify mark deleted [
+108 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-portal'
+108 silly reify ]
+109 silly reify mark deleted [
+109 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-presence'
+109 silly reify ]
+110 silly reify mark deleted [
+110 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-primitive'
+110 silly reify ]
+111 silly reify mark deleted [
+111 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-primitive\\node_modules\\@radix-ui\\react-slot'
+111 silly reify ]
+112 silly reify mark deleted [
+112 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-progress'
+112 silly reify ]
+113 silly reify mark deleted [
+113 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-progress\\node_modules\\@radix-ui\\react-context'
+113 silly reify ]
+114 silly reify mark deleted [
+114 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-progress\\node_modules\\@radix-ui\\react-primitive'
+114 silly reify ]
+115 silly reify mark deleted [
+115 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-radio-group'
+115 silly reify ]
+116 silly reify mark deleted [
+116 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-roving-focus'
+116 silly reify ]
+117 silly reify mark deleted [
+117 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-scroll-area'
+117 silly reify ]
+118 silly reify mark deleted [
+118 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-select'
+118 silly reify ]
+119 silly reify mark deleted [
+119 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-select\\node_modules\\@radix-ui\\react-slot'
+119 silly reify ]
+120 silly reify mark deleted [
+120 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-separator'
+120 silly reify ]
+121 silly reify mark deleted [
+121 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-separator\\node_modules\\@radix-ui\\react-primitive'
+121 silly reify ]
+122 silly reify mark deleted [
+122 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-slider'
+122 silly reify ]
+123 silly reify mark deleted [
+123 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-slot'
+123 silly reify ]
+124 silly reify mark deleted [
+124 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-switch'
+124 silly reify ]
+125 silly reify mark deleted [
+125 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-tabs'
+125 silly reify ]
+126 silly reify mark deleted [
+126 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-toast'
+126 silly reify ]
+127 silly reify mark deleted [
+127 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-toggle'
+127 silly reify ]
+128 silly reify mark deleted [
+128 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-toggle-group'
+128 silly reify ]
+129 silly reify mark deleted [
+129 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-tooltip'
+129 silly reify ]
+130 silly reify mark deleted [
+130 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-tooltip\\node_modules\\@radix-ui\\react-slot'
+130 silly reify ]
+131 silly reify mark deleted [
+131 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-use-callback-ref'
+131 silly reify ]
+132 silly reify mark deleted [
+132 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-use-controllable-state'
+132 silly reify ]
+133 silly reify mark deleted [
+133 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-use-effect-event'
+133 silly reify ]
+134 silly reify mark deleted [
+134 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-use-escape-keydown'
+134 silly reify ]
+135 silly reify mark deleted [
+135 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-use-is-hydrated'
+135 silly reify ]
+136 silly reify mark deleted [
+136 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-use-layout-effect'
+136 silly reify ]
+137 silly reify mark deleted [
+137 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-use-previous'
+137 silly reify ]
+138 silly reify mark deleted [
+138 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-use-rect'
+138 silly reify ]
+139 silly reify mark deleted [
+139 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-use-size'
+139 silly reify ]
+140 silly reify mark deleted [
+140 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\react-visually-hidden'
+140 silly reify ]
+141 silly reify mark deleted [
+141 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@radix-ui\\rect'
+141 silly reify ]
+142 silly reify mark deleted [
+142 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rolldown\\pluginutils'
+142 silly reify ]
+143 silly reify mark deleted [
+143 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-android-arm-eabi'
+143 silly reify ]
+144 silly reify mark deleted [
+144 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-android-arm64'
+144 silly reify ]
+145 silly reify mark deleted [
+145 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-darwin-arm64'
+145 silly reify ]
+146 silly reify mark deleted [
+146 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-darwin-x64'
+146 silly reify ]
+147 silly reify mark deleted [
+147 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-freebsd-arm64'
+147 silly reify ]
+148 silly reify mark deleted [
+148 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-freebsd-x64'
+148 silly reify ]
+149 silly reify mark deleted [
+149 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-linux-arm-gnueabihf'
+149 silly reify ]
+150 silly reify mark deleted [
+150 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-linux-arm-musleabihf'
+150 silly reify ]
+151 silly reify mark deleted [
+151 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-linux-arm64-gnu'
+151 silly reify ]
+152 silly reify mark deleted [
+152 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-linux-arm64-musl'
+152 silly reify ]
+153 silly reify mark deleted [
+153 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-linux-loong64-gnu'
+153 silly reify ]
+154 silly reify mark deleted [
+154 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-linux-loong64-musl'
+154 silly reify ]
+155 silly reify mark deleted [
+155 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-linux-ppc64-gnu'
+155 silly reify ]
+156 silly reify mark deleted [
+156 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-linux-ppc64-musl'
+156 silly reify ]
+157 silly reify mark deleted [
+157 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-linux-riscv64-gnu'
+157 silly reify ]
+158 silly reify mark deleted [
+158 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-linux-riscv64-musl'
+158 silly reify ]
+159 silly reify mark deleted [
+159 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-linux-s390x-gnu'
+159 silly reify ]
+160 silly reify mark deleted [
+160 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-linux-x64-gnu'
+160 silly reify ]
+161 silly reify mark deleted [
+161 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-linux-x64-musl'
+161 silly reify ]
+162 silly reify mark deleted [
+162 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-openbsd-x64'
+162 silly reify ]
+163 silly reify mark deleted [
+163 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-openharmony-arm64'
+163 silly reify ]
+164 silly reify mark deleted [
+164 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-win32-arm64-msvc'
+164 silly reify ]
+165 silly reify mark deleted [
+165 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-win32-ia32-msvc'
+165 silly reify ]
+166 silly reify mark deleted [
+166 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-win32-x64-gnu'
+166 silly reify ]
+167 silly reify mark deleted [
+167 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@rollup\\rollup-win32-x64-msvc'
+167 silly reify ]
+168 silly reify mark deleted [
+168 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tabby_ai\\hijri-converter'
+168 silly reify ]
+169 silly reify mark deleted [
+169 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\node'
+169 silly reify ]
+170 silly reify mark deleted [
+170 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\oxide'
+170 silly reify ]
+171 silly reify mark deleted [
+171 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\oxide-android-arm64'
+171 silly reify ]
+172 silly reify mark deleted [
+172 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\oxide-darwin-arm64'
+172 silly reify ]
+173 silly reify mark deleted [
+173 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\oxide-darwin-x64'
+173 silly reify ]
+174 silly reify mark deleted [
+174 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\oxide-freebsd-x64'
+174 silly reify ]
+175 silly reify mark deleted [
+175 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\oxide-linux-arm-gnueabihf'
+175 silly reify ]
+176 silly reify mark deleted [
+176 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\oxide-linux-arm64-gnu'
+176 silly reify ]
+177 silly reify mark deleted [
+177 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\oxide-linux-arm64-musl'
+177 silly reify ]
+178 silly reify mark deleted [
+178 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\oxide-linux-x64-gnu'
+178 silly reify ]
+179 silly reify mark deleted [
+179 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\oxide-linux-x64-musl'
+179 silly reify ]
+180 silly reify mark deleted [
+180 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\oxide-wasm32-wasi'
+180 silly reify ]
+181 silly reify mark deleted [
+181 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\oxide-win32-arm64-msvc'
+181 silly reify ]
+182 silly reify mark deleted [
+182 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\oxide-win32-x64-msvc'
+182 silly reify ]
+183 silly reify mark deleted [
+183 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\typography'
+183 silly reify ]
+184 silly reify mark deleted [
+184 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@tailwindcss\\vite'
+184 silly reify ]
+185 silly reify mark deleted [
+185 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\babel__core'
+185 silly reify ]
+186 silly reify mark deleted [
+186 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\babel__generator'
+186 silly reify ]
+187 silly reify mark deleted [
+187 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\babel__template'
+187 silly reify ]
+188 silly reify mark deleted [
+188 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\babel__traverse'
+188 silly reify ]
+189 silly reify mark deleted [
+189 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\d3-array'
+189 silly reify ]
+190 silly reify mark deleted [
+190 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\d3-ease'
+190 silly reify ]
+191 silly reify mark deleted [
+191 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\d3-path'
+191 silly reify ]
+192 silly reify mark deleted [
+192 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\d3-scale'
+192 silly reify ]
+193 silly reify mark deleted [
+193 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\d3-shape'
+193 silly reify ]
+194 silly reify mark deleted [
+194 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\d3-time'
+194 silly reify ]
+195 silly reify mark deleted [
+195 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\d3-timer'
+195 silly reify ]
+196 silly reify mark deleted [
+196 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\estree'
+196 silly reify ]
+197 silly reify mark deleted [
+197 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\node'
+197 silly reify ]
+198 silly reify mark deleted [
+198 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\react'
+198 silly reify ]
+199 silly reify mark deleted [
+199 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\react-dom'
+199 silly reify ]
+200 silly reify mark deleted [
+200 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@types\\uuid'
+200 silly reify ]
+201 silly reify mark deleted [
+201 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\@vitejs\\plugin-react'
+201 silly reify ]
+202 silly reify mark deleted [
+202 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\aria-hidden'
+202 silly reify ]
+203 silly reify mark deleted [
+203 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\baseline-browser-mapping',
+203 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\baseline-browser-mapping',
+203 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\baseline-browser-mapping.cmd',
+203 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\baseline-browser-mapping.ps1'
+203 silly reify ]
+204 silly reify mark deleted [
+204 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\browserslist',
+204 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\browserslist',
+204 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\browserslist.cmd',
+204 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\browserslist.ps1'
+204 silly reify ]
+205 silly reify mark deleted [
+205 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\caniuse-lite'
+205 silly reify ]
+206 silly reify mark deleted [
+206 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\class-variance-authority'
+206 silly reify ]
+207 silly reify mark deleted [
+207 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\clsx'
+207 silly reify ]
+208 silly reify mark deleted [
+208 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\cmdk'
+208 silly reify ]
+209 silly reify mark deleted [
+209 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\convert-source-map'
+209 silly reify ]
+210 silly reify mark deleted [
+210 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\cssesc',
+210 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\cssesc',
+210 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\cssesc.cmd',
+210 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\cssesc.ps1'
+210 silly reify ]
+211 silly reify mark deleted [
+211 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\csstype'
+211 silly reify ]
+212 silly reify mark deleted [
+212 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\d3-array'
+212 silly reify ]
+213 silly reify mark deleted [
+213 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\d3-format'
+213 silly reify ]
+214 silly reify mark deleted [
+214 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\d3-path'
+214 silly reify ]
+215 silly reify mark deleted [
+215 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\d3-scale'
+215 silly reify ]
+216 silly reify mark deleted [
+216 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\d3-shape'
+216 silly reify ]
+217 silly reify mark deleted [
+217 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\d3-time'
+217 silly reify ]
+218 silly reify mark deleted [
+218 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\d3-time-format'
+218 silly reify ]
+219 silly reify mark deleted [
+219 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\date-fns'
+219 silly reify ]
+220 silly reify mark deleted [
+220 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\date-fns-jalali'
+220 silly reify ]
+221 silly reify mark deleted [
+221 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\debug'
+221 silly reify ]
+222 silly reify mark deleted [
+222 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\decimal.js-light'
+222 silly reify ]
+223 silly reify mark deleted [
+223 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\detect-libc'
+223 silly reify ]
+224 silly reify mark deleted [
+224 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\detect-node-es'
+224 silly reify ]
+225 silly reify mark deleted [
+225 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\dom-helpers'
+225 silly reify ]
+226 silly reify mark deleted [
+226 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\electron-to-chromium'
+226 silly reify ]
+227 silly reify mark deleted [
+227 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\embla-carousel'
+227 silly reify ]
+228 silly reify mark deleted [
+228 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\embla-carousel-react'
+228 silly reify ]
+229 silly reify mark deleted [
+229 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\embla-carousel-reactive-utils'
+229 silly reify ]
+230 silly reify mark deleted [
+230 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\enhanced-resolve'
+230 silly reify ]
+231 silly reify mark deleted [
+231 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\esbuild',
+231 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\esbuild',
+231 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\esbuild.cmd',
+231 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\esbuild.ps1'
+231 silly reify ]
+232 silly reify mark deleted [
+232 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\escalade'
+232 silly reify ]
+233 silly reify mark deleted [
+233 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\eventemitter3'
+233 silly reify ]
+234 silly reify mark deleted [
+234 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\fast-equals'
+234 silly reify ]
+235 silly reify mark deleted [
+235 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\fdir'
+235 silly reify ]
+236 silly reify mark deleted [
+236 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\framer-motion'
+236 silly reify ]
+237 silly reify mark deleted [
+237 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\fsevents'
+237 silly reify ]
+238 silly reify mark deleted [
+238 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\gensync'
+238 silly reify ]
+239 silly reify mark deleted [
+239 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\get-nonce'
+239 silly reify ]
+240 silly reify mark deleted [
+240 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\graceful-fs'
+240 silly reify ]
+241 silly reify mark deleted [
+241 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\input-otp'
+241 silly reify ]
+242 silly reify mark deleted [
+242 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\internmap'
+242 silly reify ]
+243 silly reify mark deleted [
+243 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\jiti',
+243 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\jiti',
+243 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\jiti.cmd',
+243 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\jiti.ps1'
+243 silly reify ]
+244 silly reify mark deleted [
+244 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\js-tokens'
+244 silly reify ]
+245 silly reify mark deleted [
+245 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\jsesc',
+245 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\jsesc',
+245 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\jsesc.cmd',
+245 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\jsesc.ps1'
+245 silly reify ]
+246 silly reify mark deleted [
+246 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\json5',
+246 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\json5',
+246 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\json5.cmd',
+246 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\json5.ps1'
+246 silly reify ]
+247 silly reify mark deleted [
+247 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lightningcss'
+247 silly reify ]
+248 silly reify mark deleted [
+248 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lightningcss-android-arm64'
+248 silly reify ]
+249 silly reify mark deleted [
+249 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lightningcss-darwin-arm64'
+249 silly reify ]
+250 silly reify mark deleted [
+250 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lightningcss-darwin-x64'
+250 silly reify ]
+251 silly reify mark deleted [
+251 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lightningcss-freebsd-x64'
+251 silly reify ]
+252 silly reify mark deleted [
+252 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lightningcss-linux-arm-gnueabihf'
+252 silly reify ]
+253 silly reify mark deleted [
+253 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lightningcss-linux-arm64-gnu'
+253 silly reify ]
+254 silly reify mark deleted [
+254 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lightningcss-linux-arm64-musl'
+254 silly reify ]
+255 silly reify mark deleted [
+255 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lightningcss-linux-x64-gnu'
+255 silly reify ]
+256 silly reify mark deleted [
+256 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lightningcss-linux-x64-musl'
+256 silly reify ]
+257 silly reify mark deleted [
+257 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lightningcss-win32-arm64-msvc'
+257 silly reify ]
+258 silly reify mark deleted [
+258 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lightningcss-win32-x64-msvc'
+258 silly reify ]
+259 silly reify mark deleted [
+259 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lodash'
+259 silly reify ]
+260 silly reify mark deleted [
+260 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\loose-envify',
+260 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\loose-envify',
+260 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\loose-envify.cmd',
+260 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\loose-envify.ps1'
+260 silly reify ]
+261 silly reify mark deleted [
+261 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lru-cache'
+261 silly reify ]
+262 silly reify mark deleted [
+262 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\lucide-react'
+262 silly reify ]
+263 silly reify mark deleted [
+263 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\magic-string'
+263 silly reify ]
+264 silly reify mark deleted [
+264 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\motion-dom'
+264 silly reify ]
+265 silly reify mark deleted [
+265 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\motion-utils'
+265 silly reify ]
+266 silly reify mark deleted [
+266 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\ms'
+266 silly reify ]
+267 silly reify mark deleted [
+267 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\nanoid',
+267 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\nanoid',
+267 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\nanoid.cmd',
+267 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\nanoid.ps1'
+267 silly reify ]
+268 silly reify mark deleted [
+268 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\next-themes'
+268 silly reify ]
+269 silly reify mark deleted [
+269 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\node-releases'
+269 silly reify ]
+270 silly reify mark deleted [
+270 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\object-assign'
+270 silly reify ]
+271 silly reify mark deleted [
+271 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\picocolors'
+271 silly reify ]
+272 silly reify mark deleted [
+272 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\picomatch'
+272 silly reify ]
+273 silly reify mark deleted [
+273 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\postcss'
+273 silly reify ]
+274 silly reify mark deleted [
+274 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\postcss-selector-parser'
+274 silly reify ]
+275 silly reify mark deleted [
+275 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\prop-types'
+275 silly reify ]
+276 silly reify mark deleted [
+276 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\prop-types\\node_modules\\react-is'
+276 silly reify ]
+277 silly reify mark deleted [
+277 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\react-day-picker'
+277 silly reify ]
+278 silly reify mark deleted [
+278 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\react-day-picker\\node_modules\\date-fns'
+278 silly reify ]
+279 silly reify mark deleted [
+279 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\react-hook-form'
+279 silly reify ]
+280 silly reify mark deleted [
+280 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\react-icons'
+280 silly reify ]
+281 silly reify mark deleted [
+281 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\react-is'
+281 silly reify ]
+282 silly reify mark deleted [
+282 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\react-refresh'
+282 silly reify ]
+283 silly reify mark deleted [
+283 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\react-remove-scroll'
+283 silly reify ]
+284 silly reify mark deleted [
+284 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\react-remove-scroll-bar'
+284 silly reify ]
+285 silly reify mark deleted [
+285 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\react-resizable-panels'
+285 silly reify ]
+286 silly reify mark deleted [
+286 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\react-smooth'
+286 silly reify ]
+287 silly reify mark deleted [
+287 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\react-style-singleton'
+287 silly reify ]
+288 silly reify mark deleted [
+288 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\react-transition-group'
+288 silly reify ]
+289 silly reify mark deleted [
+289 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\recharts'
+289 silly reify ]
+290 silly reify mark deleted [
+290 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\recharts-scale'
+290 silly reify ]
+291 silly reify mark deleted [
+291 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\rollup',
+291 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\rollup',
+291 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\rollup.cmd',
+291 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\rollup.ps1'
+291 silly reify ]
+292 silly reify mark deleted [
+292 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\semver',
+292 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\semver',
+292 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\semver.cmd',
+292 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\semver.ps1'
+292 silly reify ]
+293 silly reify mark deleted [
+293 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\sonner'
+293 silly reify ]
+294 silly reify mark deleted [
+294 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\source-map-js'
+294 silly reify ]
+295 silly reify mark deleted [
+295 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\tailwind-merge'
+295 silly reify ]
+296 silly reify mark deleted [
+296 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\tailwindcss'
+296 silly reify ]
+297 silly reify mark deleted [
+297 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\tapable'
+297 silly reify ]
+298 silly reify mark deleted [
+298 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\tiny-invariant'
+298 silly reify ]
+299 silly reify mark deleted [
+299 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\tinyglobby'
+299 silly reify ]
+300 silly reify mark deleted [
+300 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\tslib'
+300 silly reify ]
+301 silly reify mark deleted [
+301 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\tw-animate-css'
+301 silly reify ]
+302 silly reify mark deleted [
+302 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\undici-types'
+302 silly reify ]
+303 silly reify mark deleted [
+303 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\update-browserslist-db',
+303 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\update-browserslist-db',
+303 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\update-browserslist-db.cmd',
+303 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\update-browserslist-db.ps1'
+303 silly reify ]
+304 silly reify mark deleted [
+304 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\use-callback-ref'
+304 silly reify ]
+305 silly reify mark deleted [
+305 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\use-sidecar'
+305 silly reify ]
+306 silly reify mark deleted [
+306 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\util-deprecate'
+306 silly reify ]
+307 silly reify mark deleted [
+307 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\vaul'
+307 silly reify ]
+308 silly reify mark deleted [
+308 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\victory-vendor'
+308 silly reify ]
+309 silly reify mark deleted [
+309 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\vite',
+309 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\vite',
+309 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\vite.cmd',
+309 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\.bin\\vite.ps1'
+309 silly reify ]
+310 silly reify mark deleted [
+310 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\yallist'
+310 silly reify ]
+311 silly reify mark deleted [
+311 silly reify   'C:\\Users\\Aakash\\Downloads\\Agentcraft\\artifacts\\agentcraft\\node_modules\\zod'
+311 silly reify ]
+312 silly audit bulk request {
+312 silly audit   '@tanstack/query-core': [ '5.95.2' ],
+312 silly audit   '@tanstack/react-query': [ '5.95.2' ],
+312 silly audit   '@types/d3-color': [ '3.1.3' ],
+312 silly audit   '@types/d3-drag': [ '3.0.7' ],
+312 silly audit   '@types/d3-interpolate': [ '3.0.4' ],
+312 silly audit   '@types/d3-selection': [ '3.0.11' ],
+312 silly audit   '@types/d3-transition': [ '3.0.9' ],
+312 silly audit   '@types/d3-zoom': [ '3.0.8' ],
+312 silly audit   '@xyflow/react': [ '12.10.2' ],
+312 silly audit   zustand: [ '4.5.7', '5.0.12' ],
+312 silly audit   '@xyflow/system': [ '0.0.76' ],
+312 silly audit   classcat: [ '5.0.5' ],
+312 silly audit   'd3-color': [ '3.1.0' ],
+312 silly audit   'd3-dispatch': [ '3.0.1' ],
+312 silly audit   'd3-drag': [ '3.0.0' ],
+312 silly audit   'd3-ease': [ '3.0.1' ],
+312 silly audit   'd3-interpolate': [ '3.0.1' ],
+312 silly audit   'd3-selection': [ '3.0.0' ],
+312 silly audit   'd3-timer': [ '3.0.1' ],
+312 silly audit   'd3-transition': [ '3.0.1' ],
+312 silly audit   'd3-zoom': [ '3.0.0' ],
+312 silly audit   mitt: [ '3.0.1' ],
+312 silly audit   react: [ '19.2.4' ],
+312 silly audit   'react-dom': [ '19.2.4' ],
+312 silly audit   regexparam: [ '3.0.0' ],
+312 silly audit   scheduler: [ '0.27.0' ],
+312 silly audit   'use-sync-external-store': [ '1.6.0' ],
+312 silly audit   uuid: [ '11.1.0' ],
+312 silly audit   wouter: [ '3.9.0' ]
+312 silly audit }
+313 http cache zustand@https://registry.npmjs.org/zustand/-/zustand-5.0.12.tgz 0ms (cache hit)
+314 http cache wouter@https://registry.npmjs.org/wouter/-/wouter-3.9.0.tgz 0ms (cache hit)
+315 http cache uuid@https://registry.npmjs.org/uuid/-/uuid-11.1.0.tgz 0ms (cache hit)
+316 http cache use-sync-external-store@https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.6.0.tgz 0ms (cache hit)
+317 http cache scheduler@https://registry.npmjs.org/scheduler/-/scheduler-0.27.0.tgz 0ms (cache hit)
+318 http cache regexparam@https://registry.npmjs.org/regexparam/-/regexparam-3.0.0.tgz 0ms (cache hit)
+319 http cache react-dom@https://registry.npmjs.org/react-dom/-/react-dom-19.2.4.tgz 0ms (cache hit)
+320 http cache react@https://registry.npmjs.org/react/-/react-19.2.4.tgz 0ms (cache hit)
+321 http cache d3-transition@https://registry.npmjs.org/d3-transition/-/d3-transition-3.0.1.tgz 0ms (cache hit)
+322 http cache d3-zoom@https://registry.npmjs.org/d3-zoom/-/d3-zoom-3.0.0.tgz 0ms (cache hit)
+323 http cache mitt@https://registry.npmjs.org/mitt/-/mitt-3.0.1.tgz 0ms (cache hit)
+324 http cache d3-ease@https://registry.npmjs.org/d3-ease/-/d3-ease-3.0.1.tgz 0ms (cache hit)
+325 http cache d3-timer@https://registry.npmjs.org/d3-timer/-/d3-timer-3.0.1.tgz 0ms (cache hit)
+326 http cache d3-interpolate@https://registry.npmjs.org/d3-interpolate/-/d3-interpolate-3.0.1.tgz 0ms (cache hit)
+327 http cache d3-dispatch@https://registry.npmjs.org/d3-dispatch/-/d3-dispatch-3.0.1.tgz 0ms (cache hit)
+328 http cache d3-drag@https://registry.npmjs.org/d3-drag/-/d3-drag-3.0.0.tgz 0ms (cache hit)
+329 http cache d3-selection@https://registry.npmjs.org/d3-selection/-/d3-selection-3.0.0.tgz 0ms (cache hit)
+330 http cache d3-color@https://registry.npmjs.org/d3-color/-/d3-color-3.1.0.tgz 0ms (cache hit)
+331 http cache @xyflow/system@https://registry.npmjs.org/@xyflow/system/-/system-0.0.76.tgz 0ms (cache hit)
+332 http cache @xyflow/react@https://registry.npmjs.org/@xyflow/react/-/react-12.10.2.tgz 0ms (cache hit)
+333 http cache classcat@https://registry.npmjs.org/classcat/-/classcat-5.0.5.tgz 1ms (cache hit)
+334 http cache @types/d3-interpolate@https://registry.npmjs.org/@types/d3-interpolate/-/d3-interpolate-3.0.4.tgz 0ms (cache hit)
+335 http cache @types/d3-zoom@https://registry.npmjs.org/@types/d3-zoom/-/d3-zoom-3.0.8.tgz 0ms (cache hit)
+336 http cache @types/d3-transition@https://registry.npmjs.org/@types/d3-transition/-/d3-transition-3.0.9.tgz 0ms (cache hit)
+337 http cache @types/d3-color@https://registry.npmjs.org/@types/d3-color/-/d3-color-3.1.3.tgz 0ms (cache hit)
+338 http cache zustand@https://registry.npmjs.org/zustand/-/zustand-4.5.7.tgz 0ms (cache hit)
+339 http cache @types/d3-selection@https://registry.npmjs.org/@types/d3-selection/-/d3-selection-3.0.11.tgz 0ms (cache hit)
+340 http cache @types/d3-drag@https://registry.npmjs.org/@types/d3-drag/-/d3-drag-3.0.7.tgz 0ms (cache hit)
+341 silly tarball no local data for zustand@https://registry.npmjs.org/zustand/-/zustand-5.0.12.tgz. Extracting by manifest.
+342 silly tarball no local data for wouter@https://registry.npmjs.org/wouter/-/wouter-3.9.0.tgz. Extracting by manifest.
+343 silly tarball no local data for uuid@https://registry.npmjs.org/uuid/-/uuid-11.1.0.tgz. Extracting by manifest.
+344 silly tarball no local data for use-sync-external-store@https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.6.0.tgz. Extracting by manifest.
+345 silly tarball no local data for scheduler@https://registry.npmjs.org/scheduler/-/scheduler-0.27.0.tgz. Extracting by manifest.
+346 silly tarball no local data for regexparam@https://registry.npmjs.org/regexparam/-/regexparam-3.0.0.tgz. Extracting by manifest.
+347 http cache @tanstack/react-query@https://registry.npmjs.org/@tanstack/react-query/-/react-query-5.95.2.tgz 0ms (cache hit)
+348 silly tarball no local data for react-dom@https://registry.npmjs.org/react-dom/-/react-dom-19.2.4.tgz. Extracting by manifest.
+349 silly tarball no local data for react@https://registry.npmjs.org/react/-/react-19.2.4.tgz. Extracting by manifest.
+350 http cache @tanstack/query-core@https://registry.npmjs.org/@tanstack/query-core/-/query-core-5.95.2.tgz 0ms (cache hit)
+351 silly tarball no local data for d3-transition@https://registry.npmjs.org/d3-transition/-/d3-transition-3.0.1.tgz. Extracting by manifest.
+352 silly tarball no local data for d3-zoom@https://registry.npmjs.org/d3-zoom/-/d3-zoom-3.0.0.tgz. Extracting by manifest.
+353 silly tarball no local data for mitt@https://registry.npmjs.org/mitt/-/mitt-3.0.1.tgz. Extracting by manifest.
+354 silly tarball no local data for d3-ease@https://registry.npmjs.org/d3-ease/-/d3-ease-3.0.1.tgz. Extracting by manifest.
+355 silly tarball no local data for d3-timer@https://registry.npmjs.org/d3-timer/-/d3-timer-3.0.1.tgz. Extracting by manifest.
+356 silly tarball no local data for d3-interpolate@https://registry.npmjs.org/d3-interpolate/-/d3-interpolate-3.0.1.tgz. Extracting by manifest.
+357 silly tarball no local data for d3-dispatch@https://registry.npmjs.org/d3-dispatch/-/d3-dispatch-3.0.1.tgz. Extracting by manifest.
+358 silly tarball no local data for d3-drag@https://registry.npmjs.org/d3-drag/-/d3-drag-3.0.0.tgz. Extracting by manifest.
+359 silly tarball no local data for d3-selection@https://registry.npmjs.org/d3-selection/-/d3-selection-3.0.0.tgz. Extracting by manifest.
+360 silly tarball no local data for d3-color@https://registry.npmjs.org/d3-color/-/d3-color-3.1.0.tgz. Extracting by manifest.
+361 silly tarball no local data for @xyflow/system@https://registry.npmjs.org/@xyflow/system/-/system-0.0.76.tgz. Extracting by manifest.
+362 silly tarball no local data for @xyflow/react@https://registry.npmjs.org/@xyflow/react/-/react-12.10.2.tgz. Extracting by manifest.
+363 silly tarball no local data for classcat@https://registry.npmjs.org/classcat/-/classcat-5.0.5.tgz. Extracting by manifest.
+364 silly tarball no local data for @types/d3-interpolate@https://registry.npmjs.org/@types/d3-interpolate/-/d3-interpolate-3.0.4.tgz. Extracting by manifest.
+365 silly tarball no local data for @types/d3-zoom@https://registry.npmjs.org/@types/d3-zoom/-/d3-zoom-3.0.8.tgz. Extracting by manifest.
+366 silly tarball no local data for @types/d3-transition@https://registry.npmjs.org/@types/d3-transition/-/d3-transition-3.0.9.tgz. Extracting by manifest.
+367 silly tarball no local data for @types/d3-color@https://registry.npmjs.org/@types/d3-color/-/d3-color-3.1.3.tgz. Extracting by manifest.
+368 silly tarball no local data for zustand@https://registry.npmjs.org/zustand/-/zustand-4.5.7.tgz. Extracting by manifest.
+369 silly tarball no local data for @types/d3-selection@https://registry.npmjs.org/@types/d3-selection/-/d3-selection-3.0.11.tgz. Extracting by manifest.
+370 silly tarball no local data for @types/d3-drag@https://registry.npmjs.org/@types/d3-drag/-/d3-drag-3.0.7.tgz. Extracting by manifest.
+371 silly tarball no local data for @tanstack/react-query@https://registry.npmjs.org/@tanstack/react-query/-/react-query-5.95.2.tgz. Extracting by manifest.
+372 silly tarball no local data for @tanstack/query-core@https://registry.npmjs.org/@tanstack/query-core/-/query-core-5.95.2.tgz. Extracting by manifest.
+373 http fetch GET 200 https://registry.npmjs.org/scheduler/-/scheduler-0.27.0.tgz 238ms (cache miss)
+374 http fetch GET 200 https://registry.npmjs.org/mitt/-/mitt-3.0.1.tgz 372ms (cache miss)
+375 http fetch GET 200 https://registry.npmjs.org/d3-timer/-/d3-timer-3.0.1.tgz 395ms (cache miss)
+376 http fetch GET 200 https://registry.npmjs.org/d3-dispatch/-/d3-dispatch-3.0.1.tgz 405ms (cache miss)
+377 http fetch GET 200 https://registry.npmjs.org/classcat/-/classcat-5.0.5.tgz 414ms (cache miss)
+378 http fetch GET 200 https://registry.npmjs.org/@types/d3-interpolate/-/d3-interpolate-3.0.4.tgz 437ms (cache miss)
+379 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 528ms
+380 silly audit report {}
+381 http fetch GET 200 https://registry.npmjs.org/@types/d3-color/-/d3-color-3.1.3.tgz 454ms (cache miss)
+382 http fetch GET 200 https://registry.npmjs.org/regexparam/-/regexparam-3.0.0.tgz 465ms (cache miss)
+383 http fetch GET 200 https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.6.0.tgz 473ms (cache miss)
+384 http fetch GET 200 https://registry.npmjs.org/d3-drag/-/d3-drag-3.0.0.tgz 478ms (cache miss)
+385 http fetch GET 200 https://registry.npmjs.org/d3-color/-/d3-color-3.1.0.tgz 485ms (cache miss)
+386 http fetch GET 200 https://registry.npmjs.org/d3-ease/-/d3-ease-3.0.1.tgz 517ms (cache miss)
+387 http fetch GET 200 https://registry.npmjs.org/d3-zoom/-/d3-zoom-3.0.0.tgz 533ms (cache miss)
+388 http fetch GET 200 https://registry.npmjs.org/wouter/-/wouter-3.9.0.tgz 542ms (cache miss)
+389 http fetch GET 200 https://registry.npmjs.org/react/-/react-19.2.4.tgz 582ms (cache miss)
+390 http fetch GET 200 https://registry.npmjs.org/d3-interpolate/-/d3-interpolate-3.0.1.tgz 607ms (cache miss)
+391 http fetch GET 200 https://registry.npmjs.org/d3-transition/-/d3-transition-3.0.1.tgz 634ms (cache miss)
+392 http fetch GET 200 https://registry.npmjs.org/@types/d3-selection/-/d3-selection-3.0.11.tgz 702ms (cache miss)
+393 http fetch GET 200 https://registry.npmjs.org/@types/d3-drag/-/d3-drag-3.0.7.tgz 710ms (cache miss)
+394 http fetch GET 200 https://registry.npmjs.org/@types/d3-zoom/-/d3-zoom-3.0.8.tgz 717ms (cache miss)
+395 http fetch GET 200 https://registry.npmjs.org/d3-selection/-/d3-selection-3.0.0.tgz 771ms (cache miss)
+396 http fetch GET 200 https://registry.npmjs.org/react-dom/-/react-dom-19.2.4.tgz 958ms (cache miss)
+397 http fetch GET 200 https://registry.npmjs.org/zustand/-/zustand-4.5.7.tgz 965ms (cache miss)
+398 http fetch GET 200 https://registry.npmjs.org/uuid/-/uuid-11.1.0.tgz 1005ms (cache miss)
+399 http fetch GET 200 https://registry.npmjs.org/zustand/-/zustand-5.0.12.tgz 1029ms (cache miss)
+400 http fetch GET 200 https://registry.npmjs.org/@xyflow/system/-/system-0.0.76.tgz 1082ms (cache miss)
+401 http fetch GET 200 https://registry.npmjs.org/@types/d3-transition/-/d3-transition-3.0.9.tgz 1177ms (cache miss)
+402 http fetch GET 200 https://registry.npmjs.org/@tanstack/query-core/-/query-core-5.95.2.tgz 1302ms (cache miss)
+403 http fetch GET 200 https://registry.npmjs.org/@tanstack/react-query/-/react-query-5.95.2.tgz 1404ms (cache miss)
+404 http fetch GET 200 https://registry.npmjs.org/@xyflow/react/-/react-12.10.2.tgz 1590ms (cache miss)
+405 silly ADD node_modules/zustand
+406 silly ADD
+407 silly ADD
+408 silly ADD node_modules/wouter
+409 silly ADD
+410 silly ADD
+411 silly ADD
+412 silly ADD node_modules/uuid
+413 silly ADD
+414 silly ADD node_modules/use-sync-external-store
+415 silly ADD
+416 silly ADD
+417 silly ADD
+418 silly ADD
+419 silly ADD
+420 silly ADD
+421 silly ADD
+422 silly ADD
+423 silly ADD
+424 silly ADD
+425 silly ADD
+426 silly ADD
+427 silly ADD
+428 silly ADD
+429 silly ADD node_modules/scheduler
+430 silly ADD
+431 silly ADD node_modules/regexparam
+432 silly ADD
+433 silly ADD
+434 silly ADD
+435 silly ADD
+436 silly ADD
+437 silly ADD
+438 silly ADD
+439 silly ADD
+440 silly ADD
+441 silly ADD
+442 silly ADD
+443 silly ADD
+444 silly ADD node_modules/react-dom
+445 silly ADD
+446 silly ADD node_modules/date-fns
+447 silly ADD node_modules/react
+448 silly ADD
+449 silly ADD node_modules/react-is
+450 silly ADD
+451 silly ADD
+452 silly ADD
+453 silly ADD
+454 silly ADD
+455 silly ADD
+456 silly ADD
+457 silly ADD
+458 silly ADD
+459 silly ADD
+460 silly ADD
+461 silly ADD node_modules/mitt
+462 silly ADD
+463 silly ADD
+464 silly ADD
+465 silly ADD
+466 silly ADD
+467 silly ADD
+468 silly ADD
+469 silly ADD
+470 silly ADD
+471 silly ADD
+472 silly ADD
+473 silly ADD
+474 silly ADD
+475 silly ADD
+476 silly ADD
+477 silly ADD
+478 silly ADD
+479 silly ADD
+480 silly ADD
+481 silly ADD
+482 silly ADD
+483 silly ADD
+484 silly ADD
+485 silly ADD
+486 silly ADD
+487 silly ADD
+488 silly ADD
+489 silly ADD
+490 silly ADD
+491 silly ADD
+492 silly ADD
+493 silly ADD
+494 silly ADD
+495 silly ADD
+496 silly ADD
+497 silly ADD
+498 silly ADD
+499 silly ADD
+500 silly ADD
+501 silly ADD
+502 silly ADD
+503 silly ADD
+504 silly ADD
+505 silly ADD
+506 silly ADD
+507 silly ADD node_modules/d3-zoom
+508 silly ADD node_modules/d3-transition
+509 silly ADD node_modules/d3-timer
+510 silly ADD
+511 silly ADD
+512 silly ADD
+513 silly ADD node_modules/d3-selection
+514 silly ADD
+515 silly ADD
+516 silly ADD node_modules/d3-interpolate
+517 silly ADD
+518 silly ADD node_modules/d3-ease
+519 silly ADD node_modules/d3-drag
+520 silly ADD node_modules/d3-dispatch
+521 silly ADD node_modules/d3-color
+522 silly ADD
+523 silly ADD
+524 silly ADD
+525 silly ADD
+526 silly ADD
+527 silly ADD
+528 silly ADD node_modules/classcat
+529 silly ADD
+530 silly ADD
+531 silly ADD
+532 silly ADD
+533 silly ADD
+534 silly ADD node_modules/@xyflow/system
+535 silly ADD node_modules/@xyflow/react
+536 silly ADD node_modules/@xyflow/react/node_modules/zustand
+537 silly ADD
+538 silly ADD
+539 silly ADD
+540 silly ADD
+541 silly ADD
+542 silly ADD
+543 silly ADD node_modules/@types/d3-zoom
+544 silly ADD node_modules/@types/d3-transition
+545 silly ADD
+546 silly ADD
+547 silly ADD
+548 silly ADD node_modules/@types/d3-selection
+549 silly ADD
+550 silly ADD
+551 silly ADD node_modules/@types/d3-interpolate
+552 silly ADD
+553 silly ADD node_modules/@types/d3-drag
+554 silly ADD node_modules/@types/d3-color
+555 silly ADD
+556 silly ADD
+557 silly ADD
+558 silly ADD
+559 silly ADD
+560 silly ADD node_modules/@tanstack/react-query
+561 silly ADD node_modules/@tanstack/query-core
+562 silly ADD
+563 silly ADD
+564 silly ADD
+565 silly ADD
+566 silly ADD
+567 silly ADD
+568 silly ADD
+569 silly ADD
+570 silly ADD
+571 silly ADD
+572 silly ADD
+573 silly ADD
+574 silly ADD
+575 silly ADD
+576 silly ADD
+577 silly ADD
+578 silly ADD
+579 silly ADD
+580 silly ADD
+581 silly ADD
+582 silly ADD
+583 silly ADD
+584 silly ADD
+585 silly ADD
+586 silly ADD
+587 silly ADD
+588 silly ADD
+589 silly ADD
+590 silly ADD
+591 silly ADD
+592 silly ADD
+593 silly ADD
+594 silly ADD
+595 silly ADD
+596 silly ADD
+597 silly ADD
+598 silly ADD
+599 silly ADD
+600 silly ADD
+601 silly ADD
+602 silly ADD
+603 silly ADD
+604 silly ADD
+605 silly ADD
+606 silly ADD
+607 silly ADD
+608 silly ADD
+609 silly ADD
+610 silly ADD
+611 silly ADD
+612 silly ADD
+613 silly ADD
+614 silly ADD
+615 silly ADD
+616 silly ADD
+617 silly ADD node_modules/@radix-ui/react-slot
+618 silly ADD
+619 silly ADD
+620 silly ADD
+621 silly ADD
+622 silly ADD
+623 silly ADD
+624 silly ADD
+625 silly ADD
+626 silly ADD node_modules/@radix-ui/react-primitive
+627 silly ADD
+628 silly ADD node_modules/@radix-ui/react-slot
+629 silly ADD
+630 silly ADD
+631 silly ADD
+632 silly ADD
+633 silly ADD node_modules/@radix-ui/react-primitive
+634 silly ADD node_modules/@radix-ui/react-context
+635 silly ADD
+636 silly ADD node_modules/@radix-ui/react-slot
+637 silly ADD
+638 silly ADD
+639 silly ADD
+640 silly ADD
+641 silly ADD node_modules/@radix-ui/react-slot
+642 silly ADD
+643 silly ADD
+644 silly ADD
+645 silly ADD node_modules/@radix-ui/react-slot
+646 silly ADD
+647 silly ADD node_modules/@radix-ui/react-primitive
+648 silly ADD
+649 silly ADD
+650 silly ADD
+651 silly ADD
+652 silly ADD
+653 silly ADD
+654 silly ADD
+655 silly ADD
+656 silly ADD node_modules/@radix-ui/react-slot
+657 silly ADD
+658 silly ADD
+659 silly ADD
+660 silly ADD
+661 silly ADD node_modules/@radix-ui/react-slot
+662 silly ADD
+663 silly ADD
+664 silly ADD
+665 silly ADD node_modules/@radix-ui/react-primitive
+666 silly ADD node_modules/@radix-ui/react-context
+667 silly ADD
+668 silly ADD node_modules/@radix-ui/react-primitive
+669 silly ADD
+670 silly ADD
+671 silly ADD node_modules/@radix-ui/react-slot
+672 silly ADD
+673 silly ADD
+674 silly ADD
+675 silly ADD
+676 silly ADD
+677 silly ADD
+678 silly ADD
+679 silly ADD
+680 silly ADD
+681 silly ADD
+682 silly ADD
+683 silly ADD
+684 silly ADD
+685 silly ADD
+686 silly ADD
+687 silly ADD
+688 silly ADD
+689 silly ADD
+690 silly ADD
+691 silly ADD
+692 silly ADD
+693 silly ADD
+694 silly ADD
+695 silly ADD
+696 silly ADD
+697 silly ADD
+698 silly ADD
+699 silly ADD
+700 silly ADD
+701 silly ADD
+702 silly ADD
+703 silly ADD
+704 silly ADD
+705 silly ADD
+706 silly ADD
+707 silly ADD
+708 silly ADD
+709 silly ADD
+710 silly ADD
+711 silly ADD
+712 silly ADD
+713 silly ADD
+714 silly ADD
+715 silly ADD
+716 silly ADD
+717 silly ADD
+718 silly ADD
+719 silly ADD
+720 silly ADD
+721 silly ADD
+722 silly ADD
+723 silly ADD
+724 silly ADD
+725 silly ADD
+726 silly ADD
+727 silly ADD
+728 silly ADD
+729 silly ADD
+730 silly ADD
+731 silly ADD
+732 verbose cwd C:\Users\Aakash\Downloads\Agentcraft\artifacts\agentcraft
+733 verbose os Windows_NT 10.0.26200
+734 verbose node v22.16.0
+735 verbose npm  v10.9.2
+736 verbose exit 0
+737 info ok
