@@ -23,7 +23,9 @@ import {
   useUpdateWorkflow, 
   useGenerateWorkflow,
   useStartExecution,
-  useExplainWorkflow
+  useExplainWorkflow,
+  getGetWorkflowQueryKey,
+  getExplainWorkflowQueryKey
 } from '@workspace/api-client-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -49,7 +51,7 @@ function BuilderCanvas() {
   
   const { data: explanationData, refetch: fetchExplain, isFetching: isExplaining } = useExplainWorkflow(
     workflowId || 0, 
-    { query: { enabled: false } }
+    { query: { queryKey: getExplainWorkflowQueryKey(workflowId || 0), enabled: false } }
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -308,7 +310,7 @@ export default function BuilderPage() {
   const workflowId = match ? parseInt(params.id) : null;
 
   const { data, isLoading } = useGetWorkflow(workflowId || 0, {
-    query: { enabled: !!workflowId }
+    query: { queryKey: getGetWorkflowQueryKey(workflowId || 0), enabled: !!workflowId }
   });
 
   useEffect(() => {

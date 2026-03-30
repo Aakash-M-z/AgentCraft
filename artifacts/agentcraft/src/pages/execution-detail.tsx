@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useGetExecution, useGetWorkflow, useCancelExecution } from "@workspace/api-client-react";
+import { useGetExecution, useGetWorkflow, useCancelExecution, getGetExecutionQueryKey, getGetWorkflowQueryKey } from "@workspace/api-client-react";
 import { useRoute } from "wouter";
 import { format } from "date-fns";
 import { ReactFlow, Background, ReactFlowProvider } from "@xyflow/react";
@@ -14,11 +14,11 @@ export default function ExecutionDetailPage() {
   const executionId = params ? parseInt(params.id) : null;
 
   const { data: execData, refetch } = useGetExecution(executionId || 0, {
-    query: { enabled: !!executionId }
+    query: { queryKey: getGetExecutionQueryKey(executionId || 0), enabled: !!executionId }
   });
   
   const { data: workflowData } = useGetWorkflow(execData?.workflowId || 0, {
-    query: { enabled: !!execData?.workflowId }
+    query: { queryKey: getGetWorkflowQueryKey(execData?.workflowId || 0), enabled: !!execData?.workflowId }
   });
 
   const cancelMut = useCancelExecution();
