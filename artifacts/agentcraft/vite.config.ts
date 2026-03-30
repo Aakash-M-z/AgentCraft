@@ -1,6 +1,5 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 const port = Number(process.env.PORT || "5173");
@@ -9,24 +8,24 @@ const apiPort = process.env.API_PORT || "3001";
 
 export default defineConfig({
   base: basePath,
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
+  plugins: [react()],
+  css: {
+    // Tailwind v4 via PostCSS — no native bindings required
+    postcss: "./postcss.config.js",
+  },
   resolve: {
     alias: {
-      // Redirect workspace package to the inlined local copy
       "@workspace/api-client-react": path.resolve(
-        import.meta.dirname,
+        __dirname,
         "src/lib/workspace/api-client/index.ts",
       ),
-      "@": path.resolve(import.meta.dirname, "src"),
+      "@": path.resolve(__dirname, "src"),
     },
     dedupe: ["react", "react-dom"],
   },
-  root: path.resolve(import.meta.dirname),
+  root: __dirname,
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
   },
   server: {
