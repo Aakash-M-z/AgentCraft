@@ -5,6 +5,12 @@
     "framework": null,
     "env": {
         "NODE_VERSION": "20",
-        "VITE_API_BASE_URL": "https://agentcraft-api.onrender.com"
-    }
+        "VITE_API_URL": "https://agentcraft-kexf.onrender.com"
+    },
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
 }

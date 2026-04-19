@@ -30,6 +30,35 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# ── Environment Variable Verification ─────────────────────────────────────────
+# Log environment variable status on startup (without exposing sensitive values)
+def _verify_env_vars():
+    """Verify critical environment variables are loaded."""
+    required_vars = {
+        "DATABASE_URL": bool(os.getenv("DATABASE_URL")),
+        "GROQ_API_KEY": bool(os.getenv("GROQ_API_KEY")),
+        "EMAIL_USER": bool(os.getenv("EMAIL_USER")),
+        "EMAIL_PASS": bool(os.getenv("EMAIL_PASS")),
+    }
+    
+    logger.info("🔍 Environment Variables Status:")
+    for var_name, is_present in required_vars.items():
+        status = "✅ SET" if is_present else "❌ MISSING"
+        logger.info(f"   {var_name}: {status}")
+    
+    # List all EMAIL_* variables (for debugging)
+    email_vars = [k for k in os.environ.keys() if k.startswith("EMAIL")]
+    logger.info(f"   Available EMAIL_* vars: {email_vars}")
+    
+    missing = [k for k, v in required_vars.items() if not v]
+    if missing:
+        logger.warning(f"⚠️  Missing environment variables: {', '.join(missing)}")
+        logger.warning("   Email functionality will not work without EMAIL_USER and EMAIL_PASS")
+    
+    return required_vars
+
+_env_status = _verify_env_vars()
+
 # ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(title="AgentCraft – AI Workflow Engine", version="1.0.0")
 

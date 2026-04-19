@@ -73,11 +73,31 @@ async def _send_email(to: str, subject: str, body: str, fmt: str = "text") -> di
     Send email via Gmail SMTP.
     Always returns a structured dict — never raises silently.
     """
+    # Debug logging for production troubleshooting
     email_user = os.environ.get("EMAIL_USER", "").strip()
     email_pass = os.environ.get("EMAIL_PASS", "").strip()
+    
+    # Log environment variable status (without exposing values)
+    logger.info("📧 Email credentials check:")
+    logger.info(f"   EMAIL_USER present: {bool(email_user)} (length: {len(email_user) if email_user else 0})")
+    logger.info(f"   EMAIL_PASS present: {bool(email_pass)} (length: {len(email_pass) if email_pass else 0})")
+    
+    # Also check os.getenv vs os.environ
+    alt_user = os.getenv("EMAIL_USER", "").strip()
+    alt_pass = os.getenv("EMAIL_PASS", "").strip()
+    logger.info(f"   os.getenv EMAIL_USER: {bool(alt_user)}")
+    logger.info(f"   os.getenv EMAIL_PASS: {bool(alt_pass)}")
+    
+    # List all environment variables that start with EMAIL (for debugging)
+    email_vars = {k: "***" for k in os.environ.keys() if k.startswith("EMAIL")}
+    logger.info(f"   Available EMAIL_* vars: {list(email_vars.keys())}")
 
     if not email_user or not email_pass:
-        raise ValueError("EMAIL_USER and EMAIL_PASS environment variables are not set")
+        error_msg = "EMAIL_USER and EMAIL_PASS environment variables are not set"
+        logger.error(f"❌ {error_msg}")
+        logger.error(f"   EMAIL_USER: {'<empty>' if not email_user else '<present>'}")
+        logger.error(f"   EMAIL_PASS: {'<empty>' if not email_pass else '<present>'}")
+        raise ValueError(error_msg)
 
     # Subject MUST be a single line — sanitize before building the message
     clean_subject = _sanitize_subject(subject)

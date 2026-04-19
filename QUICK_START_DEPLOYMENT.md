@@ -36,18 +36,17 @@ git push origin main
 
 ### Step 2: Configure Vercel (1 minute)
 
+**✅ Already done!** The `vercel.json` now includes:
+- ✅ SPA routing rewrites (fixes 404 on refresh)
+- ✅ Correct environment variable (`VITE_API_URL`)
+- ✅ Correct backend URL
+
+**Just push to GitHub and Vercel will auto-deploy with the correct config!**
+
+**Optional:** If you want to verify environment variables:
 1. Go to: https://vercel.com/dashboard
 2. Click your project → Settings → Environment Variables
-3. **Add or verify:**
-   ```
-   Name:  VITE_API_URL
-   Value: https://agentcraft-kexf.onrender.com
-   ```
-4. **Important:** No trailing slash!
-5. If you just added/changed it → Redeploy:
-   - Go to Deployments
-   - Click "..." on latest deployment
-   - Click "Redeploy"
+3. Should see: `VITE_API_URL=https://agentcraft-kexf.onrender.com`
 
 ---
 
@@ -67,6 +66,12 @@ git push origin main
    - ✅ Should navigate to execution page
    - ✅ Should see logs streaming
    - ✅ Should see output appear automatically
+
+5. **Test routing (NEW FIX!):**
+   - Navigate to `/executions` and refresh (F5)
+   - ✅ Should reload correctly (not 404)
+   - Open direct URL: `https://your-app.vercel.app/builder`
+   - ✅ Should load correctly (not 404)
 
 ---
 
