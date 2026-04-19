@@ -52,3 +52,5 @@ __pycache__/
 # Local file-based DB
 artifacts/api-server/data/
 .env.production
+__pycache__/
+*.pyc
