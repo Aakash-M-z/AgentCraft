@@ -182,15 +182,24 @@ async def list_workflows(db: AsyncSession = Depends(get_db)):
 @app.post("/api/workflows", status_code=201)
 async def create_workflow(body: CreateWorkflowBody, db: AsyncSession = Depends(get_db)):
     """Create a new workflow in database."""
-    workflow = await WorkflowRepository.create(
-        db,
-        name=body.name,
-        description=body.description,
-        nodes=[n.model_dump() for n in body.nodes],
-        edges=[e.model_dump() for e in body.edges],
-    )
-    logger.info("POST /api/workflows → created id=%d", workflow.id)
-    return _wf_response(workflow)
+    try:
+        logger.info("POST /api/workflows | name=%s | nodes=%d | edges=%d", 
+                   body.name, len(body.nodes), len(body.edges))
+        
+        workflow = await WorkflowRepository.create(
+            db,
+            name=body.name,
+            description=body.description,
+            nodes=[n.model_dump() for n in body.nodes],
+            edges=[e.model_dump() for e in body.edges],
+        )
+        
+        logger.info("✅ POST /api/workflows → created id=%d", workflow.id)
+        return _wf_response(workflow)
+        
+    except Exception as exc:
+        logger.error("❌ Failed to create workflow: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create workflow: {str(exc)}")
 
 
 @app.post("/api/workflows/generate")
@@ -224,18 +233,30 @@ async def get_workflow(workflow_id: int, db: AsyncSession = Depends(get_db)):
 @app.put("/api/workflows/{workflow_id}")
 async def update_workflow(workflow_id: int, body: CreateWorkflowBody, db: AsyncSession = Depends(get_db)):
     """Update workflow in database."""
-    workflow = await WorkflowRepository.update(
-        db,
-        workflow_id=workflow_id,
-        name=body.name,
-        description=body.description,
-        nodes=[n.model_dump() for n in body.nodes],
-        edges=[e.model_dump() for e in body.edges],
-    )
-    if not workflow:
-        raise HTTPException(status_code=404, detail="Workflow not found")
-    logger.info("PUT /api/workflows/%d updated", workflow_id)
-    return _wf_response(workflow)
+    try:
+        logger.info("PUT /api/workflows/%d | name=%s | nodes=%d | edges=%d", 
+                   workflow_id, body.name, len(body.nodes), len(body.edges))
+        
+        workflow = await WorkflowRepository.update(
+            db,
+            workflow_id=workflow_id,
+            name=body.name,
+            description=body.description,
+            nodes=[n.model_dump() for n in body.nodes],
+            edges=[e.model_dump() for e in body.edges],
+        )
+        
+        if not workflow:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+            
+        logger.info("✅ PUT /api/workflows/%d updated", workflow_id)
+        return _wf_response(workflow)
+        
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("❌ Failed to update workflow %d: %s", workflow_id, exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to update workflow: {str(exc)}")
 
 
 @app.delete("/api/workflows/{workflow_id}", status_code=204)
@@ -281,32 +302,43 @@ async def list_executions(
 @app.post("/api/executions", status_code=202)
 async def start_execution(body: StartExecutionBody, db: AsyncSession = Depends(get_db)):
     """Start a new workflow execution."""
-    # Get workflow from database
-    workflow = await WorkflowRepository.get_by_id(db, body.workflowId)
-    if not workflow:
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    try:
+        logger.info("POST /api/executions | workflowId=%d | input=%.80s", 
+                   body.workflowId, body.input)
+        
+        # Get workflow from database
+        workflow = await WorkflowRepository.get_by_id(db, body.workflowId)
+        if not workflow:
+            raise HTTPException(status_code=404, detail="Workflow not found")
 
-    # Create execution record in database
-    execution = await ExecutionRepository.create(
-        db,
-        workflow_id=body.workflowId,
-        input_text=body.input,
-    )
-    
-    logger.info("POST /api/executions → created id=%d for workflow %d", execution.id, body.workflowId)
+        # Create execution record in database
+        execution = await ExecutionRepository.create(
+            db,
+            workflow_id=body.workflowId,
+            input_text=body.input,
+        )
+        
+        logger.info("✅ POST /api/executions → created id=%d for workflow %d", 
+                   execution.id, body.workflowId)
 
-    # Store in active executions for SSE streaming
-    _active_executions[execution.id] = {
-        "id": execution.id,
-        "workflowId": execution.workflow_id,
-        "status": execution.status,
-        "agentLogs": [],  # Will be populated during execution
-    }
+        # Store in active executions for SSE streaming
+        _active_executions[execution.id] = {
+            "id": execution.id,
+            "workflowId": execution.workflow_id,
+            "status": execution.status,
+            "agentLogs": [],  # Will be populated during execution
+        }
 
-    # Run asynchronously so we return 202 immediately
-    asyncio.create_task(_run_execution(execution.id, workflow, body.input))
+        # Run asynchronously so we return 202 immediately
+        asyncio.create_task(_run_execution(execution.id, workflow, body.input))
 
-    return _ex_response(execution)
+        return _ex_response(execution)
+        
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("❌ Failed to start execution: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to start execution: {str(exc)}")
 
 
 @app.get("/api/executions/{execution_id}")

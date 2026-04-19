@@ -51,3 +51,4 @@ __pycache__/
 .env.example
 # Local file-based DB
 artifacts/api-server/data/
+.env.production
