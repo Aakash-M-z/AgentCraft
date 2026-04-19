@@ -400,8 +400,11 @@ function BuilderCanvas() {
         { data: { workflowId: id, input: inputText } },
         {
           onSuccess: (res) => {
-            setLiveExecutionId(res.id);
+            console.log('🚀 Execution started:', res.id);
             toast({ title: '▶ Execution started' });
+
+            // 🔥 CRITICAL: Navigate immediately to execution page
+            navigate(`/executions/${res.id}`);
           },
           onError: () => {
             setIsExecuting(false);

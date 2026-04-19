@@ -300,10 +300,6 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
                   <option value="html">HTML</option>
                 </select>
               </div>
-              <div className="p-3 rounded-lg bg-sky-500/5 border border-sky-500/20 text-xs text-sky-300/80">
-                <p className="font-semibold text-sky-400 mb-1">📧 SMTP Config</p>
-                <p>Set <code className="bg-secondary px-1 rounded">EMAIL_USER</code> and <code className="bg-secondary px-1 rounded">EMAIL_PASS</code> in your .env file.</p>
-              </div>
             </>
           )}
 
