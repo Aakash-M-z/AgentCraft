@@ -1,4 +1,19 @@
 services:
+  # Python FastAPI backend
+  - type: web
+    name: agentcraft-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: SESSION_SECRET
+        generateValue: true
+
+  # React frontend (static site)
   - type: web
     name: agentcraft-frontend
     runtime: static
@@ -8,9 +23,7 @@ services:
       pnpm --filter agentcraft-frontend run build
     staticPublishPath: artifacts/agentcraft/dist/public
     envVars:
-      - key: VITE_API_URL
-        value: https://agentcraft-kexf.onrender.com
       - key: NODE_VERSION
         value: "20"
-      - key: BASE_PATH
-        value: /
+      - key: VITE_API_BASE_URL
+        value: https://agentcraft-api.onrender.com

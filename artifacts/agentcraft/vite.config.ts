@@ -4,7 +4,7 @@ import path from "path";
 
 const port = Number(process.env.PORT || "5173");
 const basePath = process.env.BASE_PATH || "/";
-const apiPort = process.env.API_PORT || "3001";
+const apiPort = process.env.API_PORT || "8000";
 
 // import.meta.dirname is available in Node 20+ (ESM)
 const dir = import.meta.dirname;

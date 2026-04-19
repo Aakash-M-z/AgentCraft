@@ -1,4 +1,4 @@
-import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles } from 'lucide-react';
+import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail } from 'lucide-react';
 import { WorkflowNodeType } from '@workspace/api-client-react';
 
 const paletteNodes = [
@@ -7,6 +7,7 @@ const paletteNodes = [
   { type: WorkflowNodeType.api_call, label: 'API Request', icon: Server, color: 'text-blue-400', border: 'border-blue-500/30' },
   { type: WorkflowNodeType.condition, label: 'Condition', icon: ArrowRightFromLine, color: 'text-amber-400', border: 'border-amber-500/30' },
   { type: WorkflowNodeType.loop, label: 'Loop', icon: Repeat, color: 'text-pink-400', border: 'border-pink-500/30' },
+  { type: 'email' as any, label: 'Email', icon: Mail, color: 'text-sky-400', border: 'border-sky-500/30' },
   { type: WorkflowNodeType.output, label: 'Output', icon: Sparkles, color: 'text-rose-400', border: 'border-rose-500/30' },
 ];
 

@@ -44,9 +44,10 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
-# Replit
-.cache/
-.local/
-
+# Local env files
+.env.local
+.env.*.local
+.env 
+.env.example
 # Local file-based DB
 artifacts/api-server/data/

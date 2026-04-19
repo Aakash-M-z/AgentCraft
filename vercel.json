@@ -4,7 +4,7 @@
     "outputDirectory": "artifacts/agentcraft/dist/public",
     "framework": null,
     "env": {
-        "BASE_PATH": "/",
-        "NODE_VERSION": "20"
+        "NODE_VERSION": "20",
+        "VITE_API_BASE_URL": "https://agentcraft-api.onrender.com"
     }
 }

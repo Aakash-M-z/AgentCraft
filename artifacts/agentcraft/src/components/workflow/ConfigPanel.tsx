@@ -1,6 +1,6 @@
 import { useWorkflowStore } from "@/lib/store";
 import { WorkflowNodeType } from "@workspace/api-client-react";
-import { Bot, Server, GitBranch, Repeat, Zap, ArrowDownToLine } from "lucide-react";
+import { Bot, Server, GitBranch, Repeat, Zap, ArrowDownToLine, Mail } from "lucide-react";
 
 const GROQ_MODELS = [
   { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B Versatile ⚡" },
@@ -48,6 +48,7 @@ export function ConfigPanel() {
     condition: <GitBranch size={14} className="text-amber-400" />,
     loop: <Repeat size={14} className="text-pink-400" />,
     output: <ArrowDownToLine size={14} className="text-rose-400" />,
+    email: <Mail size={14} className="text-sky-400" />,
   };
 
   return (
@@ -206,6 +207,62 @@ export function ConfigPanel() {
               <option value="json">JSON</option>
             </select>
           </div>
+        )}
+
+        {/* ── Email ─────────────────────────────────────────────────────── */}
+        {node.type === "email" && (
+          <>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">To</label>
+              <input
+                type="email"
+                value={cfg.to ?? ""}
+                onChange={e => set("to", e.target.value)}
+                className={inputClass}
+                placeholder="recipient@example.com"
+              />
+              <p className="text-xs text-muted-foreground">Supports <code className="bg-secondary px-1 rounded">{"{{input}}"}</code></p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Subject</label>
+              <input
+                type="text"
+                value={cfg.subject ?? ""}
+                onChange={e => set("subject", e.target.value)}
+                className={inputClass}
+                placeholder="Workflow result: {{input}}"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Body</label>
+              <textarea
+                value={cfg.body ?? ""}
+                onChange={e => set("body", e.target.value)}
+                rows={6}
+                className={`${inputClass} resize-none font-mono text-xs`}
+                placeholder={"Hello,\n\nHere is your result:\n\n{{input}}\n\nRegards,\nAgentCraft"}
+              />
+              <p className="text-xs text-muted-foreground">
+                Variables: <code className="bg-secondary px-1 rounded">{"{{input}}"}</code>{" "}
+                <code className="bg-secondary px-1 rounded">{"{{ai_output}}"}</code>
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Format</label>
+              <select value={cfg.format ?? "text"} onChange={e => set("format", e.target.value)} className={inputClass}>
+                <option value="text">Plain Text</option>
+                <option value="html">HTML</option>
+              </select>
+            </div>
+
+            <div className="p-3 rounded-lg bg-sky-500/5 border border-sky-500/20 text-xs text-sky-300/80 space-y-1">
+              <p className="font-semibold text-sky-400">📧 SMTP Config</p>
+              <p>Set <code className="bg-secondary px-1 rounded">EMAIL_USER</code> and <code className="bg-secondary px-1 rounded">EMAIL_PASS</code> in your environment variables.</p>
+            </div>
+          </>
         )}
       </div>
     </div>

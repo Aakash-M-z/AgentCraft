@@ -315,6 +315,53 @@ async function executeNode(
       return { result: lastResult, format };
     }
 
+    case "email": {
+      const to = String(config.to ?? "").replace(/\{\{input\}\}/g, String(context.lastResult ?? input)).replace(/\{\{ai_output\}\}/g, String(context.lastResult ?? input));
+      const subject = String(config.subject ?? "Workflow Result").replace(/\{\{input\}\}/g, String(context.lastResult ?? input));
+      const body = String(config.body ?? "{{input}}").replace(/\{\{input\}\}/g, String(context.lastResult ?? input)).replace(/\{\{ai_output\}\}/g, String(context.lastResult ?? input));
+      const format = String(config.format ?? "text");
+
+      if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+        throw new Error(`Invalid or missing recipient email: "${to}"`);
+      }
+
+      const emailUser = process.env.EMAIL_USER;
+      const emailPass = process.env.EMAIL_PASS;
+      if (!emailUser || !emailPass) {
+        throw new Error("EMAIL_USER and EMAIL_PASS environment variables are required for the Email node.");
+      }
+
+      log(`  📧 Sending email to: ${to} | subject: ${subject.slice(0, 60)}`);
+
+      const nodemailer = await import("nodemailer");
+      const transporter = nodemailer.default.createTransport({
+        service: "gmail",
+        auth: { user: emailUser, pass: emailPass },
+      });
+
+      const mailOptions: Record<string, unknown> = {
+        from: `"AgentCraft" <${emailUser}>`,
+        to,
+        subject,
+        ...(format === "html" ? { html: body } : { text: body }),
+      };
+
+      // Retry up to 3 times
+      let lastError: unknown;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const info = await transporter.sendMail(mailOptions);
+          log(`  ✅ Email sent (attempt ${attempt}) | messageId: ${info.messageId}`);
+          return { result: `Email sent to ${to}`, messageId: info.messageId, to, subject };
+        } catch (err) {
+          lastError = err;
+          log(`  ⚠️  Email attempt ${attempt} failed: ${err}`);
+          if (attempt < 3) await sleep(1000 * attempt);
+        }
+      }
+      throw new Error(`Email failed after 3 attempts: ${lastError}`);
+    }
+
     default:
       return { result: `Unknown node type: ${node.type}` };
   }

@@ -1,5 +1,5 @@
 import { Handle, Position } from '@xyflow/react';
-import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles } from 'lucide-react';
+import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AppNodeData } from '@/lib/store';
 
@@ -57,7 +57,16 @@ const nodeConfig = {
     glow: 'shadow-[0_0_20px_rgba(244,63,94,0.15)]',
     hasSource: false,
     hasTarget: true,
-  }
+  },
+  email: {
+    icon: Mail,
+    color: 'text-sky-400',
+    bg: 'bg-sky-400/10',
+    border: 'border-sky-500/50',
+    glow: 'shadow-[0_0_20px_rgba(56,189,248,0.15)]',
+    hasSource: true,
+    hasTarget: true,
+  },
 };
 
 export function BaseCustomNode({ data, type, selected }: { data: AppNodeData, type: keyof typeof nodeConfig, selected?: boolean }) {
@@ -71,13 +80,13 @@ export function BaseCustomNode({ data, type, selected }: { data: AppNodeData, ty
       "hover:border-muted-foreground/50"
     )}>
       {config.hasTarget && (
-        <Handle 
-          type="target" 
+        <Handle
+          type="target"
           position={Position.Left}
           style={{ width: 12, height: 12, background: 'hsl(240 10% 6%)', border: '2px solid hsl(240 5% 35%)' }}
         />
       )}
-      
+
       <div className="flex items-center gap-3">
         <div className={cn("p-2 rounded-lg", config.bg, config.color)}>
           <Icon size={18} />
@@ -89,8 +98,8 @@ export function BaseCustomNode({ data, type, selected }: { data: AppNodeData, ty
       </div>
 
       {config.hasSource && (
-        <Handle 
-          type="source" 
+        <Handle
+          type="source"
           position={Position.Right}
           style={{ width: 12, height: 12, background: 'hsl(240 10% 6%)', border: '2px solid hsl(240 5% 35%)' }}
         />
@@ -106,4 +115,5 @@ export const nodeTypes = {
   condition: (props: any) => <BaseCustomNode {...props} type="condition" />,
   loop: (props: any) => <BaseCustomNode {...props} type="loop" />,
   output: (props: any) => <BaseCustomNode {...props} type="output" />,
+  email: (props: any) => <BaseCustomNode {...props} type="email" />,
 };

@@ -1,0 +1,318 @@
+
+> @workspace/agentcraft@0.0.0 dev /home/runner/workspace/artifacts/agentcraft
+> vite --config vite.config.ts --host 0.0.0.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J
+  [32m[1mVITE[22m v7.3.1[39m  [2mready in [0m[1m385[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m23360[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.31.71.162:[1m23360[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+[2m4:52:04 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Cannot apply unknown utility class `!important`
+  Plugin: [35m@tailwindcss/vite:generate:serve[39m
+  File: [36m/home/runner/workspace/artifacts/agentcraft/src/index.css[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:52:06 AM[22m [31m[1m[vite][22m[39m [31mInternal server error: Cannot apply unknown utility class `!important`[39m
+  Plugin: [35m@tailwindcss/vite:generate:serve[39m
+  File: [36m/home/runner/workspace/artifacts/agentcraft/src/index.css[39m
+      at onInvalidCandidate (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:21:1511)
+      at $e (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:16:36740)
+      at file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:21:355
+      at Ar (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:3:1733)
+      at I (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:3:1377)
+      at Ce (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:21:172)
+      at Gi (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:38:294)
+      at async ao (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:38:631)
+      at async vf (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:38:1406)
+      at async uu (file:///home/runner/workspace/node_modules/.pnpm/@tailwindcss+node@4.2.1/node_modules/@tailwindcss/node/dist/index.mjs:10:3458)
+      at async B.generate (file:///home/runner/workspace/node_modules/.pnpm/@tailwindcss+vite@4.2.1_vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2_/node_modules/@tailwindcss/vite/dist/index.mjs:1:5049)
+      at async TransformPluginContext.handler (file:///home/runner/workspace/node_modules/.pnpm/@tailwindcss+vite@4.2.1_vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2_/node_modules/@tailwindcss/vite/dist/index.mjs:1:2719)
+      at async EnvironmentPluginContainer.transform (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:28797:14)
+      at async loadAndTransform (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:22670:26)
+      at async viteTransformMiddleware (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:24542:20)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:52:08 AM[22m [31m[1m[vite][22m[39m [31mInternal server error: Cannot apply unknown utility class `!important`[39m
+  Plugin: [35m@tailwindcss/vite:generate:serve[39m
+  File: [36m/home/runner/workspace/artifacts/agentcraft/src/index.css[39m
+      at onInvalidCandidate (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:21:1511)
+      at $e (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:16:36740)
+      at file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:21:355
+      at Ar (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:3:1733)
+      at I (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:3:1377)
+      at Ce (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:21:172)
+      at Gi (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:38:294)
+      at async ao (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:38:631)
+      at async vf (file:///home/runner/workspace/node_modules/.pnpm/tailwindcss@4.2.1/node_modules/tailwindcss/dist/chunk-L5IEUH3R.mjs:38:1406)
+      at async uu (file:///home/runner/workspace/node_modules/.pnpm/@tailwindcss+node@4.2.1/node_modules/@tailwindcss/node/dist/index.mjs:10:3458)
+      at async B.generate (file:///home/runner/workspace/node_modules/.pnpm/@tailwindcss+vite@4.2.1_vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2_/node_modules/@tailwindcss/vite/dist/index.mjs:1:5049)
+      at async TransformPluginContext.handler (file:///home/runner/workspace/node_modules/.pnpm/@tailwindcss+vite@4.2.1_vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2_/node_modules/@tailwindcss/vite/dist/index.mjs:1:2719)
+      at async EnvironmentPluginContainer.transform (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:28797:14)
+      at async loadAndTransform (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:22670:26)
+      at async viteTransformMiddleware (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:24542:20) [33m(x2)[39m
+[RUNTIME_ERROR]{"type":"runtime-error","timestamp":1774846359168,"name":"Error","message":"Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.","stack":"\n\n\n\n\n    at Set.forEach (<anonymous>)\n\n    at setSelectedNodeId /home/runner/workspace/artifacts/agentcraft/src/lib/store.ts:99:45\n    at onSelectionChange /home/runner/workspace/artifacts/agentcraft/src/pages/builder.tsx:208:47\n","loc":{"line":99,"column":45,"file":"/home/runner/workspace/artifacts/agentcraft/src/lib/store.ts"},"frame":"97 |    },\n98 |    \n99 |    setSelectedNodeId: (id: string | null) => set({ selectedNodeId: id }),\n   |                                              ^\n100|    \n101|    setWorkflowMeta: (meta) => set((state) => ({ ...state, ...meta })),"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:52:49 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/builder.tsx, /src/index.css[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:52:53 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/builder.tsx, /src/index.css[22m [33m(x2)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:52:54 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/builder.tsx, /src/index.css[22m [33m(x3)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:53:37 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/builder.tsx, /src/index.css[22m [33m(x4)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:53:38 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/builder.tsx, /src/index.css[22m [33m(x5)[39m
+[RUNTIME_ERROR]{"type":"runtime-error","timestamp":1774846418863,"name":"Error","message":"onSelectionChange is not defined","stack":"    at BuilderCanvas /home/runner/workspace/artifacts/agentcraft/src/pages/builder.tsx:325:11\n\n\n\n\n\n\n\n\n","loc":{"line":325,"column":11,"file":"/home/runner/workspace/artifacts/agentcraft/src/pages/builder.tsx"},"frame":"323|    return (\n324|      <AppLayout>\n325|        {(isLoading && workflowId) ? (\n   |            ^\n326|          <div className=\"flex-1 flex items-center justify-center\">\n327|            <RefreshCw className=\"w-8 h-8 text-primary animate-spin\" />"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m5:00:45 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/builder.tsx, /src/index.css[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m5:01:09 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/workflow/CustomNodes.tsx, /src/index.css[22m
+[2m5:01:12 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/workflow/CustomNodes.tsx[22m Could not Fast Refresh ("nodeTypes" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m5:01:12 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/builder.tsx, /src/pages/execution-detail.tsx[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m5:01:13 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/workflow/CustomNodes.tsx, /src/index.css[22m
+[2m5:01:15 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/workflow/CustomNodes.tsx[22m Could not Fast Refresh ("nodeTypes" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m5:01:15 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/builder.tsx, /src/pages/execution-detail.tsx[22m
+[41m[30m ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL [39m[49m [31m@workspace/agentcraft@0.0.0 dev: `vite --config vite.config.ts --host 0.0.0.0`[39m
+[31mCommand failed with signal "SIGTERM"[39m
