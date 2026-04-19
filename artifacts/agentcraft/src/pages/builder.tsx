@@ -7,13 +7,16 @@ import {
   Controls,
   MiniMap,
   useReactFlow,
+  BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Save, Play, Wand2, RefreshCw, X, Sparkles } from 'lucide-react';
+import { Save, Play, Wand2, RefreshCw, X, Sparkles, CheckCircle2, XCircle, Maximize2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { NodePalette } from '@/components/workflow/NodePalette';
 import { ConfigPanel } from '@/components/workflow/ConfigPanel';
 import { nodeTypes } from '@/components/workflow/CustomNodes';
+import { EmptyState } from '@/components/workflow/EmptyState';
 import { useWorkflowStore } from '@/lib/store';
 import { generateId } from '@/lib/utils';
 import {
@@ -22,27 +25,245 @@ import {
   useUpdateWorkflow,
   useGenerateWorkflow,
   useStartExecution,
-  useExplainWorkflow
+  useExplainWorkflow,
+  useGetExecution,
 } from '@workspace/api-client-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { useExecutionWebSocket } from '@/hooks/use-websocket';
 
+// ── Execution output panel ───────────────────────────────────────────────────
+function ExecutionOutputPanel() {
+  const { finalOutput, executionStatus, setFinalOutput } = useWorkflowStore();
+  const [isVisible, setIsVisible] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (finalOutput && (executionStatus === 'completed' || executionStatus === 'failed')) {
+      setIsVisible(true);
+    }
+  }, [finalOutput, executionStatus]);
+
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(() => setFinalOutput(null), 300);
+  };
+
+  const handleCopy = async () => {
+    if (finalOutput) {
+      await navigator.clipboard.writeText(finalOutput);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  if (!finalOutput || !isVisible) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        className="absolute bottom-6 right-6 z-40 w-96 max-h-80 bg-card border border-border rounded-xl shadow-2xl shadow-black/50 overflow-hidden"
+      >
+        <div className={cn(
+          "flex items-center justify-between px-4 py-3 border-b border-border",
+          executionStatus === 'completed' ? 'bg-emerald-500/10' : 'bg-rose-500/10'
+        )}>
+          <div className="flex items-center gap-2">
+            {executionStatus === 'completed' ? (
+              <CheckCircle2 size={16} className="text-emerald-400" />
+            ) : (
+              <XCircle size={16} className="text-rose-400" />
+            )}
+            <span className="text-sm font-semibold text-foreground">
+              {executionStatus === 'completed' ? 'Workflow Output' : 'Execution Error'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCopy}
+              className="text-xs px-2 py-1 rounded bg-secondary hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            >
+              {copied ? '✓ Copied' : 'Copy'}
+            </button>
+            <button
+              onClick={handleClose}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+        <div className="p-4 overflow-y-auto max-h-64">
+          <pre className={cn(
+            "text-sm whitespace-pre-wrap font-mono leading-relaxed",
+            executionStatus === 'completed' ? 'text-foreground/90' : 'text-rose-300'
+          )}>
+            {finalOutput}
+          </pre>
+        </div>
+        <div className="px-4 py-2 border-t border-border bg-secondary/50">
+          <p className="text-xs text-muted-foreground">
+            Click outside or press ESC to close
+          </p>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// ── Execution status bar ──────────────────────────────────────────────────────
+function ExecutionStatusBar({ executionId, onDone }: { executionId: number; onDone: () => void }) {
+  const { data, refetch } = useGetExecution(executionId, { query: { enabled: true } });
+  const { setNodeExecutionStatus, setNodeDebugInfo, setIsExecuting, setExecutionProgress, setFinalOutput, setExecutionStatus, nodes } = useWorkflowStore();
+  const { events } = useExecutionWebSocket(executionId);
+  const onDoneRef = useRef(onDone);
+  const doneCalledRef = useRef(false);
+  useEffect(() => { onDoneRef.current = onDone; });
+
+  // Handle SSE events in real-time
+  useEffect(() => {
+    if (!events.length) return;
+
+    const lastEvent = events[events.length - 1];
+    console.log('🔄 Builder: Processing SSE event', lastEvent);
+
+    // Handle completion event from SSE
+    if (lastEvent.type === 'execution_complete') {
+      console.log('🎉 Builder: Execution complete via SSE!', {
+        status: lastEvent.status,
+        finalOutput: lastEvent.finalOutput,
+        outputLength: lastEvent.finalOutput?.length || 0
+      });
+
+      setExecutionStatus(lastEvent.status as any);
+      if (lastEvent.finalOutput) {
+        console.log('✅ Builder: Setting final output:', lastEvent.finalOutput.substring(0, 100));
+        setFinalOutput(lastEvent.finalOutput);
+      }
+
+      if (!doneCalledRef.current) {
+        doneCalledRef.current = true;
+        setIsExecuting(false);
+        onDoneRef.current();
+      }
+    }
+
+    // Handle node updates from SSE
+    if (lastEvent.type === 'node_update' && lastEvent.nodeId) {
+      const status: any = lastEvent.status === 'success' ? 'success' : lastEvent.status === 'failed' ? 'failed' : 'running';
+      setNodeExecutionStatus(lastEvent.nodeId, status);
+      if (lastEvent.output) {
+        setNodeDebugInfo(lastEvent.nodeId, {
+          output: typeof lastEvent.output.result === 'string' ? lastEvent.output.result : undefined,
+          status,
+        });
+      }
+    }
+  }, [events]);
+
+  // Polling fallback (in case SSE misses something)
+  useEffect(() => {
+    if (!data) return;
+
+    // Sync node statuses
+    data.nodeResults?.forEach((nr: any, i: number) => {
+      const status: any = nr.status === 'success' ? 'success' : nr.status === 'failed' ? 'failed' : 'running';
+      setNodeExecutionStatus(nr.nodeId, status);
+      setNodeDebugInfo(nr.nodeId, {
+        input: typeof nr.output?.input === 'string' ? nr.output.input : undefined,
+        output: typeof nr.output?.result === 'string' ? nr.output.result : undefined,
+        error: nr.reasoning ?? nr.error,
+        status,
+      });
+      setExecutionProgress({ current: i + 1, total: nodes.length });
+    });
+
+    // Update execution status and final output from polling
+    setExecutionStatus(data.status as any);
+    if (data.finalOutput) {
+      console.log('📊 Builder: Setting final output from polling:', data.finalOutput.substring(0, 100));
+      setFinalOutput(data.finalOutput);
+    }
+
+    const isTerminal = data.status === 'completed' || data.status === 'failed' || data.status === 'cancelled';
+
+    if (isTerminal) {
+      if (!doneCalledRef.current) {
+        doneCalledRef.current = true;
+        setIsExecuting(false);
+        onDoneRef.current();
+      }
+      return; // stop polling
+    }
+
+    // Still running — schedule next poll
+    const t = setTimeout(() => refetch(), 1200);
+    return () => clearTimeout(t);
+  }, [data]); // only re-run when data changes
+
+  if (!data) return null;
+
+  const isRunning = data.status === 'running' || data.status === 'pending';
+  const isDone = data.status === 'completed' || data.status === 'failed';
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ y: -48, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -48, opacity: 0 }}
+        className={cn(
+          'absolute top-0 left-0 right-0 z-30 flex items-center gap-3 px-6 py-2.5 text-sm font-medium border-b',
+          data.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' :
+            data.status === 'failed' ? 'bg-rose-500/10 border-rose-500/20 text-rose-300' :
+              'bg-blue-500/10 border-blue-500/20 text-blue-300'
+        )}
+      >
+        {isRunning && <RefreshCw size={14} className="animate-spin shrink-0" />}
+        {data.status === 'completed' && <CheckCircle2 size={14} className="shrink-0" />}
+        {data.status === 'failed' && <XCircle size={14} className="shrink-0" />}
+        <span>
+          {isRunning ? 'Workflow is running...' :
+            data.status === 'completed' ? 'Workflow completed successfully' :
+              data.status === 'failed' ? 'Workflow failed' : data.status}
+        </span>
+        {isDone && (
+          <a href={`/executions/${executionId}`} className="ml-auto text-xs underline underline-offset-2 opacity-70 hover:opacity-100">
+            View full execution →
+          </a>
+        )}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// ── Main canvas ───────────────────────────────────────────────────────────────
 function BuilderCanvas() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
   const {
     nodes, edges, onNodesChange, onEdgesChange, onConnect,
-    addNode, setSelectedNodeId, workflowId, workflowName, setWorkflowMeta,
-    getApiFormat, loadApiFormat
+    addNode, setSelectedNodeId, selectedNodeId, workflowId, workflowName, setWorkflowMeta,
+    getApiFormat, loadApiFormat, isExecuting, setIsExecuting, clearExecutionState,
+    executionProgress, finalOutput, executionStatus,
   } = useWorkflowStore();
 
   const [promptOpen, setPromptOpen] = useState(false);
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState('');
   const [explainOpen, setExplainOpen] = useState(false);
   const [runInputOpen, setRunInputOpen] = useState(false);
-  const [runInput, setRunInput] = useState("");
+  const [runInput, setRunInput] = useState('');
+  const [liveExecutionId, setLiveExecutionId] = useState<number | null>(null);
+  const handleExecutionDone = useCallback(() => {
+    setTimeout(() => setLiveExecutionId(null), 4000);
+  }, []);
+
   const createMut = useCreateWorkflow();
   const updateMut = useUpdateWorkflow();
   const generateMut = useGenerateWorkflow();
@@ -52,6 +273,49 @@ function BuilderCanvas() {
     workflowId || 0,
     { query: { enabled: false } }
   );
+
+  const isEmpty = nodes.length === 0;
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!isExecuting) handleExecute();
+      }
+      if (e.key === 'Escape') {
+        setSelectedNodeId(null);
+        setPromptOpen(false);
+        setRunInputOpen(false);
+        setExplainOpen(false);
+        // Close output panel if visible
+        if (finalOutput) {
+          const { setFinalOutput } = useWorkflowStore.getState();
+          setFinalOutput(null);
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [workflowId, workflowName, isExecuting]);
+
+  // Listen for "add AI agent" from config panel empty state
+  useEffect(() => {
+    const handler = () => {
+      addNode({
+        id: generateId(),
+        type: 'ai_agent' as any,
+        position: { x: 400, y: 250 },
+        data: { label: 'AI Agent', config: {} },
+      });
+    };
+    window.addEventListener('add-ai-agent', handler);
+    return () => window.removeEventListener('add-ai-agent', handler);
+  }, [addNode]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -66,40 +330,21 @@ function BuilderCanvas() {
     setSelectedNodeId(null);
   }, [setSelectedNodeId]);
 
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-      const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
-      const dataStr = event.dataTransfer.getData('application/reactflow');
-
-      if (!dataStr || !reactFlowBounds) return;
-
-      const { type, label } = JSON.parse(dataStr);
-      const position = screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
-      });
-
-      const newNode = {
-        id: generateId(),
-        type,
-        position,
-        data: { label, config: {} },
-      };
-
-      addNode(newNode);
-    },
-    [screenToFlowPosition, addNode],
-  );
+  const onDrop = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    const dataStr = event.dataTransfer.getData('application/reactflow');
+    if (!dataStr) return;
+    const { type, label } = JSON.parse(dataStr);
+    const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+    addNode({ id: generateId(), type, position, data: { label, config: {} } });
+  }, [screenToFlowPosition, addNode]);
 
   const handleSave = () => {
     const apiData = getApiFormat();
     if (workflowId) {
       updateMut.mutate(
         { id: workflowId, data: { name: workflowName, ...apiData } },
-        {
-          onSuccess: () => toast({ title: "Workflow saved!" })
-        }
+        { onSuccess: () => toast({ title: '✓ Workflow saved' }) }
       );
     } else {
       createMut.mutate(
@@ -107,7 +352,7 @@ function BuilderCanvas() {
         {
           onSuccess: (res) => {
             setWorkflowMeta({ id: res.id });
-            toast({ title: "Workflow created!" });
+            toast({ title: '✓ Workflow created' });
             window.history.replaceState(null, '', `/workflows/${res.id}`);
           }
         }
@@ -124,41 +369,44 @@ function BuilderCanvas() {
           loadApiFormat(res.nodes, res.edges);
           setWorkflowMeta({ name: res.name, description: res.description });
           setPromptOpen(false);
-          toast({ title: "Workflow generated successfully!" });
-        }
+          setPrompt('');
+          toast({ title: '✓ Workflow generated' });
+          setTimeout(() => fitView({ padding: 0.2, duration: 600 }), 100);
+        },
+        onError: () => toast({ title: 'Generation failed', variant: 'destructive' }),
       }
     );
   };
 
   const handleExplain = () => {
     if (!workflowId) {
-      toast({ title: "Please save the workflow first", variant: "destructive" });
+      toast({ title: 'Save the workflow first', variant: 'destructive' });
       return;
     }
     fetchExplain().then(() => setExplainOpen(true));
   };
 
-  const handleExecute = async () => {
-    setRunInputOpen(true);
-  };
+  const handleExecute = () => setRunInputOpen(true);
 
   const doExecute = async () => {
     setRunInputOpen(false);
-    // Auto-save first if not yet saved, then run
+    clearExecutionState();
+    setIsExecuting(true);
     const apiData = getApiFormat();
-    const inputText = runInput.trim() || "Run workflow";
+    const inputText = runInput.trim() || 'Run workflow';
 
     const doRun = (id: number) => {
       executeMut.mutate(
         { data: { workflowId: id, input: inputText } },
         {
           onSuccess: (res) => {
-            toast({ title: "Execution started!" });
-            navigate(`/executions/${res.id}`);
+            setLiveExecutionId(res.id);
+            toast({ title: '▶ Execution started' });
           },
           onError: () => {
-            toast({ title: "Failed to start execution", variant: "destructive" });
-          }
+            setIsExecuting(false);
+            toast({ title: 'Failed to start execution', variant: 'destructive' });
+          },
         }
       );
     };
@@ -178,58 +426,78 @@ function BuilderCanvas() {
             doRun(res.id);
           },
           onError: () => {
-            toast({ title: "Failed to save workflow", variant: "destructive" });
-          }
+            setIsExecuting(false);
+            toast({ title: 'Failed to save workflow', variant: 'destructive' });
+          },
         }
       );
     }
   };
 
+  const isSaving = createMut.isPending || updateMut.isPending;
+
   return (
     <div className="flex-1 flex flex-col h-full bg-[#0a0a0a]">
       {/* Top Toolbar */}
-      <div className="h-16 border-b border-border bg-card/80 backdrop-blur flex items-center justify-between px-6 z-20">
-        <div className="flex items-center gap-4">
+      <div className="h-14 border-b border-border bg-card/80 backdrop-blur flex items-center justify-between px-5 z-20 shrink-0">
+        <div className="flex items-center gap-3">
           <input
             type="text"
             value={workflowName}
             onChange={(e) => setWorkflowMeta({ name: e.target.value })}
-            className="bg-transparent text-xl font-display font-bold text-foreground border-none outline-none focus:ring-2 focus:ring-primary/50 rounded px-2 py-1 w-64"
+            className="bg-transparent text-lg font-display font-bold text-foreground border-none outline-none focus:ring-2 focus:ring-primary/40 rounded px-2 py-1 w-56"
           />
-          {workflowId && <span className="text-xs px-2 py-1 bg-secondary text-muted-foreground rounded-full">ID: {workflowId}</span>}
+          {workflowId && (
+            <span className="text-xs px-2 py-0.5 bg-secondary text-muted-foreground rounded-full border border-border">
+              #{workflowId}
+            </span>
+          )}
+          {isExecuting && executionProgress && (
+            <motion.span
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-xs text-blue-400 font-mono"
+            >
+              Running {executionProgress.current}/{executionProgress.total}
+            </motion.span>
+          )}
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setPromptOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-secondary text-foreground hover:bg-muted transition-colors border border-border"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-foreground hover:bg-muted transition-colors border border-border"
           >
-            <Sparkles size={16} className="text-amber-400" />
+            <Sparkles size={14} className="text-amber-400" />
             AI Generate
           </button>
           <button
             onClick={handleExplain}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-secondary text-foreground hover:bg-muted transition-colors border border-border"
+            disabled={isExplaining || !workflowId}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-foreground hover:bg-muted transition-colors border border-border disabled:opacity-40"
           >
-            <Wand2 size={16} className="text-accent" />
+            {isExplaining ? <RefreshCw size={14} className="animate-spin" /> : <Wand2 size={14} className="text-cyan-400" />}
             Explain
           </button>
           <button
             onClick={handleSave}
-            disabled={createMut.isPending || updateMut.isPending}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 transition-colors"
+            disabled={isSaving}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 transition-colors disabled:opacity-50"
+            title="Save (Ctrl+S)"
           >
-            {createMut.isPending || updateMut.isPending ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
+            {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
             Save
           </button>
           <button
             onClick={handleExecute}
-            disabled={executeMut.isPending || createMut.isPending || updateMut.isPending}
-            className="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold bg-gradient-to-r from-accent to-primary text-white shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            disabled={isExecuting || isSaving}
+            className="flex items-center gap-1.5 px-5 py-1.5 rounded-lg text-sm font-bold bg-gradient-to-r from-cyan-500 to-violet-600 text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 hover:-translate-y-px transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            title="Run (Ctrl+Enter)"
           >
-            {(executeMut.isPending || createMut.isPending || updateMut.isPending)
-              ? <RefreshCw size={16} className="animate-spin" />
-              : <Play size={16} className="fill-white" />}
-            {createMut.isPending ? 'Saving...' : executeMut.isPending ? 'Starting...' : 'Run Workflow'}
+            {isExecuting
+              ? <RefreshCw size={14} className="animate-spin" />
+              : <Play size={14} className="fill-white" />}
+            {isExecuting ? 'Running...' : 'Run'}
           </button>
         </div>
       </div>
@@ -237,7 +505,23 @@ function BuilderCanvas() {
       {/* Main Builder Area */}
       <div className="flex-1 flex overflow-hidden relative">
         <NodePalette />
-        <div className="flex-1 h-full" ref={reactFlowWrapper}>
+
+        <div className="flex-1 h-full relative" ref={reactFlowWrapper}>
+          {/* Live execution status bar */}
+          {liveExecutionId && (
+            <ExecutionStatusBar
+              executionId={liveExecutionId}
+              onDone={handleExecutionDone}
+            />
+          )}
+
+          {/* Empty state — shown OVER canvas when no nodes exist */}
+          {isEmpty && !isExecuting && (
+            <div className="absolute inset-0 z-10 pointer-events-none">
+              <EmptyState onOpenAIGenerate={() => setPromptOpen(true)} />
+            </div>
+          )}
+
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -251,119 +535,184 @@ function BuilderCanvas() {
             onPaneClick={onPaneClick}
             fitView
             proOptions={{ hideAttribution: true }}
+            deleteKeyCode="Delete"
+            defaultEdgeOptions={{ animated: true, style: { stroke: 'hsl(262 83% 58% / 0.6)', strokeWidth: 2 } }}
+            connectionLineStyle={{ stroke: 'hsl(262 83% 58%)', strokeWidth: 2, strokeDasharray: '6 3' }}
             className="bg-[#050505]"
           >
-            <Background color="#2a2a2a" gap={24} size={2} />
-            <Controls className="bg-card border border-border rounded-xl overflow-hidden" showInteractive={false} />
+            <Background
+              variant={BackgroundVariant.Dots}
+              color="#1e1e2e"
+              gap={24}
+              size={1.5}
+            />
+            <Controls
+              className="bg-card border border-border rounded-xl overflow-hidden shadow-xl"
+              showInteractive={false}
+            />
             <MiniMap
               nodeColor={(n) => {
-                switch (n.type) {
-                  case 'input': return '#34d399';
-                  case 'ai_agent': return '#8b5cf6';
-                  case 'api_call': return '#60a5fa';
-                  case 'condition': return '#fbbf24';
-                  case 'loop': return '#f472b6';
-                  case 'output': return '#f43f5e';
-                  default: return '#555';
-                }
+                const colors: Record<string, string> = {
+                  input: '#34d399', ai_agent: '#8b5cf6', api_call: '#60a5fa',
+                  condition: '#fbbf24', loop: '#f472b6', output: '#f43f5e',
+                  email: '#38bdf8', database: '#2dd4bf', webhook: '#fb923c',
+                  file_processor: '#818cf8', delay: '#facc15',
+                };
+                return colors[n.type ?? ''] ?? '#555';
               }}
-              maskColor="rgba(0, 0, 0, 0.7)"
+              maskColor="rgba(0,0,0,0.75)"
               style={{ background: 'hsl(240 10% 6%)' }}
             />
-          </ReactFlow>
-        </div>
-        <ConfigPanel />
-      </div>
-
-      {/* AI Generate Dialog */}
-      {promptOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
-          <div className="bg-card border border-border p-6 rounded-2xl shadow-2xl shadow-black max-w-lg w-full relative">
-            <button onClick={() => setPromptOpen(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
-              <X size={20} />
-            </button>
-            <h3 className="text-xl font-bold text-foreground mb-2 flex items-center gap-2">
-              <Sparkles className="text-amber-400" /> Auto-Generate Workflow
-            </h3>
-            <p className="text-sm text-muted-foreground mb-6">Describe the workflow you want to build and AI will construct the nodes and connections.</p>
-            <textarea
-              value={prompt}
-              onChange={e => setPrompt(e.target.value)}
-              placeholder="E.g., An agent that fetches weather data from an API, uses AI to write a short summary, and outputs it."
-              className="w-full bg-background border border-border rounded-xl p-4 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 min-h-[120px] mb-4 resize-none"
-            />
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setPromptOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground">Cancel</button>
+            {/* Fit view button */}
+            <div className="absolute bottom-4 right-4 z-10">
               <button
-                onClick={handleGenerate}
-                disabled={generateMut.isPending || !prompt}
-                className="px-6 py-2 rounded-lg text-sm font-bold bg-primary text-white shadow-lg shadow-primary/25 disabled:opacity-50 flex items-center gap-2"
+                onClick={() => fitView({ padding: 0.15, duration: 500 })}
+                className="p-2 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shadow-lg"
+                title="Fit view"
               >
-                {generateMut.isPending ? <RefreshCw className="animate-spin" size={16} /> : <Wand2 size={16} />}
-                Generate
+                <Maximize2 size={14} />
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </ReactFlow>
 
-      {/* AI Explain Dialog */}
-      {explainOpen && explanationData && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
-          <div className="bg-card border border-border p-6 rounded-2xl shadow-2xl shadow-black max-w-lg w-full relative max-h-[80vh] overflow-y-auto">
-            <button onClick={() => setExplainOpen(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
-              <X size={20} />
-            </button>
-            <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <Wand2 className="text-accent" /> Workflow Explanation
-            </h3>
-            <div className="prose prose-invert max-w-none text-sm">
-              <p className="text-foreground/90 leading-relaxed mb-6">{explanationData.explanation}</p>
-              <h4 className="text-foreground font-semibold mb-3">Execution Steps:</h4>
+          {/* Execution Output Panel */}
+          <ExecutionOutputPanel />
+        </div>
+
+        <ConfigPanel onOpenGenerate={() => setPromptOpen(true)} />
+      </div>
+
+      {/* ── AI Generate Dialog ─────────────────────────────────────────── */}
+      <AnimatePresence>
+        {promptOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              className="bg-card border border-border p-6 rounded-2xl shadow-2xl shadow-black max-w-lg w-full mx-4 relative"
+            >
+              <button onClick={() => setPromptOpen(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors">
+                <X size={18} />
+              </button>
+              <h3 className="text-xl font-bold text-foreground mb-1 flex items-center gap-2">
+                <Sparkles className="text-amber-400" size={20} /> Generate Workflow
+              </h3>
+              <p className="text-sm text-muted-foreground mb-5">Describe what you want to build and AI will create the nodes and connections.</p>
+              <textarea
+                autoFocus
+                value={prompt}
+                onChange={e => setPrompt(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate(); }}
+                placeholder="E.g., Fetch weather data from an API, summarize it with AI, and send an email with the result."
+                className="w-full bg-background border border-border rounded-xl p-4 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 min-h-[120px] mb-4 resize-none"
+              />
+              <div className="flex justify-between items-center">
+                <p className="text-xs text-muted-foreground">Ctrl+Enter to generate</p>
+                <div className="flex gap-2">
+                  <button onClick={() => setPromptOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground">Cancel</button>
+                  <button
+                    onClick={handleGenerate}
+                    disabled={generateMut.isPending || !prompt.trim()}
+                    className="px-5 py-2 rounded-lg text-sm font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {generateMut.isPending ? <RefreshCw className="animate-spin" size={14} /> : <Wand2 size={14} />}
+                    Generate
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Explain Dialog ─────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {explainOpen && explanationData && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              className="bg-card border border-border p-6 rounded-2xl shadow-2xl shadow-black max-w-lg w-full mx-4 relative max-h-[80vh] overflow-y-auto"
+            >
+              <button onClick={() => setExplainOpen(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+                <X size={18} />
+              </button>
+              <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                <Wand2 className="text-cyan-400" size={20} /> Workflow Explanation
+              </h3>
+              <p className="text-foreground/90 leading-relaxed mb-5 text-sm">{explanationData.explanation}</p>
+              <h4 className="text-foreground font-semibold mb-3 text-sm">Execution Steps:</h4>
               <ul className="space-y-2">
-                {explanationData.steps.map((step, i) => (
-                  <li key={i} className="flex gap-3 text-muted-foreground bg-secondary/50 p-3 rounded-lg border border-border">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">{i + 1}</span>
+                {explanationData.steps.map((step: string, i: number) => (
+                  <li key={i} className="flex gap-3 text-muted-foreground bg-secondary/50 p-3 rounded-lg border border-border text-sm">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">{i + 1}</span>
                     <span>{step}</span>
                   </li>
                 ))}
               </ul>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Run Workflow Input Dialog */}
-      {runInputOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
-          <div className="bg-card border border-border p-6 rounded-2xl shadow-2xl shadow-black max-w-lg w-full relative">
-            <button onClick={() => setRunInputOpen(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
-              <X size={20} />
-            </button>
-            <h3 className="text-xl font-bold text-foreground mb-2 flex items-center gap-2">
-              <Play size={18} className="text-primary fill-primary" /> Run Workflow
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">Provide the input text that will be passed into the first node of your workflow.</p>
-            <textarea
-              autoFocus
-              value={runInput}
-              onChange={e => setRunInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) doExecute(); }}
-              placeholder="E.g., Artificial intelligence is transforming every industry..."
-              className="w-full bg-background border border-border rounded-xl p-4 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 min-h-[100px] mb-4 resize-none"
-            />
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setRunInputOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground">Cancel</button>
-              <button
-                onClick={doExecute}
-                className="px-6 py-2 rounded-lg text-sm font-bold bg-gradient-to-r from-accent to-primary text-white shadow-lg shadow-primary/25 flex items-center gap-2"
-              >
-                <Play size={16} className="fill-white" /> Run Now
+      {/* ── Run Dialog ─────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {runInputOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              className="bg-card border border-border p-6 rounded-2xl shadow-2xl shadow-black max-w-lg w-full mx-4 relative"
+            >
+              <button onClick={() => setRunInputOpen(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+                <X size={18} />
               </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <h3 className="text-xl font-bold text-foreground mb-1 flex items-center gap-2">
+                <Play size={18} className="text-violet-400 fill-violet-400/30" /> Run Workflow
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">Provide the input text passed into the first node.</p>
+              <textarea
+                autoFocus
+                value={runInput}
+                onChange={e => setRunInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) doExecute(); }}
+                placeholder="E.g., Artificial intelligence is transforming every industry..."
+                className="w-full bg-background border border-border rounded-xl p-4 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 min-h-[100px] mb-4 resize-none"
+              />
+              <div className="flex justify-between items-center">
+                <p className="text-xs text-muted-foreground">Ctrl+Enter to run</p>
+                <div className="flex gap-2">
+                  <button onClick={() => setRunInputOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground">Cancel</button>
+                  <button
+                    onClick={doExecute}
+                    className="px-5 py-2 rounded-lg text-sm font-bold bg-gradient-to-r from-cyan-500 to-violet-600 text-white shadow-lg flex items-center gap-2"
+                  >
+                    <Play size={14} className="fill-white" /> Run Now
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -384,7 +733,7 @@ export default function BuilderPage() {
     } else if (!workflowId) {
       reset();
     }
-  }, [workflowId, data, loadApiFormat, setWorkflowMeta, reset]);
+  }, [workflowId, data]);
 
   return (
     <AppLayout>

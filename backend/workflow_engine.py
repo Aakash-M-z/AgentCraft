@@ -2,121 +2,214 @@
 Executes a workflow (list of ReactFlow-style nodes + edges) sequentially.
 Maps frontend node types to actual actions.
 """
+import json
 import logging
+import os
+import smtplib
+import asyncio
 import httpx
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timezone
 from typing import Any
 from .ai import call_ai
 
 logger = logging.getLogger(__name__)
 
-# Frontend node types → handler keys
-_AI_TYPES = {"ai_agent", "ai"}
-_API_TYPES = {"api_call", "api"}
+# ── Node type sets ────────────────────────────────────────────────────────────
+_AI_TYPES       = {"ai_agent", "ai"}
+_API_TYPES      = {"api_call", "api"}
 _CONDITION_TYPES = {"condition"}
-_LOOP_TYPES = {"loop"}
-_INPUT_TYPES = {"input"}
-_OUTPUT_TYPES = {"output"}
+_LOOP_TYPES     = {"loop"}
+_INPUT_TYPES    = {"input"}
+_OUTPUT_TYPES   = {"output"}
+_EMAIL_TYPES    = {"email"}
+_DELAY_TYPES    = {"delay"}
+_WEBHOOK_TYPES  = {"webhook"}
+_DB_TYPES       = {"database"}
+_FILE_TYPES     = {"file_processor"}
 
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _inject(template: str, value: str) -> str:
-    return template.replace("{{input}}", value)
+def _to_str(value: Any) -> str:
+    """Safely convert any value to a string for use as {{input}} injection."""
+    if isinstance(value, str):
+        return value
+    return json.dumps(value, ensure_ascii=False)
+
+
+def _inject(template: str, value: Any) -> str:
+    """Replace {{input}} in template with the string form of value."""
+    return template.replace("{{input}}", _to_str(value))
+
+
+def _parse_json_or_str(value: Any) -> Any:
+    """
+    If value is a JSON string, parse and return the dict/list.
+    Otherwise return as-is.
+    """
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.startswith("{") or stripped.startswith("["):
+            try:
+                return json.loads(stripped)
+            except json.JSONDecodeError:
+                pass
+    return value
+
+
+def _sanitize_subject(subject: str) -> str:
+    """Strip newlines and truncate — SMTP Subject must be a single line."""
+    # Take only the first line, strip whitespace, cap at 200 chars
+    first_line = subject.splitlines()[0].strip() if subject else ""
+    return first_line[:200] or "AgentCraft Workflow Result"
+
+
+async def _send_email(to: str, subject: str, body: str, fmt: str = "text") -> dict:
+    """
+    Send email via Gmail SMTP.
+    Always returns a structured dict — never raises silently.
+    """
+    email_user = os.environ.get("EMAIL_USER", "").strip()
+    email_pass = os.environ.get("EMAIL_PASS", "").strip()
+
+    if not email_user or not email_pass:
+        raise ValueError("EMAIL_USER and EMAIL_PASS environment variables are not set")
+
+    # Subject MUST be a single line — sanitize before building the message
+    clean_subject = _sanitize_subject(subject)
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = clean_subject
+    msg["From"]    = email_user
+    msg["To"]      = to
+
+    mime_type = "html" if fmt == "html" else "plain"
+    msg.attach(MIMEText(body, mime_type, "utf-8"))
+
+    def _smtp_send():
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=20) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(email_user, email_pass)
+            server.sendmail(email_user, to, msg.as_string())
+
+    # Run blocking SMTP in thread pool — never blocks the event loop
+    await asyncio.get_event_loop().run_in_executor(None, _smtp_send)
+
+    return {
+        "status": "sent",
+        "to": to,
+        "subject": clean_subject,
+        "body": body[:200],  # truncate for output display
+    }
 
 
 async def run_workflow(
     user_input: str,
     nodes: list[dict],
     edges: list[dict] | None = None,
+    _log_sink: list[str] | None = None,  # shared list for incremental SSE logging
 ) -> dict[str, Any]:
     """
-    Execute nodes in order (topological if edges provided, else list order).
+    Execute nodes in topological order.
+    Each node receives the previous node's output as `current`.
     Returns a dict compatible with the frontend ExecutionDetail schema.
     """
     edges = edges or []
     ordered = _topo_sort(nodes, edges) if edges else nodes
 
-    current = user_input
+    # `current` carries the live value between nodes — starts as the user's input
+    current: Any = user_input
     node_results: list[dict] = []
-    agent_logs: list[str] = []
-    final_output = ""
+    # Use shared sink if provided (for incremental SSE), else local list
+    agent_logs: list[str] = _log_sink if _log_sink is not None else []
+    final_output: str = ""
 
-    def log(msg: str):
+    def log(msg: str) -> None:
+        entry = f"[{_now()}] {msg}"
         logger.info(msg)
-        agent_logs.append(f"[{_now()}] {msg}")
+        agent_logs.append(entry)
 
-    log(f"🚀 Starting execution | input: {user_input[:80]}")
+    log(f"🚀 Starting execution | nodes={len(ordered)} | input: {_to_str(user_input)[:80]}")
 
     for node in ordered:
-        node_id = node.get("id", "?")
+        node_id   = node.get("id", "?")
         node_type = (node.get("type") or "").lower()
-        label = node.get("label") or node_type
-        config = node.get("config") or {}
+        label     = node.get("label") or node_type
+        config    = node.get("config") or {}
 
-        log(f"⚙️  Node [{node_id}] type={node_type} label={label}")
+        log(f"⚙️  [{label}] type={node_type}")
+        log(f"    ↳ input: {_to_str(current)[:120]}")
 
         result: dict = {
-            "nodeId": node_id,
-            "nodeType": node_type,
-            "label": label,
-            "status": "running",
+            "nodeId":    node_id,
+            "nodeType":  node_type,
+            "label":     label,
+            "status":    "running",
             "startedAt": _now(),
+            "input":     _to_str(current)[:500],
         }
 
         try:
+            output: Any = None  # will be set by each handler
+
             # ── input ──────────────────────────────────────────────────────
             if node_type in _INPUT_TYPES:
                 output = user_input
-                log(f"  📥 Input node → {output[:80]}")
+                log(f"    ✓ Input → {_to_str(output)[:80]}")
 
             # ── ai_agent ───────────────────────────────────────────────────
             elif node_type in _AI_TYPES:
-                instruction = str(config.get("instruction") or config.get("prompt") or "Process: {{input}}")
-                model = config.get("model") or None
+                instruction = str(
+                    config.get("instruction") or config.get("prompt") or "Process: {{input}}"
+                )
+                model       = config.get("model") or None
                 temperature = float(config.get("temperature") or 0.7)
-                prompt = _inject(instruction, current)
-                log(f"  🤖 AI prompt [{model or 'default'}]: {prompt[:100]}")
-                output = await call_ai(prompt, model=model, temperature=temperature)
-                log(f"  💬 AI output: {output[:100]}")
+                prompt      = _inject(instruction, current)
+                log(f"    🤖 AI [{model or 'default'}]: {prompt[:120]}")
+                raw_output  = await call_ai(prompt, model=model, temperature=temperature)
+                # Try to parse as JSON so downstream nodes can use structured data
+                output = _parse_json_or_str(raw_output)
+                log(f"    💬 AI output: {_to_str(output)[:120]}")
 
             # ── api_call ───────────────────────────────────────────────────
             elif node_type in _API_TYPES:
-                url = str(config.get("url") or "")
+                url    = str(config.get("url") or "")
                 method = str(config.get("method") or "GET").upper()
                 if not url:
-                    output = f"[API] simulated response for: {current[:60]}"
-                    log(f"  🌐 API simulated")
+                    output = f"[API] simulated response for: {_to_str(current)[:60]}"
+                    log(f"    🌐 API simulated (no URL configured)")
                 else:
-                    async with httpx.AsyncClient(timeout=10) as http:
+                    async with httpx.AsyncClient(timeout=15) as http:
                         if method == "POST":
-                            resp = await http.post(url, json={"input": current})
+                            resp = await http.post(url, json={"input": _to_str(current)})
                         else:
-                            resp = await http.get(url, params={"input": current})
+                            resp = await http.get(url, params={"input": _to_str(current)})
                         resp.raise_for_status()
-                        output = resp.text
-                    log(f"  🌐 API {method} {url} → {output[:60]}")
+                        output = _parse_json_or_str(resp.text)
+                    log(f"    🌐 API {method} {url} → {_to_str(output)[:80]}")
 
             # ── condition ──────────────────────────────────────────────────
             elif node_type in _CONDITION_TYPES:
-                expr = str(config.get("expression") or config.get("keyword") or "error")
-                passed = expr.lower() not in current.lower()
-                output = "true" if passed else "false"
-                log(f"  🔀 Condition '{expr}' → {'PASS' if passed else 'HALT'}")
+                expr   = str(config.get("expression") or config.get("keyword") or "error")
+                passed = expr.lower() not in _to_str(current).lower()
+                output = current  # pass value through unchanged
+                log(f"    🔀 Condition '{expr}' → {'PASS ✓' if passed else 'HALT ✗'}")
                 result.update({
-                    "status": "success",
-                    "output": {"result": output, "passed": passed},
+                    "status":      "success",
+                    "output":      {"result": _to_str(output), "passed": passed},
                     "completedAt": _now(),
                 })
                 node_results.append(result)
                 if not passed:
-                    agent_logs.append(f"[{_now()}] ❌ Halted by condition")
-                    return _build_result(
-                        "failed", current, node_results, agent_logs,
-                        reason=f"Condition halted: '{expr}' found in output",
-                    )
+                    log(f"    ❌ Halted by condition: '{expr}' found in output")
+                    return _build_result("failed", _to_str(current), node_results, agent_logs,
+                                         reason=f"Condition halted: '{expr}' found in output")
                 current = output
                 continue
 
@@ -124,54 +217,129 @@ async def run_workflow(
             elif node_type in _LOOP_TYPES:
                 times = int(config.get("maxIterations") or config.get("times") or 3)
                 inner = list(config.get("innerNodes") or [])
-                log(f"  🔄 Loop x{times}")
-                loop_out = current
+                log(f"    🔄 Loop ×{times}")
+                loop_out: Any = current
                 for i in range(times):
                     if inner:
-                        sub = await run_workflow(loop_out, inner)
+                        sub      = await run_workflow(_to_str(loop_out), inner)
                         loop_out = sub["finalOutput"]
-                    log(f"  🔄 Loop iter {i+1}: {loop_out[:60]}")
+                    log(f"    🔄 iter {i+1}: {_to_str(loop_out)[:60]}")
                 output = loop_out
+
+            # ── email ──────────────────────────────────────────────────────
+            elif node_type in _EMAIL_TYPES:
+                to  = str(config.get("to") or "").strip()
+                fmt = str(config.get("format") or "text")
+
+                if not to:
+                    raise ValueError("Email node: 'to' address is required — set it in the node config")
+
+                # current may be a dict (from AI node) or a plain string
+                parsed = _parse_json_or_str(current)
+
+                # Extract subject: config template > parsed dict key > fallback
+                subject_tpl = str(config.get("subject") or "AgentCraft Workflow Result")
+                if isinstance(parsed, dict) and "subject" in parsed:
+                    subject = str(parsed["subject"])
+                else:
+                    subject = _inject(subject_tpl, current)
+
+                # Extract body: config template > parsed dict key > full current value
+                body_tpl = str(config.get("body") or "{{input}}")
+                if isinstance(parsed, dict) and "body" in parsed:
+                    body = str(parsed["body"])
+                elif isinstance(parsed, dict) and "content" in parsed:
+                    body = str(parsed["content"])
+                else:
+                    body = _inject(body_tpl, current)
+
+                log(f"    📧 Sending to={to} | subject={subject[:60]}")
+                email_result = await _send_email(to, subject, body, fmt)
+                log(f"    ✅ Email sent → {email_result['to']}")
+                # Pass the email result dict downstream (output node will display it)
+                output = email_result
 
             # ── output ─────────────────────────────────────────────────────
             elif node_type in _OUTPUT_TYPES:
-                fmt = str(config.get("format") or "text")
-                output = current
-                final_output = output
-                log(f"  📤 Output ({fmt}): {output[:80]}")
+                fmt    = str(config.get("format") or "text")
+                output = current  # output node simply returns what it receives
+                final_output = _to_str(output)
+                log(f"    📤 Output ({fmt}): {final_output[:120]}")
                 result.update({
-                    "status": "success",
-                    "output": {"result": output, "format": fmt},
+                    "status":      "success",
+                    "output":      {"result": final_output, "format": fmt},
                     "completedAt": _now(),
-                    "durationMs": 0,
                 })
                 node_results.append(result)
-                log("🎉 Execution complete")
+                log("🎉 Workflow complete")
                 return _build_result("completed", final_output, node_results, agent_logs)
 
+            # ── delay ──────────────────────────────────────────────────────
+            elif node_type in _DELAY_TYPES:
+                seconds = min(int(config.get("seconds") or 5), 60)
+                log(f"    ⏱️  Waiting {seconds}s...")
+                await asyncio.sleep(seconds)
+                output = current
+                log(f"    ✅ Delay complete")
+
+            # ── webhook ────────────────────────────────────────────────────
+            elif node_type in _WEBHOOK_TYPES:
+                output = current
+                log(f"    🔗 Webhook — passing through")
+
+            # ── database ───────────────────────────────────────────────────
+            elif node_type in _DB_TYPES:
+                operation = str(config.get("operation") or "read")
+                query     = str(config.get("query") or "")
+                log(f"    🗄️  DB {operation}: {query[:60]}")
+                output = f"[DB {operation}] simulated result for: {_to_str(current)[:60]}"
+                log(f"    ✅ {output[:60]}")
+
+            # ── file processor ─────────────────────────────────────────────
+            elif node_type in _FILE_TYPES:
+                operation = str(config.get("operation") or "read")
+                path      = str(config.get("path") or "")
+                log(f"    📄 File {operation}: {path}")
+                output = f"[File {operation}] simulated result for: {_to_str(current)[:60]}"
+                log(f"    ✅ {output[:60]}")
+
+            # ── unknown ────────────────────────────────────────────────────
             else:
                 output = current
-                log(f"  ⚠️  Unknown node type '{node_type}' — passing through")
+                log(f"    ⚠️  Unknown type '{node_type}' — passing through")
+
+            # Guard: output must never be None
+            if output is None:
+                output = current
+                log(f"    ⚠️  Node returned None — using previous value")
+
+            log(f"    ✓ output: {_to_str(output)[:120]}")
 
             result.update({
-                "status": "success",
-                "output": {"result": output},
+                "status":      "success",
+                "output":      {"result": _to_str(output)},
                 "completedAt": _now(),
             })
             current = output
 
         except Exception as exc:
-            logger.error("Node %s failed: %s", node_id, exc)
-            log(f"  ❌ Node {node_id} error: {exc}")
-            result.update({"status": "failed", "reasoning": str(exc), "completedAt": _now()})
+            error_msg = f"Node [{label}] failed: {exc}"
+            logger.error(error_msg, exc_info=True)
+            log(f"    ❌ {error_msg}")
+            result.update({
+                "status":      "failed",
+                "reasoning":   error_msg,
+                "completedAt": _now(),
+            })
             node_results.append(result)
-            return _build_result("failed", str(exc), node_results, agent_logs)
+            return _build_result("failed", error_msg, node_results, agent_logs)
 
         node_results.append(result)
 
-    # No explicit output node — return last value
-    log("✅ Workflow finished (no output node)")
-    return _build_result("completed", current, node_results, agent_logs)
+    # Workflow finished without an explicit output node
+    final_output = _to_str(current)
+    log(f"✅ Workflow finished | final: {final_output[:120]}")
+    return _build_result("completed", final_output, node_results, agent_logs)
 
 
 def _build_result(
@@ -182,17 +350,17 @@ def _build_result(
     reason: str | None = None,
 ) -> dict:
     return {
-        "status": status,
+        "status":      status,
         "finalOutput": final_output,
         "nodeResults": node_results,
-        "agentLogs": agent_logs,
+        "agentLogs":   agent_logs,
         **({"reason": reason} if reason else {}),
     }
 
 
 def _topo_sort(nodes: list[dict], edges: list[dict]) -> list[dict]:
-    node_map = {n["id"]: n for n in nodes}
-    in_degree: dict[str, int] = {n["id"]: 0 for n in nodes}
+    node_map   = {n["id"]: n for n in nodes}
+    in_degree  = {n["id"]: 0 for n in nodes}
     adj: dict[str, list[str]] = {n["id"]: [] for n in nodes}
 
     for e in edges:
@@ -200,9 +368,9 @@ def _topo_sort(nodes: list[dict], edges: list[dict]) -> list[dict]:
         if src in adj:
             adj[src].append(tgt)
         if tgt in in_degree:
-            in_degree[tgt] = in_degree.get(tgt, 0) + 1
+            in_degree[tgt] += 1
 
-    queue = [n for n in nodes if in_degree[n["id"]] == 0]
+    queue  = [n for n in nodes if in_degree[n["id"]] == 0]
     result: list[dict] = []
     while queue:
         node = queue.pop(0)
@@ -212,7 +380,7 @@ def _topo_sort(nodes: list[dict], edges: list[dict]) -> list[dict]:
             if in_degree[neighbor] == 0 and neighbor in node_map:
                 queue.append(node_map[neighbor])
 
-    # Append any nodes not reached
+    # Append any disconnected nodes
     seen = {n["id"] for n in result}
     result += [n for n in nodes if n["id"] not in seen]
     return result

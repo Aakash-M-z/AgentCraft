@@ -18,6 +18,16 @@ export type AppNodeData = {
 
 export type AppNode = Node<AppNodeData, WorkflowNodeType>;
 
+export type NodeExecutionStatus = 'idle' | 'running' | 'success' | 'failed';
+
+export type NodeDebugInfo = {
+  input?: string;
+  output?: string;
+  executionTime?: number;
+  error?: string;
+  status: NodeExecutionStatus;
+};
+
 interface WorkflowState {
   nodes: AppNode[];
   edges: Edge[];
@@ -25,7 +35,15 @@ interface WorkflowState {
   workflowId: number | null;
   workflowName: string;
   workflowDescription: string;
-  
+
+  // Live execution state (used in builder during run)
+  nodeExecutionStatus: Record<string, NodeExecutionStatus>;
+  nodeDebugInfo: Record<string, NodeDebugInfo>;
+  isExecuting: boolean;
+  executionProgress: { current: number; total: number } | null;
+  finalOutput: string | null;
+  executionStatus: 'idle' | 'running' | 'completed' | 'failed' | null;
+
   // Actions
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
@@ -37,20 +55,20 @@ interface WorkflowState {
   setSelectedNodeId: (id: string | null) => void;
   setWorkflowMeta: (meta: { id?: number | null; name?: string; description?: string }) => void;
   reset: () => void;
-  
+  setNodeExecutionStatus: (nodeId: string, status: NodeExecutionStatus) => void;
+  setNodeDebugInfo: (nodeId: string, info: NodeDebugInfo) => void;
+  setIsExecuting: (v: boolean) => void;
+  setExecutionProgress: (p: { current: number; total: number } | null) => void;
+  setFinalOutput: (output: string | null) => void;
+  setExecutionStatus: (status: 'idle' | 'running' | 'completed' | 'failed' | null) => void;
+  clearExecutionState: () => void;
+
   // Mappers
   getApiFormat: () => { nodes: WorkflowNode[]; edges: WorkflowEdge[] };
   loadApiFormat: (nodes: WorkflowNode[], edges: WorkflowEdge[]) => void;
 }
 
-const initialNodes: AppNode[] = [
-  {
-    id: 'trigger-1',
-    type: 'input',
-    position: { x: 250, y: 200 },
-    data: { label: 'Manual Trigger', config: { inputSchema: '{}' } },
-  },
-];
+const initialNodes: AppNode[] = [];
 
 export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   nodes: initialNodes,
@@ -59,54 +77,65 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   workflowId: null,
   workflowName: 'Untitled Workflow',
   workflowDescription: '',
+  nodeExecutionStatus: {},
+  nodeDebugInfo: {},
+  isExecuting: false,
+  executionProgress: null,
+  finalOutput: null,
+  executionStatus: null,
 
   onNodesChange: (changes: NodeChange[]) => {
-    set({
-      nodes: applyNodeChanges(changes, get().nodes) as AppNode[],
-    });
+    set({ nodes: applyNodeChanges(changes, get().nodes) as AppNode[] });
   },
-  
   onEdgesChange: (changes: EdgeChange[]) => {
-    set({
-      edges: applyEdgeChanges(changes, get().edges),
-    });
+    set({ edges: applyEdgeChanges(changes, get().edges) });
   },
-  
   onConnect: (connection: Connection) => {
-    set({
-      edges: addEdge({ ...connection, animated: true }, get().edges),
-    });
+    set({ edges: addEdge({ ...connection, animated: true }, get().edges) });
   },
-  
   setNodes: (nodes: AppNode[]) => set({ nodes }),
   setEdges: (edges: Edge[]) => set({ edges }),
-  
   addNode: (node: AppNode) => {
     set({ nodes: [...get().nodes, node] });
   },
-  
   updateNodeData: (id: string, data: Partial<AppNodeData>) => {
     set({
-      nodes: get().nodes.map((node) => {
-        if (node.id === id) {
-          return { ...node, data: { ...node.data, ...data } };
-        }
-        return node;
-      }),
+      nodes: get().nodes.map((node) =>
+        node.id === id ? { ...node, data: { ...node.data, ...data } } : node
+      ),
     });
   },
-  
   setSelectedNodeId: (id: string | null) => set({ selectedNodeId: id }),
-  
   setWorkflowMeta: (meta) => set((state) => ({ ...state, ...meta })),
-  
-  reset: () => set({ 
-    nodes: initialNodes, 
-    edges: [], 
-    selectedNodeId: null, 
-    workflowId: null, 
-    workflowName: 'Untitled Workflow', 
-    workflowDescription: '' 
+  reset: () => set({
+    nodes: initialNodes,
+    edges: [],
+    selectedNodeId: null,
+    workflowId: null,
+    workflowName: 'Untitled Workflow',
+    workflowDescription: '',
+    nodeExecutionStatus: {},
+    nodeDebugInfo: {},
+    isExecuting: false,
+    executionProgress: null,
+    finalOutput: null,
+    executionStatus: null,
+  }),
+  setNodeExecutionStatus: (nodeId, status) =>
+    set((s) => ({ nodeExecutionStatus: { ...s.nodeExecutionStatus, [nodeId]: status } })),
+  setNodeDebugInfo: (nodeId, info) =>
+    set((s) => ({ nodeDebugInfo: { ...s.nodeDebugInfo, [nodeId]: info } })),
+  setIsExecuting: (v) => set({ isExecuting: v }),
+  setExecutionProgress: (p) => set({ executionProgress: p }),
+  setFinalOutput: (output) => set({ finalOutput: output }),
+  setExecutionStatus: (status) => set({ executionStatus: status }),
+  clearExecutionState: () => set({
+    nodeExecutionStatus: {},
+    nodeDebugInfo: {},
+    isExecuting: false,
+    executionProgress: null,
+    finalOutput: null,
+    executionStatus: null,
   }),
 
   getApiFormat: () => {
@@ -133,12 +162,8 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       id: n.id,
       type: n.type,
       position: n.position,
-      data: {
-        label: n.label,
-        config: n.config || {}
-      }
+      data: { label: n.label, config: n.config || {} }
     }));
-    
     const edges: Edge[] = apiEdges.map(e => ({
       id: e.id,
       source: e.source,
@@ -146,7 +171,6 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       label: e.label,
       animated: true,
     }));
-    
     set({ nodes, edges, selectedNodeId: null });
   }
 }));

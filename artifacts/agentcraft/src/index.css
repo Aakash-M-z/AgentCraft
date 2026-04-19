@@ -47,36 +47,41 @@
 
 :root {
   /* Force Dark Mode Palette */
-  --background: 240 10% 4%; /* #09090b */
-  --foreground: 0 0% 98%; /* #fafafa */
-  
-  --card: 240 10% 6%; /* #0f0f11 */
+  --background: 240 10% 4%;
+  /* #09090b */
+  --foreground: 0 0% 98%;
+  /* #fafafa */
+
+  --card: 240 10% 6%;
+  /* #0f0f11 */
   --card-foreground: 0 0% 98%;
   --card-border: 240 10% 12%;
-  
+
   --popover: 240 10% 6%;
   --popover-foreground: 0 0% 98%;
   --popover-border: 240 10% 12%;
-  
-  --primary: 262 83% 58%; /* #8b5cf6 - Purple */
+
+  --primary: 262 83% 58%;
+  /* #8b5cf6 - Purple */
   --primary-foreground: 0 0% 100%;
-  
+
   --secondary: 240 10% 10%;
   --secondary-foreground: 0 0% 98%;
-  
+
   --muted: 240 10% 12%;
   --muted-foreground: 240 5% 65%;
-  
-  --accent: 189 94% 43%; /* #06b6d4 - Cyan */
+
+  --accent: 189 94% 43%;
+  /* #06b6d4 - Cyan */
   --accent-foreground: 0 0% 98%;
-  
+
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
-  
+
   --border: 240 10% 15%;
   --input: 240 10% 15%;
   --ring: 262 83% 58%;
-  
+
   --radius: 0.75rem;
 }
 
@@ -88,8 +93,13 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
-  
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-display font-bold tracking-tight;
   }
 }
@@ -98,15 +108,19 @@
 .react-flow__pane {
   @apply bg-background;
 }
+
 .react-flow__background {
   @apply bg-background;
 }
+
 .react-flow__controls-button {
   @apply bg-card border-border fill-foreground hover:bg-muted transition-colors;
 }
+
 .react-flow__minimap {
   @apply bg-card border border-border rounded-xl overflow-hidden;
 }
+
 .react-flow__minimap-mask {
   @apply fill-primary/20;
 }
@@ -116,12 +130,72 @@
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   @apply bg-muted-foreground/30 rounded-full;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/50;
+}
+
+/* ── React Flow handle hover ─────────────────────────────────────────────── */
+.react-flow__handle {
+  transition: all 0.15s ease !important;
+}
+
+.react-flow__handle:hover {
+  width: 18px !important;
+  height: 18px !important;
+  border-color: hsl(262 83% 58%) !important;
+  background: hsl(262 83% 58% / 0.2) !important;
+  box-shadow: 0 0 12px hsl(262 83% 58% / 0.5) !important;
+}
+
+.react-flow__handle-connecting {
+  border-color: hsl(262 83% 58%) !important;
+  background: hsl(262 83% 58% / 0.3) !important;
+}
+
+.react-flow__handle-valid {
+  border-color: hsl(142 71% 45%) !important;
+  background: hsl(142 71% 45% / 0.3) !important;
+  box-shadow: 0 0 12px hsl(142 71% 45% / 0.5) !important;
+}
+
+/* ── Animated edges ──────────────────────────────────────────────────────── */
+.react-flow__edge-path {
+  transition: stroke 0.3s ease;
+}
+
+/* ── Connection line ─────────────────────────────────────────────────────── */
+.react-flow__connectionline path {
+  stroke-dasharray: 6 3;
+  animation: dash 0.5s linear infinite;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -9;
+  }
+}
+
+/* ── Node selection ring ─────────────────────────────────────────────────── */
+.react-flow__node.selected>div {
+  outline: none;
+}
+
+/* ── Slow spin utility ───────────────────────────────────────────────────── */
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
 }

@@ -31,49 +31,63 @@ export default function ExecutionDetailPage() {
   const [visibleLogs, setVisibleLogs] = useState<string[]>([]);
   const [showOutput, setShowOutput] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
+  // Track how many logs we've already shown to avoid duplicates
+  const shownCountRef = useRef(0);
+  const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Poll while running
+  // Poll while running — stop as soon as terminal state reached
   useEffect(() => {
     if (!execData) return;
     if (execData.status === 'running' || execData.status === 'pending') {
       const t = setInterval(() => refetch(), 1500);
       return () => clearInterval(t);
     }
+    // Terminal state — no more polling needed
   }, [execData?.status]);
 
-  // Sync from polled data
+  // Sync logs from polled data — replace liveLogs with authoritative server list
   useEffect(() => {
     if (!execData) return;
     const nodeState: Record<string, string> = {};
-    execData.nodeResults.forEach(nr => { nodeState[nr.nodeId] = nr.status; });
+    execData.nodeResults.forEach((nr: any) => { nodeState[nr.nodeId] = nr.status; });
     setLiveNodes(nodeState);
+    // Replace entirely — server is source of truth
     setLiveLogs(execData.agentLogs || []);
-    if (execData.status === 'completed' || execData.status === 'failed') {
+    if (execData.status === 'completed' || execData.status === 'failed' || execData.status === 'cancelled') {
       setTimeout(() => setShowOutput(true), 400);
     }
   }, [execData]);
 
-  // Sync from SSE events
+  // Sync from SSE events — only add logs not already in liveLogs
   useEffect(() => {
     if (!events.length) return;
-    const newNodeState = { ...liveNodes };
-    const newLogs: string[] = [];
-    events.forEach(e => {
-      if (e.nodeId && e.status) newNodeState[e.nodeId] = e.status;
-      if (e.message) newLogs.push(e.message);
-      if (e.type === 'execution_complete') setTimeout(() => setShowOutput(true), 400);
-    });
-    if (Object.keys(newNodeState).length) setLiveNodes(prev => ({ ...prev, ...newNodeState }));
-    if (newLogs.length) setLiveLogs(prev => [...prev, ...newLogs]);
+    const lastEvent = events[events.length - 1];
+    if (lastEvent.nodeId && lastEvent.status) {
+      setLiveNodes(prev => ({ ...prev, [lastEvent.nodeId!]: lastEvent.status! }));
+    }
+    if (lastEvent.type === 'execution_complete') {
+      setTimeout(() => setShowOutput(true), 400);
+    }
+    // SSE logs are already captured by polling — skip to avoid duplicates
   }, [events]);
 
-  // Animate logs in one by one
+  // Animate logs in one by one — driven by liveLogs length vs shown count
   useEffect(() => {
-    if (liveLogs.length <= visibleLogs.length) return;
-    const next = liveLogs[visibleLogs.length];
-    const t = setTimeout(() => setVisibleLogs(prev => [...prev, next]), 60);
-    return () => clearTimeout(t);
-  }, [liveLogs, visibleLogs]);
+    if (animTimerRef.current) clearTimeout(animTimerRef.current);
+    if (liveLogs.length <= shownCountRef.current) return;
+
+    const showNext = () => {
+      const idx = shownCountRef.current;
+      if (idx >= liveLogs.length) return;
+      shownCountRef.current = idx + 1;
+      setVisibleLogs(liveLogs.slice(0, shownCountRef.current));
+      if (shownCountRef.current < liveLogs.length) {
+        animTimerRef.current = setTimeout(showNext, 50);
+      }
+    };
+    animTimerRef.current = setTimeout(showNext, 50);
+    return () => { if (animTimerRef.current) clearTimeout(animTimerRef.current); };
+  }, [liveLogs]);
 
   // Auto-scroll logs
   useEffect(() => {
@@ -238,13 +252,21 @@ export default function ExecutionDetailPage() {
               showOutput ? "max-h-[45%] opacity-100" : "max-h-0 opacity-0"
             )}>
               <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-card/50">
-                <Sparkles size={15} className="text-amber-400" />
-                <span className="text-sm font-semibold text-foreground">Final Output</span>
+                <Sparkles size={15} className={execData.status === 'failed' ? 'text-rose-400' : 'text-amber-400'} />
+                <span className="text-sm font-semibold text-foreground">
+                  {execData.status === 'failed' ? 'Error' : 'Final Output'}
+                </span>
                 {execData.status === 'completed' && (
                   <CheckCircle2 size={14} className="ml-auto text-emerald-400" />
                 )}
+                {execData.status === 'failed' && (
+                  <XCircle size={14} className="ml-auto text-rose-400" />
+                )}
               </div>
-              <div className="p-4 overflow-y-auto bg-background/50 text-sm text-foreground/90 whitespace-pre-wrap font-mono leading-relaxed"
+              <div className={cn(
+                "p-4 overflow-y-auto text-sm whitespace-pre-wrap font-mono leading-relaxed",
+                execData.status === 'failed' ? 'bg-rose-500/5 text-rose-300' : 'bg-background/50 text-foreground/90'
+              )}
                 style={{ maxHeight: 'calc(45vh - 48px)' }}>
                 {execData.finalOutput
                   ? <span className="animate-in fade-in duration-700">{execData.finalOutput}</span>
