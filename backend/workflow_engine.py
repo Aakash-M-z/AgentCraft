@@ -111,7 +111,12 @@ async def _send_email(to: str, subject: str, body: str, fmt: str = "text") -> di
     msg.attach(MIMEText(body, mime_type, "utf-8"))
 
     def _smtp_send():
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=20) as server:
+        host = os.environ.get("EMAIL_HOST", "smtp-relay.brevo.com")
+        port = int(os.environ.get("EMAIL_PORT", "587"))
+        
+        logger.info(f"   SMTP Host: {host}:{port}")
+        
+        with smtplib.SMTP(host, port, timeout=20) as server:
             server.ehlo()
             server.starttls()
             server.ehlo()

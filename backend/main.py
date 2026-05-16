@@ -39,6 +39,8 @@ def _verify_env_vars():
         "GROQ_API_KEY": bool(os.getenv("GROQ_API_KEY")),
         "EMAIL_USER": bool(os.getenv("EMAIL_USER")),
         "EMAIL_PASS": bool(os.getenv("EMAIL_PASS")),
+        "EMAIL_HOST": bool(os.getenv("EMAIL_HOST")),
+        "EMAIL_PORT": bool(os.getenv("EMAIL_PORT")),
     }
     
     logger.info("🔍 Environment Variables Status:")
