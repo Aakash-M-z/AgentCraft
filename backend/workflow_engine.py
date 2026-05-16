@@ -5,11 +5,8 @@ Maps frontend node types to actual actions.
 import json
 import logging
 import os
-import smtplib
 import asyncio
 import httpx
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timezone
 from typing import Any
 from .ai import call_ai
@@ -70,67 +67,56 @@ def _sanitize_subject(subject: str) -> str:
 
 async def _send_email(to: str, subject: str, body: str, fmt: str = "text") -> dict:
     """
-    Send email via Gmail SMTP.
+    Send email via Brevo Transactional Email REST API.
+    Uses HTTPS (port 443) — works on all cloud hosts including Render.
+    EMAIL_USER = sender address, EMAIL_PASS = Brevo API key (xkeysib-...).
     Always returns a structured dict — never raises silently.
     """
-    # Debug logging for production troubleshooting
-    email_user = os.environ.get("EMAIL_USER", "").strip()
-    email_pass = os.environ.get("EMAIL_PASS", "").strip()
-    
-    # Log environment variable status (without exposing values)
-    logger.info("📧 Email credentials check:")
-    logger.info(f"   EMAIL_USER present: {bool(email_user)} (length: {len(email_user) if email_user else 0})")
-    logger.info(f"   EMAIL_PASS present: {bool(email_pass)} (length: {len(email_pass) if email_pass else 0})")
-    
-    # Also check os.getenv vs os.environ
-    alt_user = os.getenv("EMAIL_USER", "").strip()
-    alt_pass = os.getenv("EMAIL_PASS", "").strip()
-    logger.info(f"   os.getenv EMAIL_USER: {bool(alt_user)}")
-    logger.info(f"   os.getenv EMAIL_PASS: {bool(alt_pass)}")
-    
-    # List all environment variables that start with EMAIL (for debugging)
-    email_vars = {k: "***" for k in os.environ.keys() if k.startswith("EMAIL")}
-    logger.info(f"   Available EMAIL_* vars: {list(email_vars.keys())}")
+    sender_email = os.environ.get("EMAIL_USER", "").strip()
+    api_key      = os.environ.get("EMAIL_PASS", "").strip()
 
-    if not email_user or not email_pass:
-        error_msg = "EMAIL_USER and EMAIL_PASS environment variables are not set"
-        logger.error(f"❌ {error_msg}")
-        logger.error(f"   EMAIL_USER: {'<empty>' if not email_user else '<present>'}")
-        logger.error(f"   EMAIL_PASS: {'<empty>' if not email_pass else '<present>'}")
-        raise ValueError(error_msg)
+    logger.info("📧 Brevo API email:")
+    logger.info(f"   Sender:  {'<set>' if sender_email else '<MISSING>'}")
+    logger.info(f"   API key: {'<set>' if api_key else '<MISSING>'}")
 
-    # Subject MUST be a single line — sanitize before building the message
+    if not sender_email or not api_key:
+        missing = [v for v, val in [("EMAIL_USER", sender_email), ("EMAIL_PASS", api_key)] if not val]
+        raise ValueError(f"Brevo email: missing env vars: {', '.join(missing)}")
+
     clean_subject = _sanitize_subject(subject)
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = clean_subject
-    msg["From"]    = email_user
-    msg["To"]      = to
-
-    mime_type = "html" if fmt == "html" else "plain"
-    msg.attach(MIMEText(body, mime_type, "utf-8"))
-
-    def _smtp_send():
-        host = os.environ.get("EMAIL_HOST", "smtp-relay.brevo.com")
-        port = int(os.environ.get("EMAIL_PORT", "587"))
-        
-        logger.info(f"   SMTP Host: {host}:{port}")
-        
-        with smtplib.SMTP(host, port, timeout=20) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(email_user, email_pass)
-            server.sendmail(email_user, to, msg.as_string())
-
-    # Run blocking SMTP in thread pool — never blocks the event loop
-    await asyncio.get_event_loop().run_in_executor(None, _smtp_send)
-
-    return {
-        "status": "sent",
-        "to": to,
+    payload: dict = {
+        "sender":  {"email": sender_email},
+        "to":      [{"email": to}],
         "subject": clean_subject,
-        "body": body[:200],  # truncate for output display
+    }
+    if fmt == "html":
+        payload["htmlContent"] = body
+    else:
+        payload["textContent"] = body
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={
+                "api-key":     api_key,
+                "Content-Type": "application/json",
+                "Accept":       "application/json",
+            },
+            json=payload,
+        )
+
+    if resp.status_code not in (200, 201):
+        raise RuntimeError(
+            f"Brevo API error {resp.status_code}: {resp.text[:300]}"
+        )
+
+    logger.info(f"   ✅ Brevo accepted → messageId: {resp.json().get('messageId', '?')}")
+    return {
+        "status":  "sent",
+        "to":      to,
+        "subject": clean_subject,
+        "body":    body[:200],
     }
 
 

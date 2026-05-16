@@ -38,9 +38,7 @@ def _verify_env_vars():
         "DATABASE_URL": bool(os.getenv("DATABASE_URL")),
         "GROQ_API_KEY": bool(os.getenv("GROQ_API_KEY")),
         "EMAIL_USER": bool(os.getenv("EMAIL_USER")),
-        "EMAIL_PASS": bool(os.getenv("EMAIL_PASS")),
-        "EMAIL_HOST": bool(os.getenv("EMAIL_HOST")),
-        "EMAIL_PORT": bool(os.getenv("EMAIL_PORT")),
+        "EMAIL_PASS": bool(os.getenv("EMAIL_PASS")),  # Brevo API key
     }
     
     logger.info("🔍 Environment Variables Status:")
@@ -55,7 +53,7 @@ def _verify_env_vars():
     missing = [k for k, v in required_vars.items() if not v]
     if missing:
         logger.warning(f"⚠️  Missing environment variables: {', '.join(missing)}")
-        logger.warning("   Email functionality will not work without EMAIL_USER and EMAIL_PASS")
+        logger.warning("   Email (Brevo API) will not work without EMAIL_USER and EMAIL_PASS")
     
     return required_vars
 
