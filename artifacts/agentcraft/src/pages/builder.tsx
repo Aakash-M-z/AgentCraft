@@ -738,8 +738,8 @@ function BuilderCanvas() {
             deleteKeyCode="Delete"
             snapToGrid={true}
             snapGrid={[12, 12]}
-            defaultEdgeOptions={{ animated: true, style: { stroke: 'hsl(262 83% 58% / 0.6)', strokeWidth: 2 } }}
-            connectionLineStyle={{ stroke: 'hsl(262 83% 58%)', strokeWidth: 2, strokeDasharray: '6 3' }}
+            defaultEdgeOptions={{ animated: true, style: { stroke: 'hsl(16 95% 55% / 0.6)', strokeWidth: 2 } }}
+            connectionLineStyle={{ stroke: 'hsl(16 95% 55%)', strokeWidth: 2, strokeDasharray: '6 3' }}
             className="bg-[#050507]"
           >
             <Background

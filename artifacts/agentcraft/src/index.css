@@ -46,41 +46,42 @@
 }
 
 :root {
-  /* Force Dark Mode Palette */
-  --background: 240 10% 4%;
-  /* #09090b */
+  /* Force Dark Mode Palette - Black & Reddish Orange */
+  --background: 0 0% 2%;
+  /* #050505 - pure pitch black background */
   --foreground: 0 0% 98%;
   /* #fafafa */
 
-  --card: 240 10% 6%;
-  /* #0f0f11 */
+  --card: 0 0% 4%;
+  /* #0a0a0a - very dark grey cards */
   --card-foreground: 0 0% 98%;
-  --card-border: 240 10% 12%;
+  --card-border: 0 0% 8%;
+  /* #141414 */
 
-  --popover: 240 10% 6%;
+  --popover: 0 0% 4%;
   --popover-foreground: 0 0% 98%;
-  --popover-border: 240 10% 12%;
+  --popover-border: 0 0% 8%;
 
-  --primary: 262 83% 58%;
-  /* #8b5cf6 - Purple */
+  --primary: 16 95% 55%;
+  /* #ff4f1a - Reddish Orange */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 240 10% 10%;
+  --secondary: 0 0% 6%;
   --secondary-foreground: 0 0% 98%;
 
-  --muted: 240 10% 12%;
-  --muted-foreground: 240 5% 65%;
+  --muted: 0 0% 8%;
+  --muted-foreground: 0 0% 55%;
 
-  --accent: 189 94% 43%;
-  /* #06b6d4 - Cyan */
+  --accent: 24 95% 53%;
+  /* #f97316 - Warm Orange */
   --accent-foreground: 0 0% 98%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 240 10% 15%;
-  --input: 240 10% 15%;
-  --ring: 262 83% 58%;
+  --border: 0 0% 10%;
+  --input: 0 0% 10%;
+  --ring: 16 95% 55%;
 
   --radius: 0.75rem;
 }
@@ -151,14 +152,14 @@
 .react-flow__handle:hover {
   width: 18px !important;
   height: 18px !important;
-  border-color: hsl(262 83% 58%) !important;
-  background: hsl(262 83% 58% / 0.2) !important;
-  box-shadow: 0 0 12px hsl(262 83% 58% / 0.5) !important;
+  border-color: hsl(16 95% 55%) !important;
+  background: hsl(16 95% 55% / 0.2) !important;
+  box-shadow: 0 0 12px hsl(16 95% 55% / 0.5) !important;
 }
 
 .react-flow__handle-connecting {
-  border-color: hsl(262 83% 58%) !important;
-  background: hsl(262 83% 58% / 0.3) !important;
+  border-color: hsl(16 95% 55%) !important;
+  background: hsl(16 95% 55% / 0.3) !important;
 }
 
 .react-flow__handle-valid {
@@ -239,8 +240,8 @@
 .react-flow__edge.animated path.react-flow__edge-path {
   stroke-dasharray: 8 4;
   animation: flow-pulse 0.8s linear infinite !important;
-  stroke: hsl(262 83% 58%) !important;
-  filter: drop-shadow(0 0 6px hsl(262 83% 58% / 0.8));
+  stroke: hsl(16 95% 55%) !important;
+  filter: drop-shadow(0 0 6px hsl(16 95% 55% / 0.8));
 }
 
 /* Systems Health Indicator Beacon */
@@ -273,8 +274,8 @@
 
 /* Custom glow borders for node states */
 .glow-purple {
-  border-color: rgba(139, 92, 246, 0.45) !important;
-  box-shadow: 0 0 25px rgba(139, 92, 246, 0.25), inset 0 0 12px rgba(139, 92, 246, 0.05) !important;
+  border-color: rgba(255, 79, 26, 0.45) !important;
+  box-shadow: 0 0 25px rgba(255, 79, 26, 0.25), inset 0 0 12px rgba(255, 79, 26, 0.05) !important;
 }
 
 .glow-cyan {
@@ -315,4 +316,35 @@
 .typing-cursor {
   border-right: 2px solid;
   animation: blink-cursor .75s step-end infinite;
+}
+
+/* ── Infinite Marquee Animation for Integrations ────────────────────────── */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-reverse {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+}
+
+.animate-marquee-reverse {
+  display: flex;
+  width: max-content;
+  animation: marquee-reverse 40s linear infinite;
+}
+
+.marquee-container {
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  mask-image: linear-gradient(to right, transparent, white 15%, white 85%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, white 15%, white 85%, transparent);
 }
