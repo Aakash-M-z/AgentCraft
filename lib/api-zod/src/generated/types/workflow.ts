@@ -14,6 +14,8 @@ export interface Workflow {
   description?: string;
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
+  triggerType?: string;
+  cron?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

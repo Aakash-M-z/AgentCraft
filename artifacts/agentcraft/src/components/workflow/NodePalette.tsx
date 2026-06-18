@@ -1,4 +1,4 @@
-import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail, Database, Webhook, FileText, Timer, ChevronDown, ChevronRight } from 'lucide-react';
+import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail, Database, Webhook, FileText, Timer, ChevronDown, ChevronRight, CalendarClock, Code2, BrainCircuit, MessageSquare, Send } from 'lucide-react';
 import { WorkflowNodeType } from '@workspace/api-client-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,7 @@ const groups: { label: string; nodes: PaletteNode[] }[] = [
     label: 'Triggers',
     nodes: [
       { type: WorkflowNodeType.input, label: 'Manual Trigger', icon: Play, color: 'text-emerald-400', border: 'border-emerald-500/30', description: 'Start with user input' },
+      { type: 'schedule_trigger', label: 'Schedule', icon: CalendarClock, color: 'text-emerald-400', border: 'border-emerald-500/30', description: 'Run on a cron schedule' },
       { type: 'webhook', label: 'Webhook', icon: Webhook, color: 'text-orange-400', border: 'border-orange-500/30', description: 'HTTP trigger' },
     ],
   },
@@ -24,6 +25,7 @@ const groups: { label: string; nodes: PaletteNode[] }[] = [
     label: 'AI & Logic',
     nodes: [
       { type: WorkflowNodeType.ai_agent, label: 'AI Agent', icon: Bot, color: 'text-violet-400', border: 'border-violet-500/30', description: 'LLM-powered step' },
+      { type: 'ai_solver', label: 'AI Solver', icon: BrainCircuit, color: 'text-violet-400', border: 'border-violet-500/30', description: 'Solve LeetCode problems' },
       { type: WorkflowNodeType.condition, label: 'Condition', icon: ArrowRightFromLine, color: 'text-amber-400', border: 'border-amber-500/30', description: 'Branch on condition' },
       { type: WorkflowNodeType.loop, label: 'Loop', icon: Repeat, color: 'text-pink-400', border: 'border-pink-500/30', description: 'Iterate N times' },
       { type: 'delay', label: 'Delay', icon: Timer, color: 'text-yellow-400', border: 'border-yellow-500/30', description: 'Wait N seconds' },
@@ -32,7 +34,12 @@ const groups: { label: string; nodes: PaletteNode[] }[] = [
   {
     label: 'Integrations',
     nodes: [
+      { type: 'leetcode_daily', label: 'LeetCode Daily', icon: Code2, color: 'text-amber-400', border: 'border-amber-500/30', description: 'Fetch daily challenge' },
       { type: WorkflowNodeType.api_call, label: 'API Request', icon: Server, color: 'text-blue-400', border: 'border-blue-500/30', description: 'HTTP request' },
+      { type: WorkflowNodeType.whatsapp_monitor, label: 'WhatsApp Monitor', icon: MessageSquare, color: 'text-emerald-400', border: 'border-emerald-500/30', description: 'Monitor WhatsApp Web group messages' },
+      { type: WorkflowNodeType.whatsapp_sender, label: 'Send WhatsApp Message', icon: Send, color: 'text-emerald-400', border: 'border-emerald-500/30', description: 'Send automated or approved WhatsApp message' },
+      { type: 'discord_webhook', label: 'Discord', icon: MessageSquare, color: 'text-indigo-400', border: 'border-indigo-500/30', description: 'Send Discord message' },
+      { type: 'telegram_bot', label: 'Telegram', icon: Send, color: 'text-sky-400', border: 'border-sky-500/30', description: 'Send Telegram message' },
       { type: 'email', label: 'Send Email', icon: Mail, color: 'text-sky-400', border: 'border-sky-500/30', description: 'SMTP email' },
       { type: 'database', label: 'Database', icon: Database, color: 'text-teal-400', border: 'border-teal-500/30', description: 'Read/write DB' },
       { type: 'file_processor', label: 'File', icon: FileText, color: 'text-indigo-400', border: 'border-indigo-500/30', description: 'Process files' },

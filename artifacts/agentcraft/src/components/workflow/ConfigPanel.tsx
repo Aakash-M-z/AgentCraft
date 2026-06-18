@@ -1,6 +1,6 @@
 import { useWorkflowStore } from "@/lib/store";
 import { WorkflowNodeType } from "@workspace/api-client-react";
-import { Bot, Server, GitBranch, Repeat, Zap, ArrowDownToLine, Mail, Database, Webhook, FileText, Timer, Plus, Wand2, Lightbulb, Bug } from "lucide-react";
+import { Bot, Server, GitBranch, Repeat, Zap, ArrowDownToLine, Mail, Database, Webhook, FileText, Timer, Plus, Wand2, Lightbulb, Bug, CalendarClock, Code2, BrainCircuit, MessageSquare, Send } from "lucide-react";
 import { NodeDebugPanel } from "./NodeDebugPanel";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -89,9 +89,12 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
 
   if (!selectedNodeId) {
     return (
-      <div className="w-80 border-l border-border bg-card/50 backdrop-blur-xl h-full flex flex-col z-10 shadow-2xl overflow-y-auto">
-        <div className="p-4 border-b border-border bg-secondary/30 sticky top-0 z-10">
-          <h3 className="font-bold text-base text-foreground">Inspector</h3>
+      <div className="w-80 border-l border-border/80 bg-card/65 backdrop-blur-xl h-full flex flex-col z-10 shadow-2xl overflow-y-auto">
+        <div className="p-4 border-b border-border/50 bg-secondary/25 sticky top-0 z-10">
+          <h3 className="font-bold text-base text-foreground/90 tracking-tight flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            Inspector
+          </h3>
         </div>
         <EmptyPanel onOpenGenerate={onOpenGenerate} />
       </div>
@@ -121,14 +124,24 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
     webhook: <Webhook size={13} className="text-orange-400" />,
     file_processor: <FileText size={13} className="text-indigo-400" />,
     delay: <Timer size={13} className="text-yellow-400" />,
+    schedule_trigger: <CalendarClock size={13} className="text-emerald-400" />,
+    leetcode_daily: <Code2 size={13} className="text-amber-400" />,
+    ai_solver: <BrainCircuit size={13} className="text-violet-400" />,
+    discord_webhook: <MessageSquare size={13} className="text-indigo-400" />,
+    telegram_bot: <Send size={13} className="text-sky-400" />,
+    whatsapp_monitor: <MessageSquare size={13} className="text-emerald-400" />,
+    whatsapp_sender: <Send size={13} className="text-emerald-400" />,
   };
 
   return (
-    <div className="w-80 border-l border-border bg-card h-full flex flex-col shadow-2xl z-10 overflow-y-auto">
+    <div className="w-80 border-l border-border/80 bg-card/65 backdrop-blur-xl h-full flex flex-col shadow-2xl z-10 overflow-y-auto relative">
       {/* Header */}
-      <div className="p-4 border-b border-border bg-secondary/50 sticky top-0 z-10">
-        <h3 className="font-bold text-base text-foreground">Inspector</h3>
-        <span className="inline-flex items-center gap-1.5 mt-1 text-xs px-2 py-0.5 rounded bg-background border border-border text-muted-foreground capitalize">
+      <div className="p-4 border-b border-border/50 bg-secondary/25 sticky top-0 z-10">
+        <h3 className="font-bold text-base text-foreground/90 tracking-tight flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          Inspector
+        </h3>
+        <span className="inline-flex items-center gap-1.5 mt-2 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-[#000000]/40 border border-border/60 text-muted-foreground capitalize">
           {typeIcons[node.type ?? ""] ?? null}
           {node.type?.replace(/_/g, " ")}
         </span>
@@ -352,6 +365,149 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">File Path</label>
                 <input type="text" value={cfg.path ?? ""} onChange={e => set("path", e.target.value)} className={inputClass} placeholder="/data/output.txt" />
+              </div>
+            </>
+          )}
+
+          {/* Schedule Trigger */}
+          {node.type === "schedule_trigger" && (
+            <>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cron Expression</label>
+                <input type="text" value={cfg.cron ?? "0 8 * * *"} onChange={e => set("cron", e.target.value)} className={inputClass} placeholder="0 8 * * *" />
+                <p className="text-xs text-muted-foreground">Standard cron format. Default: 0 8 * * * (8:00 AM daily)</p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Timezone</label>
+                <input type="text" value={cfg.timezone ?? "UTC"} onChange={e => set("timezone", e.target.value)} className={inputClass} placeholder="UTC" />
+              </div>
+            </>
+          )}
+
+          {/* LeetCode Daily */}
+          {node.type === "leetcode_daily" && (
+            <div className="p-3 bg-secondary/30 rounded-lg border border-border">
+              <p className="text-xs text-muted-foreground">Fetches the daily LeetCode coding challenge automatically.</p>
+            </div>
+          )}
+
+          {/* AI Solver */}
+          {node.type === "ai_solver" && (
+            <>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Model</label>
+                <select value={cfg.model ?? "llama-3.3-70b-versatile"} onChange={e => set("model", e.target.value)} className={inputClass}>
+                  {GROQ_MODELS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Language</label>
+                <select value={cfg.language ?? "Python"} onChange={e => set("language", e.target.value)} className={inputClass}>
+                  <option value="Python">Python</option>
+                  <option value="Java">Java</option>
+                  <option value="C++">C++</option>
+                  <option value="JavaScript">JavaScript</option>
+                  <option value="TypeScript">TypeScript</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Temperature</label>
+                <div className="flex items-center gap-3">
+                  <input type="range" min="0" max="1" step="0.1"
+                    value={cfg.temperature ?? 0.2}
+                    onChange={e => set("temperature", parseFloat(e.target.value))}
+                    className="flex-1 accent-primary"
+                  />
+                  <span className="text-sm font-mono text-foreground w-8 text-right">{cfg.temperature ?? 0.2}</span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Discord Webhook */}
+          {node.type === "discord_webhook" && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Webhook URL</label>
+              <input type="text" value={cfg.webhookUrl ?? ""} onChange={e => set("webhookUrl", e.target.value)} className={inputClass} placeholder="https://discord.com/api/webhooks/..." />
+            </div>
+          )}
+
+          {/* Telegram Bot */}
+          {node.type === "telegram_bot" && (
+            <>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Bot Token</label>
+                <input type="password" value={cfg.botToken ?? ""} onChange={e => set("botToken", e.target.value)} className={inputClass} placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Chat ID</label>
+                <input type="text" value={cfg.chatId ?? ""} onChange={e => set("chatId", e.target.value)} className={inputClass} placeholder="-1001234567890" />
+              </div>
+            </>
+          )}
+
+          {/* WhatsApp Monitor */}
+          {node.type === WorkflowNodeType.whatsapp_monitor && (
+            <>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Group Name</label>
+                <input
+                  type="text"
+                  value={cfg.groupName ?? ""}
+                  onChange={e => set("groupName", e.target.value)}
+                  className={inputClass}
+                  placeholder="e.g. Attendance Group"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Max Messages</label>
+                <input
+                  type="number"
+                  min={5}
+                  max={100}
+                  value={cfg.maxMessages ?? 30}
+                  onChange={e => set("maxMessages", parseInt(e.target.value))}
+                  className={inputClass}
+                />
+              </div>
+            </>
+          )}
+
+          {/* WhatsApp Sender */}
+          {node.type === WorkflowNodeType.whatsapp_sender && (
+            <>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact / Mentor Name</label>
+                <input
+                  type="text"
+                  value={cfg.contactName ?? ""}
+                  onChange={e => set("contactName", e.target.value)}
+                  className={inputClass}
+                  placeholder="e.g. Mentor Aakash"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Message Template</label>
+                <textarea
+                  value={cfg.messageTemplate ?? ""}
+                  onChange={e => set("messageTemplate", e.target.value)}
+                  rows={4}
+                  className={`${inputClass} resize-none font-mono text-xs`}
+                  placeholder="Hello, I will be absent because {{input}}"
+                />
+                <p className="text-xs text-muted-foreground">Use <code className="bg-secondary px-1 rounded">{"{{input}}"}</code> to inject the generated reason.</p>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-secondary/20">
+                <div className="space-y-0.5">
+                  <label className="text-xs font-semibold text-foreground uppercase tracking-wider">Manual Approval</label>
+                  <p className="text-[10px] text-muted-foreground">Require confirmation before sending</p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={cfg.manualApproval ?? true}
+                  onChange={e => set("manualApproval", e.target.checked)}
+                  className="w-4 h-4 rounded border-border text-emerald-500 focus:ring-emerald-500 focus:ring-opacity-25"
+                />
               </div>
             </>
           )}

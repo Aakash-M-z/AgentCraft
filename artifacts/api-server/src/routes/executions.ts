@@ -158,7 +158,7 @@ async function runExecution(executionId: number, nodes: WorkflowNode[], edges: a
     }
 
     for (const node of ordered) {
-      if (ex.status === "cancelled") break;
+      if ((ex.status as string) === "cancelled") break;
 
       const nr: NodeResult = {
         nodeId: node.id,
@@ -238,7 +238,7 @@ async function executeNode(
 ): Promise<Record<string, unknown>> {
   const config = node.config ?? {};
 
-  switch (node.type) {
+  switch (node.type as string) {
     case "input":
       return { result: input, text: input };
 

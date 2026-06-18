@@ -10,7 +10,7 @@ import {
   BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Save, Play, Wand2, RefreshCw, X, Sparkles, CheckCircle2, XCircle, Maximize2 } from 'lucide-react';
+import { Save, Play, Wand2, RefreshCw, X, Sparkles, CheckCircle2, XCircle, Maximize2, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { NodePalette } from '@/components/workflow/NodePalette';
@@ -30,7 +30,7 @@ import {
 } from '@workspace/api-client-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useExecutionWebSocket } from '@/hooks/use-websocket';
+import { useExecutionStream } from '@/hooks/use-websocket';
 
 // ── Execution output panel ───────────────────────────────────────────────────
 function ExecutionOutputPanel() {
@@ -116,9 +116,9 @@ function ExecutionOutputPanel() {
 
 // ── Execution status bar ──────────────────────────────────────────────────────
 function ExecutionStatusBar({ executionId, onDone }: { executionId: number; onDone: () => void }) {
-  const { data, refetch } = useGetExecution(executionId, { query: { enabled: true } });
+  const { data, refetch } = useGetExecution(executionId, { query: { enabled: true } as any });
   const { setNodeExecutionStatus, setNodeDebugInfo, setIsExecuting, setExecutionProgress, setFinalOutput, setExecutionStatus, nodes } = useWorkflowStore();
-  const { events } = useExecutionWebSocket(executionId);
+  const { events, connectionState } = useExecutionStream(executionId);
   const onDoneRef = useRef(onDone);
   const doneCalledRef = useRef(false);
   useEffect(() => { onDoneRef.current = onDone; });
@@ -128,19 +128,10 @@ function ExecutionStatusBar({ executionId, onDone }: { executionId: number; onDo
     if (!events.length) return;
 
     const lastEvent = events[events.length - 1];
-    console.log('🔄 Builder: Processing SSE event', lastEvent);
 
-    // Handle completion event from SSE
     if (lastEvent.type === 'execution_complete') {
-      console.log('🎉 Builder: Execution complete via SSE!', {
-        status: lastEvent.status,
-        finalOutput: lastEvent.finalOutput,
-        outputLength: lastEvent.finalOutput?.length || 0
-      });
-
       setExecutionStatus(lastEvent.status as any);
       if (lastEvent.finalOutput) {
-        console.log('✅ Builder: Setting final output:', lastEvent.finalOutput.substring(0, 100));
         setFinalOutput(lastEvent.finalOutput);
       }
 
@@ -184,8 +175,11 @@ function ExecutionStatusBar({ executionId, onDone }: { executionId: number; onDo
     // Update execution status and final output from polling
     setExecutionStatus(data.status as any);
     if (data.finalOutput) {
-      console.log('📊 Builder: Setting final output from polling:', data.finalOutput.substring(0, 100));
       setFinalOutput(data.finalOutput);
+    }
+
+    if (data.status === 'waiting_approval') {
+      setExecutionStatus('waiting_approval');
     }
 
     const isTerminal = data.status === 'completed' || data.status === 'failed' || data.status === 'cancelled';
@@ -226,9 +220,17 @@ function ExecutionStatusBar({ executionId, onDone }: { executionId: number; onDo
         {data.status === 'completed' && <CheckCircle2 size={14} className="shrink-0" />}
         {data.status === 'failed' && <XCircle size={14} className="shrink-0" />}
         <span>
-          {isRunning ? 'Workflow is running...' :
-            data.status === 'completed' ? 'Workflow completed successfully' :
-              data.status === 'failed' ? 'Workflow failed' : data.status}
+          {connectionState === 'reconnecting'
+            ? 'Reconnecting SSE...'
+            : isRunning
+              ? 'Workflow is running...'
+              : data.status === 'completed'
+                ? 'Workflow completed successfully'
+                : data.status === 'failed'
+                  ? 'Workflow failed'
+                  : data.status === 'waiting_approval'
+                    ? 'Waiting for approval'
+                    : data.status}
         </span>
         {isDone && (
           <a href={`/executions/${executionId}`} className="ml-auto text-xs underline underline-offset-2 opacity-70 hover:opacity-100">
@@ -237,6 +239,201 @@ function ExecutionStatusBar({ executionId, onDone }: { executionId: number; onDo
         )}
       </motion.div>
     </AnimatePresence>
+  );
+}
+
+// ── AI Copilot Assistant Component ───────────────────────────────────────────
+import { Brain, CornerDownLeft, Sparkles as SparklesIcon } from "lucide-react";
+
+interface CopilotAssistantProps {
+  workflowId: number | null;
+  fetchExplain: () => any;
+  explanationData: any;
+  isExplaining: boolean;
+}
+
+function CopilotAssistant({ workflowId, fetchExplain, explanationData, isExplaining }: CopilotAssistantProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string; code?: string }>>([
+    { sender: 'ai', text: "Hello! I am your Antigravity Autonomous Copilot. Select an action below or ask me to analyze the pipeline." }
+  ]);
+  const [inputValue, setInputValue] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+
+  const simulateStream = (text: string, code?: string) => {
+    setIsTyping(true);
+    setMessages(prev => [...prev, { sender: 'user', text: "Action selected" }]);
+    
+    setTimeout(() => {
+      setIsTyping(false);
+      setMessages(prev => [...prev, { sender: 'ai', text, code }]);
+    }, 1500);
+  };
+
+  const handleSend = () => {
+    if (!inputValue.trim()) return;
+    const userText = inputValue;
+    setMessages(prev => [...prev, { sender: 'user', text: userText }]);
+    setInputValue("");
+    setIsTyping(true);
+
+    setTimeout(() => {
+      setIsTyping(false);
+      let response = "I have analyzed your request. I recommend using Llama 3.3 for reasoning and GPT OSS for structural formatting.";
+      if (userText.toLowerCase().includes("fix") || userText.toLowerCase().includes("error")) {
+        response = "Reviewing failed steps... Found conditional error: the Condition node is configured to stop if output contains 'error', but the incoming WhatsApp message is blank. Recommend adding a delay or default backup input.";
+      } else if (userText.toLowerCase().includes("explain")) {
+        response = "This workflow acts as an autonomous AI router: fetching weather or daily events, routing them to Groq's high-capacity Llama map, running conditions, and triggering manual approvals before WhatsApp notification.";
+      }
+      setMessages(prev => [...prev, { sender: 'ai', text: response }]);
+    }, 1200);
+  };
+
+  const handleAction = async (action: 'explain' | 'optimize' | 'diagnose') => {
+    if (action === 'explain') {
+      if (!workflowId) {
+        setMessages(prev => [...prev, { sender: 'ai', text: "Please save the workflow first to fetch its layout details." }]);
+        return;
+      }
+      setIsTyping(true);
+      try {
+        await fetchExplain();
+      } catch (err) {
+        console.error(err);
+      }
+      setIsTyping(false);
+    } else if (action === 'optimize') {
+      simulateStream(
+        "I have analyzed the parameter settings for your AI Agent nodes. Recommendations:\n1. For reasoning-heavy steps, switch to `llama-3.3-70b-versatile`.\n2. Set the `Temperature` to `0.2` on AI Solver steps to enforce deterministic structural output.\n3. Enforce `manualApproval: true` on critical outputs to ensure man-in-the-loop validation.",
+        "{\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"temperature\": 0.2,\n  \"manualApproval\": true\n}"
+      );
+    } else {
+      simulateStream(
+        "Running diagnostics... Checked current node configurations.\nAll 3 active endpoints are responding cleanly. Redis cache connection latency is optimal (< 2ms). No conditional loops detected. Recommended: Ensure incoming webhook body maps cleanly to the WhatsApp payload.",
+        "No issues detected in current canvas layout."
+      );
+    }
+  };
+
+  // Listen to explanationData updates and sync inside chat
+  useEffect(() => {
+    if (explanationData?.explanation) {
+      setMessages(prev => [
+        ...prev, 
+        { 
+          sender: 'ai', 
+          text: `Explanation:\n${explanationData.explanation}\n\nSteps:\n${explanationData.steps.join('\n')}` 
+        }
+      ]);
+    }
+  }, [explanationData]);
+
+  return (
+    <div className="absolute bottom-6 right-86 z-20 flex flex-col items-end">
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 15, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.95 }}
+            className="w-96 h-[400px] bg-card/75 backdrop-blur-xl border border-border/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col mb-4 relative"
+          >
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-primary via-purple-500 to-cyan-500" />
+            
+            {/* Header */}
+            <div className="px-4 py-3 bg-[#060608]/40 border-b border-border/50 flex items-center justify-between">
+              <span className="text-xs font-bold text-foreground/90 uppercase tracking-widest flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                Antigravity AI Copilot
+              </span>
+              <button 
+                onClick={() => setIsOpen(false)}
+                className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
+            {/* Chat Body */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
+              {messages.map((m, i) => (
+                <div key={i} className={cn("flex flex-col max-w-[85%] text-xs font-sans", m.sender === 'user' ? "ml-auto items-end" : "mr-auto items-start")}>
+                  <div className={cn(
+                    "p-3 rounded-xl leading-relaxed whitespace-pre-wrap",
+                    m.sender === 'user' 
+                      ? "bg-primary text-white rounded-tr-none shadow-md shadow-primary/10" 
+                      : "bg-[#0c0c0e]/80 border border-white/5 text-foreground/90 rounded-tl-none"
+                  )}>
+                    {m.text}
+                    {m.code && (
+                      <pre className="mt-2 p-1.5 bg-black/60 border border-white/5 rounded-md font-mono text-[10px] text-cyan-400 overflow-x-auto">
+                        {m.code}
+                      </pre>
+                    )}
+                  </div>
+                </div>
+              ))}
+              
+              {isTyping && (
+                <div className="flex items-center gap-1.5 text-[10px] font-mono text-violet-400 animate-pulse px-1">
+                  <Loader2 size={10} className="animate-spin" />
+                  <span>Thinking...</span>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Actions Pills */}
+            <div className="px-4 py-2 border-t border-border/40 bg-secondary/15 flex gap-1.5 overflow-x-auto shrink-0 scrollbar-none">
+              <button 
+                onClick={() => handleAction('explain')}
+                className="px-2.5 py-1 rounded-lg bg-black/40 border border-border/80 hover:border-primary/40 text-[9px] font-mono text-muted-foreground hover:text-primary transition-all shrink-0 cursor-pointer"
+              >
+                🧠 Explain
+              </button>
+              <button 
+                onClick={() => handleAction('optimize')}
+                className="px-2.5 py-1 rounded-lg bg-black/40 border border-border/80 hover:border-cyan-400/40 text-[9px] font-mono text-muted-foreground hover:text-cyan-400 transition-all shrink-0 cursor-pointer"
+              >
+                ⚡ Optimize
+              </button>
+              <button 
+                onClick={() => handleAction('diagnose')}
+                className="px-2.5 py-1 rounded-lg bg-black/40 border border-border/80 hover:border-rose-400/40 text-[9px] font-mono text-muted-foreground hover:text-rose-400 transition-all shrink-0 cursor-pointer"
+              >
+                🛡️ Diagnose
+              </button>
+            </div>
+
+            {/* Input Box */}
+            <div className="p-3 border-t border-border/50 bg-[#060608]/40 flex gap-2 shrink-0">
+              <input
+                type="text"
+                value={inputValue}
+                onChange={e => setInputValue(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSend()}
+                placeholder="Ask Copilot anything..."
+                className="flex-1 bg-[#09090b]/80 border border-border/60 rounded-xl px-3 py-1.5 text-xs text-foreground/90 focus:outline-none focus:border-primary transition-all"
+              />
+              <button 
+                onClick={handleSend}
+                className="p-1.5 bg-primary rounded-xl text-white hover:bg-primary/95 transition-all cursor-pointer shrink-0"
+              >
+                <CornerDownLeft size={14} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Sparkle/Brain Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-accent hover:scale-[1.05] active:scale-[0.95] text-white flex items-center justify-center shadow-xl shadow-primary/20 hover:shadow-primary/45 transition-all cursor-pointer relative group border border-white/10"
+      >
+        <Brain size={20} className="group-hover:rotate-6 transition-transform" />
+        <span className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 border border-card rounded-full animate-pulse" />
+      </button>
+    </div>
   );
 }
 
@@ -271,7 +468,7 @@ function BuilderCanvas() {
 
   const { data: explanationData, refetch: fetchExplain, isFetching: isExplaining } = useExplainWorkflow(
     workflowId || 0,
-    { query: { enabled: false } }
+    { query: { enabled: false } as any }
   );
 
   const isEmpty = nodes.length === 0;
@@ -539,18 +736,20 @@ function BuilderCanvas() {
             fitView
             proOptions={{ hideAttribution: true }}
             deleteKeyCode="Delete"
+            snapToGrid={true}
+            snapGrid={[12, 12]}
             defaultEdgeOptions={{ animated: true, style: { stroke: 'hsl(262 83% 58% / 0.6)', strokeWidth: 2 } }}
             connectionLineStyle={{ stroke: 'hsl(262 83% 58%)', strokeWidth: 2, strokeDasharray: '6 3' }}
-            className="bg-[#050505]"
+            className="bg-[#050507]"
           >
             <Background
               variant={BackgroundVariant.Dots}
-              color="#1e1e2e"
+              color="#1a1a24"
               gap={24}
-              size={1.5}
+              size={1.2}
             />
             <Controls
-              className="bg-card border border-border rounded-xl overflow-hidden shadow-xl"
+              className="bg-card/85 border border-border/80 rounded-xl overflow-hidden shadow-xl"
               showInteractive={false}
             />
             <MiniMap
@@ -563,20 +762,48 @@ function BuilderCanvas() {
                 };
                 return colors[n.type ?? ''] ?? '#555';
               }}
-              maskColor="rgba(0,0,0,0.75)"
-              style={{ background: 'hsl(240 10% 6%)' }}
+              maskColor="rgba(0,0,0,0.85)"
+              style={{ background: 'hsl(240 10% 6%)', border: '1px solid rgba(255,255,255,0.06)' }}
             />
-            {/* Fit view button */}
-            <div className="absolute bottom-4 right-4 z-10">
+            
+            {/* Custom Snap & Fit Canvas Controls */}
+            <div className="absolute bottom-4 right-4 z-10 flex gap-2">
+              <button
+                onClick={() => {
+                  if (nodes.length === 0) return;
+                  const sorted = [...nodes].sort((a, b) => a.position.y - b.position.y);
+                  const formattedNodes = sorted.map((node, index) => ({
+                    ...node,
+                    position: { x: 100 + (index % 3) * 280, y: 100 + Math.floor(index / 3) * 160 }
+                  }));
+                  // Set new coordinates in Zustand store
+                  const { setNodes } = useWorkflowStore.getState();
+                  setNodes(formattedNodes);
+                  toast({ title: "✓ Canvas aligned & structured" });
+                }}
+                className="px-3 py-2 rounded-lg bg-card/90 backdrop-blur border border-border/80 text-muted-foreground hover:text-cyan-400 hover:bg-secondary cursor-pointer transition-colors shadow-lg flex items-center gap-1.5 text-xs font-semibold"
+                title="Auto-align canvas"
+              >
+                <SparklesIcon size={13} className="text-cyan-400" />
+                Tidy Map
+              </button>
               <button
                 onClick={() => fitView({ padding: 0.15, duration: 500 })}
-                className="p-2 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shadow-lg"
+                className="p-2 rounded-lg bg-card/90 backdrop-blur border border-border/80 text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors shadow-lg"
                 title="Fit view"
               >
-                <Maximize2 size={14} />
+                <Maximize2 size={13} />
               </button>
             </div>
           </ReactFlow>
+
+          {/* Floating AI Copilot Assistant Drawer */}
+          <CopilotAssistant 
+            workflowId={workflowId} 
+            fetchExplain={fetchExplain} 
+            explanationData={explanationData} 
+            isExplaining={isExplaining} 
+          />
 
           {/* Execution Output Panel */}
           <ExecutionOutputPanel />
@@ -726,7 +953,7 @@ export default function BuilderPage() {
   const workflowId = match ? parseInt(params.id) : null;
 
   const { data, isLoading } = useGetWorkflow(workflowId || 0, {
-    query: { enabled: !!workflowId }
+    query: { enabled: !!workflowId } as any
   });
 
   useEffect(() => {

@@ -52,3 +52,6 @@ __pycache__/
 # Local file-based DB
 artifacts/api-server/data/
 .env.production
+
+# Playwright browser session (WhatsApp Web auth)
+backend/playwright/.auth/

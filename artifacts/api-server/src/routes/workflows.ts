@@ -71,7 +71,7 @@ router.post("/", (req, res) => {
     const id = nextWfId();
     const wf: StoredWorkflow = {
       id,
-      name: name || "Untitled Workflow",
+      name: name || "AgentCraft",
       description: description ?? null,
       nodes: nodes ?? [],
       edges: edges ?? [],

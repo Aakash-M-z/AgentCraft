@@ -2,6 +2,30 @@
 
 AI-native visual workflow automation platform. Drag-and-drop nodes, connect them, and run multi-step AI pipelines powered by Groq LLMs.
 
+## WhatsApp Attendance Assistant
+
+Autonomous attendance monitoring with human-in-the-loop messaging:
+
+- WhatsApp group monitoring (Playwright)
+- AI-generated professional mentor messages (Groq)
+- Manual approval before send
+- Resilient SSE realtime logs (heartbeat + auto-reconnect)
+- Redis execution locking and pub/sub
+
+```mermaid
+flowchart LR
+  monitor[WhatsApp Monitor] --> ai[AI Message Generator]
+  ai --> approve[Manual Approval]
+  approve --> send[WhatsApp Sender]
+```
+
+Setup: [`docs/whatsapp-attendance.md`](docs/whatsapp-attendance.md)
+
+```bash
+python scripts/login_whatsapp.py
+python scripts/seed_whatsapp_workflow.py
+```
+
 ## Stack
 
 - **Frontend**: React 19 + Vite + Tailwind CSS v4 + @xyflow/react
@@ -68,9 +92,16 @@ agentcraft/
 │   ├── agentcraft/       # React + Vite frontend
 │   └── api-server/       # Express API (TypeScript, optional)
 ├── backend/
-│   ├── main.py           # FastAPI app + routes
+│   ├── main.py           # FastAPI app + routes + SSE
 │   ├── workflow_engine.py # Node execution engine
+│   ├── redis_client.py   # Pub/sub, locks, log cache
+│   ├── whatsapp.py       # Playwright monitor/send
 │   └── ai.py             # Groq integration
+├── scripts/
+│   ├── seed_whatsapp_workflow.py
+│   └── login_whatsapp.py
+├── docs/
+│   └── whatsapp-attendance.md
 ├── lib/
 │   ├── api-spec/         # OpenAPI spec
 │   ├── api-zod/          # Generated Zod schemas
