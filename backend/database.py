@@ -77,6 +77,8 @@ class Workflow(Base):
     description = Column(Text, nullable=True)
     nodes = Column(JSON, nullable=False, default=list)
     edges = Column(JSON, nullable=False, default=list)
+    trigger_type = Column(String(50), nullable=False, default="manual")
+    cron = Column(String(100), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
@@ -94,6 +96,60 @@ class Execution(Base):
     agent_logs = Column(JSON, nullable=False, default=list)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class Assignment(Base):
+    """Personal Assignment tracking model."""
+    __tablename__ = "life_os_assignments"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String(255), nullable=False)
+    subject = Column(String(255), nullable=False)
+    deadline = Column(DateTime(timezone=True), nullable=False)
+    priority = Column(String(50), nullable=False, default="medium")  # low, medium, high
+    status = Column(String(50), nullable=False, default="pending")    # pending, in_progress, completed, overdue
+    source = Column(String(50), nullable=False, default="manual")     # whatsapp, manual
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class Placement(Base):
+    """Personal Placement opportunity tracking model."""
+    __tablename__ = "life_os_placements"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    company_name = Column(String(255), nullable=False)
+    package = Column(String(100), nullable=True)
+    deadline = Column(DateTime(timezone=True), nullable=False)
+    eligibility = Column(Text, nullable=True)
+    apply_url = Column(String(512), nullable=True)
+    status = Column(String(50), nullable=False, default="active")  # active, expired, applied, upcoming
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class LeetCodeSubmission(Base):
+    """Personal LeetCode solver tracking model."""
+    __tablename__ = "life_os_leetcode_submissions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String(255), nullable=False)
+    slug = Column(String(255), nullable=False)
+    difficulty = Column(String(50), nullable=False)  # Easy, Medium, Hard
+    solution = Column(Text, nullable=False)
+    status = Column(String(50), nullable=False, default="solved")  # solved, missed
+    date = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class DailyBriefing(Base):
+    """Daily Briefings archive log."""
+    __tablename__ = "life_os_daily_briefings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    content = Column(Text, nullable=False)
+    status = Column(String(50), nullable=False, default="sent")  # sent, failed
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 # ── Database Session Dependency ───────────────────────────────────────────────

@@ -47,7 +47,7 @@ export function nextExId() { return ++_exSeq; }
 
 interface PersistedDB {
     wfSeq: number;
-    workflows: Array<StoredWorkflow & { createdAt: string; updatedAt: string }>;
+    workflows: Array<Omit<StoredWorkflow, "createdAt" | "updatedAt"> & { createdAt: string; updatedAt: string }>;
 }
 
 export function loadDB() {

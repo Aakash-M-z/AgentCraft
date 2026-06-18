@@ -18,7 +18,7 @@ export type AppNodeData = {
 
 export type AppNode = Node<AppNodeData, WorkflowNodeType>;
 
-export type NodeExecutionStatus = 'idle' | 'running' | 'success' | 'failed';
+export type NodeExecutionStatus = 'idle' | 'running' | 'success' | 'failed' | 'waiting_approval';
 
 export type NodeDebugInfo = {
   input?: string;
@@ -42,7 +42,7 @@ interface WorkflowState {
   isExecuting: boolean;
   executionProgress: { current: number; total: number } | null;
   finalOutput: string | null;
-  executionStatus: 'idle' | 'running' | 'completed' | 'failed' | null;
+  executionStatus: 'idle' | 'running' | 'completed' | 'failed' | 'waiting_approval' | null;
 
   // Actions
   onNodesChange: (changes: NodeChange[]) => void;
@@ -60,7 +60,7 @@ interface WorkflowState {
   setIsExecuting: (v: boolean) => void;
   setExecutionProgress: (p: { current: number; total: number } | null) => void;
   setFinalOutput: (output: string | null) => void;
-  setExecutionStatus: (status: 'idle' | 'running' | 'completed' | 'failed' | null) => void;
+  setExecutionStatus: (status: 'idle' | 'running' | 'completed' | 'failed' | 'waiting_approval' | null) => void;
   clearExecutionState: () => void;
 
   // Mappers
@@ -75,7 +75,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   edges: [],
   selectedNodeId: null,
   workflowId: null,
-  workflowName: 'Untitled Workflow',
+  workflowName: 'AgentCraft',
   workflowDescription: '',
   nodeExecutionStatus: {},
   nodeDebugInfo: {},
@@ -112,7 +112,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     edges: [],
     selectedNodeId: null,
     workflowId: null,
-    workflowName: 'Untitled Workflow',
+    workflowName: 'AgentCraft',
     workflowDescription: '',
     nodeExecutionStatus: {},
     nodeDebugInfo: {},

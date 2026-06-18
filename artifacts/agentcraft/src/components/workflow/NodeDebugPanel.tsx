@@ -43,6 +43,7 @@ export function NodeDebugPanel({ debugInfo, status }: NodeDebugPanelProps) {
         running: { icon: Loader2, color: 'text-blue-400', label: 'Running' },
         success: { icon: CheckCircle2, color: 'text-emerald-400', label: 'Success' },
         failed: { icon: XCircle, color: 'text-rose-400', label: 'Failed' },
+        waiting_approval: { icon: Clock, color: 'text-yellow-400 animate-pulse', label: 'Waiting Approval' },
     };
     const sc = statusConfig[status];
     const StatusIcon = sc.icon;
@@ -54,6 +55,7 @@ export function NodeDebugPanel({ debugInfo, status }: NodeDebugPanelProps) {
                 'flex items-center justify-between px-3 py-2 rounded-lg border text-xs font-medium',
                 status === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
                     status === 'failed' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' :
+                    status === 'waiting_approval' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400 border-yellow-500/30' :
                         status === 'running' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
                             'bg-secondary border-border text-muted-foreground'
             )}>

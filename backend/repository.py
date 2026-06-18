@@ -26,6 +26,8 @@ class WorkflowRepository:
         description: Optional[str],
         nodes: list,
         edges: list,
+        trigger_type: str = "manual",
+        cron: Optional[str] = None,
     ) -> Workflow:
         """Create a new workflow."""
         workflow = Workflow(
@@ -33,6 +35,8 @@ class WorkflowRepository:
             description=description,
             nodes=nodes,
             edges=edges,
+            trigger_type=trigger_type,
+            cron=cron,
         )
         session.add(workflow)
         await session.flush()
@@ -57,6 +61,14 @@ class WorkflowRepository:
         return list(result.scalars().all())
 
     @staticmethod
+    async def list_by_trigger_type(session: AsyncSession, trigger_type: str) -> List[Workflow]:
+        """List workflows by trigger type."""
+        result = await session.execute(
+            select(Workflow).where(Workflow.trigger_type == trigger_type)
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
     async def update(
         session: AsyncSession,
         workflow_id: int,
@@ -64,6 +76,8 @@ class WorkflowRepository:
         description: Optional[str] = None,
         nodes: Optional[list] = None,
         edges: Optional[list] = None,
+        trigger_type: Optional[str] = None,
+        cron: Optional[str] = None,
     ) -> Optional[Workflow]:
         """Update workflow fields."""
         workflow = await WorkflowRepository.get_by_id(session, workflow_id)
@@ -78,6 +92,21 @@ class WorkflowRepository:
             workflow.nodes = nodes
         if edges is not None:
             workflow.edges = edges
+        if trigger_type is not None:
+            workflow.trigger_type = trigger_type
+        # Allow cron to be set to None if removing the schedule
+        if cron is not False:  # Use False as a default param if we wanted explicit None check, but here we'll just check if it's passed or let caller pass None. Actually, wait. The signature defaults to None. If the caller wants to clear it, they'd pass None. But how do we distinguish "don't update" from "clear it"? Let's just update if passed. If they want to clear it, they can pass "".
+            pass
+
+        # Since Optional[str] = None means we can't distinguish "unset" from "set to None", 
+        # we will assume if trigger_type is changing to "manual", we clear cron.
+        if trigger_type is not None:
+            if trigger_type == "manual":
+                workflow.cron = None
+            elif cron is not None:
+                workflow.cron = cron
+        elif cron is not None:
+            workflow.cron = cron
 
         workflow.updated_at = datetime.now(timezone.utc)
         await session.flush()
@@ -95,6 +124,15 @@ class WorkflowRepository:
         if deleted:
             logger.info("Deleted workflow id=%d", workflow_id)
         return deleted
+
+    @staticmethod
+    async def delete_all(session: AsyncSession) -> int:
+        """Delete all workflows. Returns count deleted."""
+        result = await session.execute(delete(Workflow))
+        count = result.rowcount or 0
+        if count:
+            logger.info("Deleted all workflows (count=%d)", count)
+        return count
 
 
 # ── Execution Repository ──────────────────────────────────────────────────────
@@ -197,3 +235,12 @@ class ExecutionRepository:
         return await ExecutionRepository.update_status(
             session, execution_id, "cancelled"
         )
+
+    @staticmethod
+    async def delete_all(session: AsyncSession) -> int:
+        """Delete all executions. Returns count deleted."""
+        result = await session.execute(delete(Execution))
+        count = result.rowcount or 0
+        if count:
+            logger.info("Deleted all executions (count=%d)", count)
+        return count

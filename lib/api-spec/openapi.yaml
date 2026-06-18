@@ -265,7 +265,7 @@ components:
           type: string
         type:
           type: string
-          enum: [input, ai_agent, api_call, condition, loop, output]
+          enum: [input, ai_agent, api_call, condition, loop, output, email, delay, webhook, database, file_processor, schedule_trigger, leetcode_daily, ai_solver, discord_webhook, telegram_bot]
         label:
           type: string
         config:
@@ -311,6 +311,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/WorkflowEdge"
+        triggerType:
+          type: string
+        cron:
+          type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time

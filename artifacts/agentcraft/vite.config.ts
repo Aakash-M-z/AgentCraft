@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, createLogger } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
@@ -9,7 +9,16 @@ const apiPort = process.env.API_PORT || "8000";
 // import.meta.dirname is available in Node 20+ (ESM)
 const dir = import.meta.dirname;
 
+// Suppress broken sourcemap warnings from third-party deps (e.g. @radix-ui)
+const logger = createLogger();
+const originalWarn = logger.warn.bind(logger);
+logger.warn = (msg, options) => {
+  if (msg.includes("Can't resolve original location of error")) return;
+  originalWarn(msg, options);
+};
+
 export default defineConfig({
+  customLogger: logger,
   base: basePath,
   plugins: [react()],
   css: {

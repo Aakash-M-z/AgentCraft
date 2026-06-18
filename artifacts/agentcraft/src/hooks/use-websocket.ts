@@ -1,68 +1,149 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { API_BASE } from '@/lib/api';
 
-export type WSEvent = {
-  type: 'node_start' | 'node_complete' | 'node_failed' | 'execution_complete' | 'log' | 'execution_cancelled' | 'node_update' | 'error';
+export type ExecutionStreamEvent = {
+  type:
+    | 'node_start'
+    | 'node_complete'
+    | 'node_failed'
+    | 'execution_complete'
+    | 'log'
+    | 'execution_cancelled'
+    | 'node_update'
+    | 'error';
   nodeId?: string;
   status?: string;
-  output?: Record<string, any>;
+  output?: Record<string, unknown>;
   message?: string;
   reasoning?: string;
   finalOutput?: string;
   executionId?: number;
 };
 
-export function useExecutionWebSocket(executionId: number | null) {
-  const [events, setEvents] = useState<WSEvent[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
+export type SseConnectionState = 'connected' | 'reconnecting' | 'disconnected';
+
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled']);
+const INITIAL_RECONNECT_MS = 3000;
+const MAX_RECONNECT_MS = 30000;
+
+export type UseExecutionStreamOptions = {
+  onEvent?: (event: ExecutionStreamEvent) => void;
+  enabled?: boolean;
+};
+
+export function useExecutionStream(
+  executionId: number | null,
+  options?: UseExecutionStreamOptions,
+) {
+  const [events, setEvents] = useState<ExecutionStreamEvent[]>([]);
+  const [connectionState, setConnectionState] =
+    useState<SseConnectionState>('disconnected');
   const evtSourceRef = useRef<EventSource | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptRef = useRef(0);
+  const stoppedRef = useRef(false);
+  const onEventRef = useRef(options?.onEvent);
+  onEventRef.current = options?.onEvent;
 
-  useEffect(() => {
-    if (!executionId) return;
+  const handleEvent = useCallback((data: ExecutionStreamEvent) => {
+    setEvents((prev) => [...prev, data]);
+    onEventRef.current?.(data);
+    if (
+      data.type === 'execution_complete' &&
+      data.status &&
+      TERMINAL_STATUSES.has(data.status)
+    ) {
+      stoppedRef.current = true;
+    }
+  }, []);
 
-    // Use API_BASE so SSE works in both dev (proxy) and production (Render URL)
+  const connectExecutionStream = useCallback(() => {
+    if (!executionId || stoppedRef.current) return;
+
+    evtSourceRef.current?.close();
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+
     const sseUrl = `${API_BASE}/api/executions/${executionId}/stream`;
-    console.log('🔌 SSE: Connecting to', sseUrl);
-
     const es = new EventSource(sseUrl);
     evtSourceRef.current = es;
 
+    es.addEventListener('heartbeat', () => {
+      // keepalive — no UI update needed
+    });
+
     es.onopen = () => {
-      console.log('✅ SSE: Connected');
-      setIsConnected(true);
+      setConnectionState('connected');
+      reconnectAttemptRef.current = 0;
     };
 
     es.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data) as WSEvent;
-        console.log('📨 SSE EVENT:', data);
-
-        // CRITICAL: Log completion events
-        if (data.type === 'execution_complete') {
-          console.log('🎉 SSE: Execution complete!', {
-            status: data.status,
-            finalOutput: data.finalOutput,
-            outputLength: data.finalOutput?.length || 0
-          });
-        }
-
-        setEvents((prev) => [...prev, data]);
+        const data = JSON.parse(event.data) as ExecutionStreamEvent;
+        handleEvent(data);
       } catch (err) {
-        console.error('❌ SSE: Failed to parse message', err, event.data);
+        console.error('SSE: Failed to parse message', err);
       }
     };
 
-    es.onerror = (err) => {
-      console.error('❌ SSE: Connection error', err);
-      setIsConnected(false);
+    es.onerror = () => {
+      es.close();
+      evtSourceRef.current = null;
+
+      if (stoppedRef.current) {
+        setConnectionState('disconnected');
+        return;
+      }
+
+      setConnectionState('reconnecting');
+      console.warn('SSE disconnected. Reconnecting...');
+
+      const attempt = reconnectAttemptRef.current;
+      reconnectAttemptRef.current += 1;
+      const delay = Math.min(
+        INITIAL_RECONNECT_MS * Math.pow(1.5, attempt),
+        MAX_RECONNECT_MS,
+      );
+      reconnectTimerRef.current = setTimeout(() => {
+        connectExecutionStream();
+      }, delay);
     };
+  }, [executionId, handleEvent]);
+
+  useEffect(() => {
+    if (!executionId || options?.enabled === false) {
+      return;
+    }
+
+    stoppedRef.current = false;
+    reconnectAttemptRef.current = 0;
+    connectExecutionStream();
 
     return () => {
-      console.log('🔌 SSE: Disconnecting');
-      es.close();
-      setIsConnected(false);
+      stoppedRef.current = true;
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+      }
+      evtSourceRef.current?.close();
+      evtSourceRef.current = null;
+      setConnectionState('disconnected');
     };
-  }, [executionId]);
+  }, [executionId, options?.enabled, connectExecutionStream]);
 
-  return { events, isConnected, setEvents };
+  return {
+    events,
+    setEvents,
+    connectionState,
+    isConnected: connectionState === 'connected',
+    connectExecutionStream,
+  };
+}
+
+/** @deprecated Use useExecutionStream */
+export function useExecutionWebSocket(executionId: number | null) {
+  const { events, setEvents, isConnected, connectionState } =
+    useExecutionStream(executionId);
+  return { events, isConnected, connectionState, setEvents };
 }

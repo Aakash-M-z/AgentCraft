@@ -7,6 +7,10 @@ import BuilderPage from "@/pages/builder";
 import WorkflowsPage from "@/pages/workflows";
 import ExecutionsPage from "@/pages/executions";
 import ExecutionDetailPage from "@/pages/execution-detail";
+import PersonalLifeOSPage from "@/pages/life-os";
+import AssignmentsPage from "@/pages/assignments";
+import PlacementsPage from "@/pages/placements";
+import LeetCodePage from "@/pages/leetcode";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +29,10 @@ function Router() {
       <Route path="/workflows/:id" component={BuilderPage} />
       <Route path="/executions" component={ExecutionsPage} />
       <Route path="/executions/:id" component={ExecutionDetailPage} />
+      <Route path="/life-os" component={PersonalLifeOSPage} />
+      <Route path="/life-os/assignments" component={AssignmentsPage} />
+      <Route path="/life-os/placements" component={PlacementsPage} />
+      <Route path="/life-os/leetcode" component={LeetCodePage} />
       <Route component={NotFound} />
     </Switch>
   );

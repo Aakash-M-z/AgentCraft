@@ -6,6 +6,11 @@ import json
 import logging
 import os
 import asyncio
+import sys
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
 import httpx
 from datetime import datetime, timezone
 from typing import Any
@@ -18,13 +23,24 @@ _AI_TYPES       = {"ai_agent", "ai"}
 _API_TYPES      = {"api_call", "api"}
 _CONDITION_TYPES = {"condition"}
 _LOOP_TYPES     = {"loop"}
-_INPUT_TYPES    = {"input"}
+_INPUT_TYPES    = {"input", "schedule_trigger"}
 _OUTPUT_TYPES   = {"output"}
 _EMAIL_TYPES    = {"email"}
 _DELAY_TYPES    = {"delay"}
 _WEBHOOK_TYPES  = {"webhook"}
 _DB_TYPES       = {"database"}
 _FILE_TYPES     = {"file_processor"}
+_LEETCODE_TYPES = {"leetcode_daily"}
+_AI_SOLVER_TYPES= {"ai_solver"}
+_DISCORD_TYPES  = {"discord_webhook"}
+_TELEGRAM_TYPES = {"telegram_bot"}
+_SUBMIT_TYPES   = {"leetcode_submit"}
+_WHATSAPP_MONITOR_TYPES = {"whatsapp_monitor"}
+_WHATSAPP_SENDER_TYPES  = {"whatsapp_sender", "whatsapp_message_sender"}
+_LIFE_OS_EXTRACTOR_TYPES = {"life_os_extractor", "whatsapp_extractor"}
+_LEETCODE_SAVE_TYPES = {"leetcode_save"}
+_FETCH_LIFE_OS_TYPES = {"fetch_life_os"}
+_BRIEFING_GENERATOR_TYPES = {"briefing_generator"}
 
 
 def _now() -> str:
@@ -56,6 +72,40 @@ def _parse_json_or_str(value: Any) -> Any:
             except json.JSONDecodeError:
                 pass
     return value
+
+
+def _strip_markdown_fences(text: str) -> str:
+    """Remove optional markdown code fences from model output."""
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        lines = stripped.splitlines()
+        if len(lines) >= 2 and lines[-1].strip() == "```":
+            return "\n".join(lines[1:-1]).strip()
+    return stripped
+
+
+def _ensure_plain_text_message(text: str, *, context: str = "message") -> str:
+    """Reject JSON-shaped output before sending to WhatsApp."""
+    stripped = (text or "").strip()
+    if stripped.startswith("{") or stripped.startswith("["):
+        raise ValueError(
+            f"AI output appears to be JSON instead of final mentor message ({context})."
+        )
+    return stripped
+
+
+def _extract_message_text(value: Any) -> str:
+    """Extract human-readable message text from AI or upstream node output."""
+    if isinstance(value, str):
+        return _strip_markdown_fences(value)
+    if isinstance(value, dict):
+        for key in ("message", "reason", "text", "content", "result"):
+            if key in value and value[key]:
+                candidate = value[key]
+                if isinstance(candidate, str):
+                    return _strip_markdown_fences(candidate)
+                return _strip_markdown_fences(str(candidate))
+    return _strip_markdown_fences(_to_str(value))
 
 
 def _sanitize_subject(subject: str) -> str:
@@ -125,6 +175,9 @@ async def run_workflow(
     nodes: list[dict],
     edges: list[dict] | None = None,
     _log_sink: list[str] | None = None,  # shared list for incremental SSE logging
+    execution_id: int | None = None,
+    node_config_overrides: dict[str, dict] | None = None,
+    previous_node_results: list[dict] | None = None,
 ) -> dict[str, Any]:
     """
     Execute nodes in topological order.
@@ -137,6 +190,15 @@ async def run_workflow(
     # `current` carries the live value between nodes — starts as the user's input
     current: Any = user_input
     node_results: list[dict] = []
+    
+    # Track successful nodes from previous execution runs (for human-in-the-loop resume)
+    successful_nodes = {}
+    if previous_node_results:
+        for r in previous_node_results:
+            if r.get("status") == "success":
+                successful_nodes[r["nodeId"]] = r
+                node_results.append(r)
+                
     # Use shared sink if provided (for incremental SSE), else local list
     agent_logs: list[str] = _log_sink if _log_sink is not None else []
     final_output: str = ""
@@ -145,6 +207,16 @@ async def run_workflow(
         entry = f"[{_now()}] {msg}"
         logger.info(msg)
         agent_logs.append(entry)
+        if execution_id:
+            try:
+                from .redis_client import publish_event, append_execution_log
+                asyncio.create_task(publish_event(f"execution:{execution_id}", {
+                    "type": "log",
+                    "message": entry
+                }))
+                asyncio.create_task(append_execution_log(execution_id, entry))
+            except Exception as e:
+                logger.error(f"Failed to publish/cache log to Redis for {execution_id}: {e}")
 
     log(f"🚀 Starting execution | nodes={len(ordered)} | input: {_to_str(user_input)[:80]}")
 
@@ -153,6 +225,17 @@ async def run_workflow(
         node_type = (node.get("type") or "").lower()
         label     = node.get("label") or node_type
         config    = node.get("config") or {}
+
+        # Skip successfully completed nodes from a previous resume
+        if node_id in successful_nodes:
+            log(f"⏭️  [{label}] already completed successfully. Skipping execution.")
+            completed_result = successful_nodes[node_id]
+            out_val = completed_result.get("output", {})
+            if isinstance(out_val, dict) and "result" in out_val:
+                current = _parse_json_or_str(out_val["result"])
+            else:
+                current = out_val
+            continue
 
         log(f"⚙️  [{label}] type={node_type}")
         log(f"    ↳ input: {_to_str(current)[:120]}")
@@ -165,6 +248,18 @@ async def run_workflow(
             "startedAt": _now(),
             "input":     _to_str(current)[:500],
         }
+
+        if execution_id:
+            try:
+                from .redis_client import publish_event
+                asyncio.create_task(publish_event(f"execution:{execution_id}", {
+                    "type": "node_update",
+                    "nodeId": node_id,
+                    "status": "running",
+                    "output": None
+                }))
+            except Exception as e:
+                logger.error(f"Failed to publish node start to Redis: {e}")
 
         try:
             output: Any = None  # will be set by each handler
@@ -181,11 +276,15 @@ async def run_workflow(
                 )
                 model       = config.get("model") or None
                 temperature = float(config.get("temperature") or 0.7)
+                output_format = str(config.get("outputFormat") or "").lower()
                 prompt      = _inject(instruction, current)
                 log(f"    🤖 AI [{model or 'default'}]: {prompt[:120]}")
                 raw_output  = await call_ai(prompt, model=model, temperature=temperature)
-                # Try to parse as JSON so downstream nodes can use structured data
-                output = _parse_json_or_str(raw_output)
+                if output_format == "plain_text":
+                    output = _strip_markdown_fences(raw_output)
+                    _ensure_plain_text_message(output, context="ai_agent plain_text")
+                else:
+                    output = _parse_json_or_str(raw_output)
                 log(f"    💬 AI output: {_to_str(output)[:120]}")
 
             # ── api_call ───────────────────────────────────────────────────
@@ -208,19 +307,43 @@ async def run_workflow(
             # ── condition ──────────────────────────────────────────────────
             elif node_type in _CONDITION_TYPES:
                 expr   = str(config.get("expression") or config.get("keyword") or "error")
-                passed = expr.lower() not in _to_str(current).lower()
+                operator = config.get("operator", "not_contains")
+                current_str = _to_str(current).lower()
+                expr_lower = expr.lower()
+                
+                if operator == "contains":
+                    passed = expr_lower in current_str
+                elif operator == "equals":
+                    passed = expr_lower == current_str
+                else: # not_contains
+                    passed = expr_lower not in current_str
+                    
                 output = current  # pass value through unchanged
-                log(f"    🔀 Condition '{expr}' → {'PASS ✓' if passed else 'HALT ✗'}")
+                log(f"    🔀 Condition (operator={operator}, value='{expr}') → {'PASS ✓' if passed else 'HALT ✗'}")
                 result.update({
                     "status":      "success",
                     "output":      {"result": _to_str(output), "passed": passed},
                     "completedAt": _now(),
                 })
                 node_results.append(result)
+                
+                if execution_id:
+                    try:
+                        from .redis_client import publish_event
+                        asyncio.create_task(publish_event(f"execution:{execution_id}", {
+                            "type": "node_update",
+                            "nodeId": node_id,
+                            "status": "success",
+                            "output": {"result": _to_str(output), "passed": passed}
+                        }))
+                    except Exception as e:
+                        logger.error(f"Failed to publish node success to Redis: {e}")
+
                 if not passed:
-                    log(f"    ❌ Halted by condition: '{expr}' found in output")
+                    log(f"    ❌ Halted by condition: condition check failed")
                     return _build_result("failed", _to_str(current), node_results, agent_logs,
-                                         reason=f"Condition halted: '{expr}' found in output")
+                                         reason=f"Condition halted: check failed")
+                    
                 current = output
                 continue
 
@@ -282,6 +405,19 @@ async def run_workflow(
                     "completedAt": _now(),
                 })
                 node_results.append(result)
+                
+                if execution_id:
+                    try:
+                        from .redis_client import publish_event
+                        asyncio.create_task(publish_event(f"execution:{execution_id}", {
+                            "type": "node_update",
+                            "nodeId": node_id,
+                            "status": "success",
+                            "output": {"result": final_output, "format": fmt}
+                        }))
+                    except Exception as e:
+                        logger.error(f"Failed to publish node success to Redis: {e}")
+
                 log("🎉 Workflow complete")
                 return _build_result("completed", final_output, node_results, agent_logs)
 
@@ -314,10 +450,568 @@ async def run_workflow(
                 output = f"[File {operation}] simulated result for: {_to_str(current)[:60]}"
                 log(f"    ✅ {output[:60]}")
 
+            # ── leetcode_daily ─────────────────────────────────────────────
+            elif node_type in _LEETCODE_TYPES:
+                log(f"    🌐 Fetching LeetCode daily challenge...")
+                # GraphQL query for daily question
+                query = """
+                query questionOfToday {
+                  activeDailyCodingChallengeQuestion {
+                    date
+                    link
+                    question {
+                      title
+                      titleSlug
+                      questionId
+                      questionFrontendId
+                      difficulty
+                      content
+                      codeSnippets {
+                        lang
+                        langSlug
+                        code
+                      }
+                    }
+                  }
+                }
+                """
+                async with httpx.AsyncClient(timeout=15) as http:
+                    resp = await http.post("https://leetcode.com/graphql", json={"query": query})
+                    resp.raise_for_status()
+                    data = resp.json()
+                    
+                    try:
+                        challenge = data["data"]["activeDailyCodingChallengeQuestion"]
+                        q_data = challenge["question"]
+                        output = {
+                            "title": q_data["title"],
+                            "titleSlug": q_data["titleSlug"],
+                            "questionId": q_data.get("questionId") or q_data.get("questionFrontendId") or "",
+                            "difficulty": q_data["difficulty"],
+                            "content": q_data["content"][:2000] + "..." if len(q_data.get("content", "")) > 2000 else q_data.get("content", ""),
+                            "link": f"https://leetcode.com/problems/{q_data['titleSlug']}/",
+                            "codeSnippets": q_data.get("codeSnippets") or []
+                        }
+                        log(f"    ✅ Fetched: {output['title']} ({output['difficulty']})")
+                    except KeyError as e:
+                        raise ValueError(f"Failed to parse LeetCode API response: {data}")
+                        
+            # ── ai_solver ──────────────────────────────────────────────────
+            elif node_type in _AI_SOLVER_TYPES:
+                model       = config.get("model") or "llama-3.3-70b-versatile"
+                language    = config.get("language") or "Python"
+                temperature = float(config.get("temperature") or 0.2) # Lower temp for coding
+                
+                # Assume current is the LeetCode output dict
+                lc_data = _parse_json_or_str(current)
+                problem_desc = str(lc_data)
+                starter_code = ""
+                if isinstance(lc_data, dict):
+                    problem_desc = f"Title: {lc_data.get('title')}\nDifficulty: {lc_data.get('difficulty')}\n{lc_data.get('content')}"
+                    snippets = lc_data.get("codeSnippets") or []
+                    target_lang = language.lower().replace(" ", "")
+                    for snip in snippets:
+                        s_lang = snip.get("lang", "").lower()
+                        s_slug = snip.get("langSlug", "").lower()
+                        if target_lang in s_lang or target_lang in s_slug or s_slug in target_lang:
+                            starter_code = snip.get("code", "")
+                            break
+                
+                instruction = f"""You are an expert competitive programmer. Solve the following LeetCode problem in {language}.
+
+STRICT RULES for the "solution" field:
+- Write ONLY the Solution class (or equivalent top-level function if needed).
+- Do NOT include any import statements (LeetCode already imports them).
+- Do NOT include any if __name__ == "__main__" blocks, test code, or examples.
+- Do NOT wrap code in Markdown fences (no ```python).
+- The code must be 100% syntactically valid {language} that LeetCode can run directly.
+- Prefer BFS/DP/Greedy for optimal time complexity. Avoid brute-force O(n^2) on large inputs.
+"""
+                if starter_code:
+                    instruction += f"""- YOU MUST KEEP the exact class and method signatures from this starter code template:
+```
+{starter_code}
+```
+"""
+                else:
+                    instruction += f"""- If you are writing in Python, the class should be named `Solution` and the standard LeetCode method signature must be used.
+"""
+
+                instruction += f"""
+Problem:
+{problem_desc}
+
+Return ONLY a valid JSON object (no markdown, no extra text) matching this schema:
+{{
+  "title": "Problem Title",
+  "difficulty": "Easy/Medium/Hard",
+  "approach": "Concise explanation of your algorithm",
+  "time_complexity": "O(...)",
+  "space_complexity": "O(...)",
+  "solution": "ONLY the Solution class code here"
+}}"""
+                
+                log(f"    🤖 AI Solver [{model}] - Language: {language}")
+                raw_output  = await call_ai(instruction, model=model, temperature=temperature, force_json=True)
+                output = _parse_json_or_str(raw_output)
+                if isinstance(output, dict) and "solution" in output:
+                    import textwrap
+                    output["solution"] = textwrap.dedent(output["solution"]).strip()
+                # Carry upstream LeetCode metadata through for leetcode_submit node
+                if isinstance(lc_data, dict) and isinstance(output, dict):
+                    output.setdefault("titleSlug", lc_data.get("titleSlug", ""))
+                    output.setdefault("questionId", lc_data.get("questionId", ""))
+                    output.setdefault("language", language)
+                log(f"    💬 Solution generated")
+                
+
+            # ── discord_webhook ────────────────────────────────────────────
+            elif node_type in _DISCORD_TYPES:
+                webhook_url = str(config.get("webhookUrl") or "").strip()
+                if not webhook_url:
+                    raise ValueError("Discord Webhook URL is missing")
+                
+                parsed = _parse_json_or_str(current)
+                # If we received the AI solver output, format a nice embed
+                if isinstance(parsed, dict) and "solution" in parsed:
+                    content = {
+                        "embeds": [{
+                            "title": f"🚀 LeetCode Daily: {parsed.get('title', 'Unknown')} ({parsed.get('difficulty', '')})",
+                            "color": 5814783,
+                            "fields": [
+                                {"name": "Approach", "value": str(parsed.get("approach", ""))[:1024]},
+                                {"name": "Time Complexity", "value": parsed.get("time_complexity", ""), "inline": True},
+                                {"name": "Space Complexity", "value": parsed.get("space_complexity", ""), "inline": True},
+                            ],
+                            "description": f"```python\n{parsed.get('solution', '')}\n```"
+                        }]
+                    }
+                else:
+                    content = {"content": f"AgentCraft Workflow Result:\n```\n{_to_str(current)[:1900]}\n```"}
+                    
+                log(f"    👾 Sending Discord webhook...")
+                async with httpx.AsyncClient(timeout=10) as http:
+                    resp = await http.post(webhook_url, json=content)
+                    if resp.status_code not in (200, 204):
+                        log(f"    ⚠️ Discord webhook returned {resp.status_code}: {resp.text}")
+                    else:
+                        log(f"    ✅ Sent to Discord")
+                output = current
+                
+            # ── telegram_bot ───────────────────────────────────────────────
+            elif node_type in _TELEGRAM_TYPES:
+                bot_token = str(config.get("botToken") or "").strip()
+                chat_id = str(config.get("chatId") or "").strip()
+                if not bot_token or not chat_id:
+                    raise ValueError("Telegram Bot Token or Chat ID is missing")
+                    
+                parsed = _parse_json_or_str(current)
+                if isinstance(parsed, dict) and "solution" in parsed:
+                    text = f"🚀 *LeetCode Daily*: {parsed.get('title')} ({parsed.get('difficulty')})\n\n"
+                    text += f"*Approach*:\n{parsed.get('approach')}\n\n"
+                    text += f"*Time*: {parsed.get('time_complexity')} | *Space*: {parsed.get('space_complexity')}\n\n"
+                    text += f"```python\n{parsed.get('solution')}\n```"
+                else:
+                    text = f"AgentCraft Workflow Result:\n{_to_str(current)}"
+                    
+                url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+                payload = {
+                    "chat_id": chat_id,
+                    "text": text[:4096],
+                    "parse_mode": "Markdown"
+                }
+                
+                log(f"    ✈️ Sending Telegram message...")
+                async with httpx.AsyncClient(timeout=10) as http:
+                    resp = await http.post(url, json=payload)
+                    if resp.status_code != 200:
+                        log(f"    ⚠️ Telegram API returned {resp.status_code}: {resp.text}")
+                    else:
+                        log(f"    ✅ Sent to Telegram")
+                output = current
+
+            # ── leetcode_submit ────────────────────────────────────────────
+            elif node_type in _SUBMIT_TYPES:
+                lc_session   = os.getenv("LEETCODE_SESSION", "").strip()
+                csrf_token   = os.getenv("LEETCODE_CSRF_TOKEN", "").strip()
+                if not lc_session or not csrf_token:
+                    raise ValueError(
+                        "LEETCODE_SESSION and LEETCODE_CSRF_TOKEN must be set in .env to submit solutions."
+                    )
+
+                parsed = _parse_json_or_str(current)
+                if not isinstance(parsed, dict):
+                    raise ValueError("leetcode_submit expects a dict from ai_solver output.")
+
+                title_slug  = parsed.get("titleSlug") or config.get("titleSlug", "")
+                question_id = parsed.get("questionId") or config.get("questionId", "")
+                code        = parsed.get("solution", "")
+                language    = (parsed.get("language") or config.get("language") or "python3").lower()
+
+                # Normalise language slug for LeetCode API
+                _LANG_MAP = {
+                    "python": "python3", "python3": "python3",
+                    "c++": "cpp", "cpp": "cpp",
+                    "java": "java", "javascript": "javascript",
+                    "typescript": "typescript", "go": "golang",
+                    "rust": "rust", "c": "c", "kotlin": "kotlin",
+                }
+                lang_slug = _LANG_MAP.get(language, language)
+
+                if not title_slug or not code:
+                    raise ValueError(f"Missing titleSlug ('{title_slug}') or solution code for submission.")
+
+                log(f"    📤 Submitting '{title_slug}' as {lang_slug} to LeetCode account...")
+
+                submit_url = f"https://leetcode.com/problems/{title_slug}/submit/"
+                headers = {
+                    "Cookie": f"LEETCODE_SESSION={lc_session}; csrftoken={csrf_token}",
+                    "X-CSRFToken": csrf_token,
+                    "Referer": f"https://leetcode.com/problems/{title_slug}/",
+                    "Content-Type": "application/json",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                    "Origin": "https://leetcode.com",
+                }
+                payload = {
+                    "lang": lang_slug,
+                    "question_id": str(question_id),
+                    "typed_code": code,
+                }
+
+                async with httpx.AsyncClient(timeout=30, follow_redirects=True) as http:
+                    sub_resp = await http.post(submit_url, json=payload, headers=headers)
+                    if sub_resp.status_code not in (200, 201):
+                        raise ValueError(
+                            f"Submission failed: HTTP {sub_resp.status_code} — {sub_resp.text[:300]}"
+                        )
+                    sub_data = sub_resp.json()
+                    submission_id = sub_data.get("submission_id")
+                    log(f"    ✅ Submitted! submission_id={submission_id}")
+
+                    # Poll for result (up to 30s)
+                    if submission_id:
+                        check_url = f"https://leetcode.com/submissions/detail/{submission_id}/check/"
+                        for _ in range(15):
+                            await asyncio.sleep(2)
+                            chk = await http.get(check_url, headers=headers)
+                            chk_data = chk.json()
+                            state = chk_data.get("state", "")
+                            log(f"    ⏳ Check state: {state}")
+                            if state == "SUCCESS":
+                                status_msg = chk_data.get("status_msg", "")
+                                runtime    = chk_data.get("status_runtime", "N/A")
+                                memory     = chk_data.get("status_memory", "N/A")
+                                runtime_pct = chk_data.get("runtime_percentile") or chk_data.get("total_correct", "")
+                                log(f"    🏆 Result: {status_msg} | Runtime: {runtime} | Memory: {memory}")
+                                output = {
+                                    **parsed,
+                                    "submission_id": submission_id,
+                                    "submission_status": status_msg,
+                                    "runtime": runtime,
+                                    "memory": memory,
+                                    "link": f"https://leetcode.com/submissions/detail/{submission_id}/",
+                                }
+                                break
+                        else:
+                            log(f"    ⚠️ Result check timed out — check manually at https://leetcode.com/submissions/detail/{submission_id}/")
+                            output = {**parsed, "submission_id": submission_id, "submission_status": "pending"}
+                    else:
+                        output = {**parsed, "submission_status": "submitted", "raw": sub_data}
+
+            # ── whatsapp_monitor ──────────────────────────────────────────
+            elif node_type in _WHATSAPP_MONITOR_TYPES:
+                group_name = str(config.get("groupName") or "").strip()
+                max_messages = int(config.get("maxMessages") or 30)
+                if not group_name:
+                    raise ValueError("WhatsApp Monitor: 'groupName' is required. Please set it in the node configuration.")
+                
+                log(f"    📱 WhatsApp Monitor: Scanning group '{group_name}' (max messages={max_messages})...")
+                
+                from .whatsapp import extract_group_messages
+                monitor_result = await extract_group_messages(
+                    group_name=group_name,
+                    max_messages=max_messages,
+                    log_func=log
+                )
+                output = monitor_result
+                log(f"    ✓ Extracted {len(monitor_result.get('messages', []))} messages from '{group_name}'")
+
+            # ── whatsapp_sender ───────────────────────────────────────────
+            elif node_type in _WHATSAPP_SENDER_TYPES:
+                contact_name = str(config.get("contactName") or "").strip()
+                msg_template = str(config.get("messageTemplate") or config.get("message") or "{{input}}")
+                manual_approval = config.get("manualApproval", True)
+                if isinstance(manual_approval, str):
+                    manual_approval = manual_approval.lower() == "true"
+                
+                if not contact_name:
+                    raise ValueError("WhatsApp Sender: 'contactName' is required. Please set it in the node configuration.")
+
+                message_val = _extract_message_text(current)
+                message = _inject(msg_template, message_val)
+                message = _ensure_plain_text_message(message, context="whatsapp_sender draft")
+                
+                # Check for human config overrides (approved message and status)
+                override = (node_config_overrides or {}).get(node_id, {})
+                is_approved = override.get("approved", False)
+                if is_approved:
+                    # If approved, prioritize manual text area edit
+                    if override.get("message") is not None:
+                        message = override.get("message")
+                    log(f"    🚀 WhatsApp Sender: Human approved message → Sending to '{contact_name}'")
+                
+                if manual_approval and not is_approved:
+                    log(f"    ⏸️  WhatsApp Sender: Pausing for manual approval. Draft message prepared.")
+                    log(f"    ↳ Draft message: {message[:120]}...")
+                    
+                    result.update({
+                        "status": "waiting_approval",
+                        "output": {
+                            "draft": message,
+                            "contactName": contact_name,
+                            "needsApproval": True
+                        },
+                        "completedAt": _now(),
+                    })
+                    node_results.append(result)
+                    
+                    if execution_id:
+                        try:
+                            from .redis_client import publish_event
+                            asyncio.create_task(publish_event(f"execution:{execution_id}", {
+                                "type": "node_update",
+                                "nodeId": node_id,
+                                "status": "waiting_approval",
+                                "output": {
+                                    "draft": message,
+                                    "contactName": contact_name,
+                                    "needsApproval": True
+                                }
+                            }))
+                        except Exception as e:
+                            logger.error(f"Failed to publish waiting_approval: {e}")
+                            
+                    log("⏸️  Workflow execution paused: Awaiting human review.")
+                    return _build_result("waiting_approval", message, node_results, agent_logs)
+                
+                # Send the message
+                log(f"    📱 WhatsApp Sender: Sending message to '{contact_name}'...")
+                from .whatsapp import send_whatsapp_message, get_screenshot_dir
+                
+                screenshot_dir = get_screenshot_dir()
+                proof_path = os.path.join(screenshot_dir, f"send_proof_{execution_id or 'direct'}.png")
+                
+                await send_whatsapp_message(
+                    contact_name=contact_name,
+                    message=message,
+                    screenshot_path=proof_path,
+                    log_func=log
+                )
+                
+                output = {
+                    "sent": True,
+                    "recipient": contact_name,
+                    "message": message,
+                    "proof_screenshot": proof_path
+                }
+
+            # ── life_os_extractor ──────────────────────────────────────────
+            elif node_type in _LIFE_OS_EXTRACTOR_TYPES:
+                from .database import AsyncSessionLocal
+                from .personal_life_os_repository import AssignmentRepository, PlacementRepository
+                from datetime import timedelta
+                
+                log(f"    🧠 Life OS Extractor: Analyzing WhatsApp stream...")
+                messages_feed = ""
+                if isinstance(current, dict):
+                    msg_list = current.get("messages", [])
+                    messages_feed = "\n".join([f"[{m.get('sender', 'Unknown')}]: {m.get('text', '')}" for m in msg_list])
+                else:
+                    messages_feed = _to_str(current)
+                
+                if not messages_feed.strip():
+                    log("    ⚠️ Empty WhatsApp messages stream. Skipping extractor.")
+                    output = {"extracted_assignments": 0, "extracted_placements": 0}
+                else:
+                    prompt = f"""You are a staff operations AI. Analyze the following WhatsApp notifications feed and extract assignments, upcoming test/placement deadlines, academic placements, and meetings.
+                    
+                    Feed:
+                    {messages_feed}
+                    
+                    Extract ONLY actionable and official items. Ignore chit-chat.
+                    Return a valid JSON object matching this schema:
+                    {{
+                      "assignments": [
+                        {{
+                          "title": "Assignment Topic",
+                          "subject": "Subject/Course Name",
+                          "days_to_deadline": 2,
+                          "priority": "high/medium/low"
+                        }}
+                      ],
+                      "placements": [
+                        {{
+                          "company_name": "TCS/Infosys",
+                          "package": "7 LPA",
+                          "days_to_deadline": 5,
+                          "eligibility": "B.Tech CSE/ECE",
+                          "apply_url": "https://..."
+                        }}
+                      ]
+                    }}
+                    """
+                    raw_json = await call_ai(prompt, model="llama-3.3-70b-versatile", temperature=0.1, force_json=True)
+                    data = _parse_json_or_str(raw_json)
+                    
+                    asg_count = 0
+                    plc_count = 0
+                    
+                    async with AsyncSessionLocal() as db:
+                        # Process Extracted Assignments
+                        for asg in data.get("assignments", []):
+                            days = int(asg.get("days_to_deadline") or 1)
+                            deadline = datetime.now(timezone.utc) + timedelta(days=days)
+                            await AssignmentRepository.create(
+                                db,
+                                title=asg.get("title", "Untitled Task"),
+                                subject=asg.get("subject", "General"),
+                                deadline=deadline,
+                                priority=asg.get("priority", "medium"),
+                                source="whatsapp"
+                            )
+                            asg_count += 1
+                        
+                        # Process Extracted Placements
+                        for plc in data.get("placements", []):
+                            days = int(plc.get("days_to_deadline") or 7)
+                            deadline = datetime.now(timezone.utc) + timedelta(days=days)
+                            saved = await PlacementRepository.create(
+                                db,
+                                company_name=plc.get("company_name", "Unknown Corp"),
+                                package=plc.get("package"),
+                                deadline=deadline,
+                                eligibility=plc.get("eligibility"),
+                                apply_url=plc.get("apply_url")
+                            )
+                            if saved:
+                                plc_count += 1
+                        
+                        await db.commit()
+                    
+                    log(f"    ✓ Extracted and stored: {asg_count} assignments, {plc_count} placements.")
+                    output = {
+                        "extracted_assignments": asg_count,
+                        "extracted_placements": plc_count,
+                        "raw_data": data
+                    }
+
+            # ── leetcode_save ──────────────────────────────────────────────
+            elif node_type in _LEETCODE_SAVE_TYPES:
+                from .database import AsyncSessionLocal
+                from .personal_life_os_repository import LeetCodeRepository
+                
+                parsed = _parse_json_or_str(current)
+                title = parsed.get("title", "LeetCode Challenge") if isinstance(parsed, dict) else "LeetCode Challenge"
+                slug = parsed.get("titleSlug", "leetcode-challenge") if isinstance(parsed, dict) else "leetcode-challenge"
+                diff = parsed.get("difficulty", "Medium") if isinstance(parsed, dict) else "Medium"
+                sol = parsed.get("solution", "") if isinstance(parsed, dict) else _to_str(current)
+                
+                # Check LeetCode submission status
+                status = "solved"
+                if isinstance(parsed, dict):
+                    sub_status = parsed.get("submission_status", "").upper()
+                    if "FAIL" in sub_status or "ERROR" in sub_status:
+                        status = "missed"
+                
+                log(f"    🗄️ Saving LeetCode Daily: '{title}' ({diff}) -> status: {status}")
+                async with AsyncSessionLocal() as db:
+                    await LeetCodeRepository.create(
+                        db,
+                        title=title,
+                        slug=slug,
+                        difficulty=diff,
+                        solution=sol,
+                        status=status
+                    )
+                    await db.commit()
+                
+                output = {"saved": True, "title": title, "status": status}
+
+            # ── fetch_life_os ──────────────────────────────────────────────
+            elif node_type in _FETCH_LIFE_OS_TYPES:
+                from .database import AsyncSessionLocal
+                from .personal_life_os_repository import AssignmentRepository, PlacementRepository, LeetCodeRepository
+                
+                log(f"    💼 Fetching Active Life OS Telemetry...")
+                async with AsyncSessionLocal() as db:
+                    assignments = await AssignmentRepository.list_active(db)
+                    placements = await PlacementRepository.list_active(db)
+                    lc_stats = await LeetCodeRepository.get_streak_stats(db)
+                
+                output = {
+                    "assignments": [
+                        {
+                            "id": a.id,
+                            "title": a.title,
+                            "subject": a.subject,
+                            "deadline": a.deadline.isoformat(),
+                            "priority": a.priority,
+                            "status": a.status
+                        }
+                        for a in assignments
+                    ],
+                    "placements": [
+                        {
+                            "id": p.id,
+                            "company_name": p.company_name,
+                            "package": p.package,
+                            "deadline": p.deadline.isoformat(),
+                            "eligibility": p.eligibility,
+                            "apply_url": p.apply_url
+                        }
+                        for p in placements
+                    ],
+                    "leetcode": lc_stats
+                }
+                log(f"    ✓ Loaded {len(assignments)} tasks and {len(placements)} placements.")
+
+            # ── briefing_generator ─────────────────────────────────────────
+            elif node_type in _BRIEFING_GENERATOR_TYPES:
+                from .database import AsyncSessionLocal
+                from .personal_life_os_repository import BriefingRepository
+                
+                log(f"    🧠 Briefing Generator: Composing AI Daily Briefing digest...")
+                context_data = _to_str(current)
+                
+                prompt = f"""You are Aakash's Executive AI Chief of Staff. Compose a premium, highly professional morning briefing based on Aakash's active student/professional dashboard metrics.
+                
+                Active Personal Data:
+                {context_data}
+                
+                STRICT GUIDELINES:
+                - Greeting: Start exactly with: "Good Morning Aakash"
+                - Style: Sleek, high-impact, engaging spacing. Make it look like a custom morning digest.
+                - Sections:
+                  - Assignments (Highlight any due soon)
+                  - Placements (TCS, TCS deadline, active opportunities)
+                  - LeetCode status (Mention if today's solved, streak count)
+                  - Short prioritized recommendations list (e.g. "Priority: HIGH")
+                """
+                briefing_text = await call_ai(prompt, model="llama-3.3-70b-versatile", temperature=0.7)
+                
+                # Save Briefing in database
+                async with AsyncSessionLocal() as db:
+                    await BriefingRepository.create(db, content=briefing_text, status="sent")
+                    await db.commit()
+                
+                log("    ✓ AI Briefing generated and logged.")
+                output = briefing_text
+
             # ── unknown ────────────────────────────────────────────────────
             else:
                 output = current
                 log(f"    ⚠️  Unknown type '{node_type}' — passing through")
+
 
             # Guard: output must never be None
             if output is None:
@@ -333,8 +1027,22 @@ async def run_workflow(
             })
             current = output
 
+            if execution_id:
+                try:
+                    from .redis_client import publish_event
+                    asyncio.create_task(publish_event(f"execution:{execution_id}", {
+                        "type": "node_update",
+                        "nodeId": node_id,
+                        "status": "success",
+                        "output": _to_str(output)
+                    }))
+                except Exception as e:
+                    logger.error(f"Failed to publish node success to Redis: {e}")
+
         except Exception as exc:
-            error_msg = f"Node [{label}] failed: {exc}"
+            import traceback
+            tb = traceback.format_exc()
+            error_msg = f"Node [{label}] failed: {exc}\n{tb}"
             logger.error(error_msg, exc_info=True)
             log(f"    ❌ {error_msg}")
             result.update({
@@ -343,6 +1051,19 @@ async def run_workflow(
                 "completedAt": _now(),
             })
             node_results.append(result)
+
+            if execution_id:
+                try:
+                    from .redis_client import publish_event
+                    asyncio.create_task(publish_event(f"execution:{execution_id}", {
+                        "type": "node_update",
+                        "nodeId": node_id,
+                        "status": "failed",
+                        "output": error_msg
+                    }))
+                except Exception as e:
+                    logger.error(f"Failed to publish node failure to Redis: {e}")
+
             return _build_result("failed", error_msg, node_results, agent_logs)
 
         node_results.append(result)
@@ -367,6 +1088,213 @@ def _build_result(
         "agentLogs":   agent_logs,
         **({"reason": reason} if reason else {}),
     }
+
+
+async def resume_workflow_from_approval(
+    execution_id: int,
+    workflow_nodes: list[dict],
+    workflow_edges: list[dict] | None,
+    approved_message: str,
+    contact_name: str,
+    waiting_node_id: str,
+    previous_node_results: list[dict],
+    _log_sink: list[str] | None = None,
+) -> dict[str, Any]:
+    """
+    Resume a paused workflow from the WhatsApp sender node after human approval.
+    This does NOT re-run prior nodes. It only executes the WhatsApp send step
+    and any remaining downstream nodes.
+    """
+    edges = workflow_edges or []
+    ordered = _topo_sort(workflow_nodes, edges) if edges else workflow_nodes
+
+    agent_logs: list[str] = _log_sink if _log_sink is not None else []
+    node_results: list[dict] = list(previous_node_results or [])
+
+    def log(msg: str) -> None:
+        entry = f"[{_now()}] {msg}"
+        logger.info(msg)
+        agent_logs.append(entry)
+        if execution_id:
+            try:
+                from .redis_client import publish_event, append_execution_log
+                asyncio.create_task(publish_event(f"execution:{execution_id}", {
+                    "type": "log",
+                    "message": entry
+                }))
+                asyncio.create_task(append_execution_log(execution_id, entry))
+            except Exception as e:
+                logger.error(f"Failed to publish/cache log to Redis for {execution_id}: {e}")
+
+    log(f"✅ Human approved execution. Resuming from node '{waiting_node_id}'...")
+
+    # Find the index of the waiting node in the topo-sorted order
+    waiting_idx = None
+    for i, node in enumerate(ordered):
+        if node.get("id") == waiting_node_id:
+            waiting_idx = i
+            break
+
+    if waiting_idx is None:
+        log(f"❌ Could not find waiting node '{waiting_node_id}' in workflow.")
+        return _build_result("failed", f"Node {waiting_node_id} not found", node_results, agent_logs)
+
+    # Step 1: Execute the WhatsApp send for the approved node
+    waiting_node = ordered[waiting_idx]
+    node_id = waiting_node.get("id", "?")
+    node_type = (waiting_node.get("type") or "").lower()
+    label = waiting_node.get("label") or node_type
+    config = waiting_node.get("config") or {}
+
+    log(f"📱 WhatsApp Sender: Sending approved message to '{contact_name}'...")
+    approved_message = _ensure_plain_text_message(
+        approved_message, context="approved WhatsApp message"
+    )
+
+    result: dict = {
+        "nodeId": node_id,
+        "nodeType": node_type,
+        "label": label,
+        "status": "running",
+        "startedAt": _now(),
+        "input": approved_message[:500],
+    }
+
+    if execution_id:
+        try:
+            from .redis_client import publish_event
+            asyncio.create_task(publish_event(f"execution:{execution_id}", {
+                "type": "node_update",
+                "nodeId": node_id,
+                "status": "running",
+                "output": None
+            }))
+        except Exception as e:
+            logger.error(f"Failed to publish node start to Redis: {e}")
+
+    try:
+        from .whatsapp import send_whatsapp_message, get_screenshot_dir
+
+        screenshot_dir = get_screenshot_dir()
+        proof_path = os.path.join(screenshot_dir, f"send_proof_{execution_id or 'direct'}.png")
+
+        await send_whatsapp_message(
+            contact_name=contact_name,
+            message=approved_message,
+            screenshot_path=proof_path,
+            log_func=log
+        )
+
+        output = {
+            "sent": True,
+            "recipient": contact_name,
+            "message": approved_message,
+            "proof_screenshot": proof_path
+        }
+        log(f"    ✓ output: {_to_str(output)[:120]}")
+
+        # Remove the old waiting_approval result for this node and add the success one
+        node_results = [r for r in node_results if r.get("nodeId") != node_id]
+        result.update({
+            "status": "success",
+            "output": {"result": _to_str(output)},
+            "completedAt": _now(),
+        })
+        node_results.append(result)
+
+        if execution_id:
+            try:
+                from .redis_client import publish_event
+                asyncio.create_task(publish_event(f"execution:{execution_id}", {
+                    "type": "node_update",
+                    "nodeId": node_id,
+                    "status": "success",
+                    "output": _to_str(output)
+                }))
+            except Exception as e:
+                logger.error(f"Failed to publish node success to Redis: {e}")
+
+    except Exception as exc:
+        import traceback
+        tb = traceback.format_exc()
+        error_msg = f"Node [{label}] failed: {exc}\n{tb}"
+        logger.error(error_msg, exc_info=True)
+        log(f"    ❌ {error_msg}")
+        result.update({
+            "status": "failed",
+            "reasoning": error_msg,
+            "completedAt": _now(),
+        })
+        # Remove old waiting result and add failed
+        node_results = [r for r in node_results if r.get("nodeId") != node_id]
+        node_results.append(result)
+        return _build_result("failed", error_msg, node_results, agent_logs)
+
+    # Step 2: Execute any remaining nodes after the sender node
+    current: Any = output
+    for remaining_node in ordered[waiting_idx + 1:]:
+        r_node_id = remaining_node.get("id", "?")
+        r_node_type = (remaining_node.get("type") or "").lower()
+        r_label = remaining_node.get("label") or r_node_type
+        r_config = remaining_node.get("config") or {}
+
+        # Skip already-completed nodes
+        already_done = any(r.get("nodeId") == r_node_id and r.get("status") == "success" for r in node_results)
+        if already_done:
+            continue
+
+        log(f"⚙️  [{r_label}] type={r_node_type}")
+
+        r_result: dict = {
+            "nodeId": r_node_id,
+            "nodeType": r_node_type,
+            "label": r_label,
+            "status": "running",
+            "startedAt": _now(),
+            "input": _to_str(current)[:500],
+        }
+
+        try:
+            r_output: Any = current
+            if r_node_type in _OUTPUT_TYPES:
+                final_out = _to_str(current)
+                log(f"    📤 Output: {final_out[:120]}")
+                r_result.update({
+                    "status": "success",
+                    "output": {"result": final_out, "format": "text"},
+                    "completedAt": _now(),
+                })
+                node_results.append(r_result)
+                log("🎉 Workflow complete")
+                return _build_result("completed", final_out, node_results, agent_logs)
+            else:
+                log(f"    ⚠️  Passing through node type '{r_node_type}'")
+
+            r_result.update({
+                "status": "success",
+                "output": {"result": _to_str(r_output)[:500]},
+                "completedAt": _now(),
+            })
+            current = r_output
+        except Exception as exc:
+            import traceback
+            tb = traceback.format_exc()
+            err_msg = f"Node [{r_label}] failed: {exc}\n{tb}"
+            log(f"    ❌ {err_msg}")
+            r_result.update({
+                "status": "failed",
+                "reasoning": err_msg,
+                "completedAt": _now(),
+            })
+            node_results.append(r_result)
+            return _build_result("failed", err_msg, node_results, agent_logs)
+
+        node_results.append(r_result)
+
+    # All done
+    final_output = _to_str(current)
+    log(f"✅ Workflow finished | final: {final_output[:120]}")
+    return _build_result("completed", final_output, node_results, agent_logs)
 
 
 def _topo_sort(nodes: list[dict], edges: list[dict]) -> list[dict]:

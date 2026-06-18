@@ -23,6 +23,18 @@ export const WorkflowNodeType = {
   condition: "condition",
   loop: "loop",
   output: "output",
+  email: "email",
+  delay: "delay",
+  webhook: "webhook",
+  database: "database",
+  file_processor: "file_processor",
+  schedule_trigger: "schedule_trigger",
+  leetcode_daily: "leetcode_daily",
+  ai_solver: "ai_solver",
+  discord_webhook: "discord_webhook",
+  telegram_bot: "telegram_bot",
+  whatsapp_monitor: "whatsapp_monitor",
+  whatsapp_sender: "whatsapp_sender",
 } as const;
 
 export type WorkflowNodeConfig = { [key: string]: unknown };
@@ -53,6 +65,8 @@ export interface Workflow {
   description?: string;
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
+  triggerType?: string;
+  cron?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -89,6 +103,7 @@ export const NodeResultStatus = {
   success: "success",
   failed: "failed",
   skipped: "skipped",
+  waiting_approval: "waiting_approval",
 } as const;
 
 export type NodeResultOutput = { [key: string]: unknown };
@@ -114,6 +129,7 @@ export const ExecutionStatus = {
   completed: "completed",
   failed: "failed",
   cancelled: "cancelled",
+  waiting_approval: "waiting_approval",
 } as const;
 
 export interface Execution {
@@ -134,6 +150,7 @@ export const ExecutionDetailStatus = {
   completed: "completed",
   failed: "failed",
   cancelled: "cancelled",
+  waiting_approval: "waiting_approval",
 } as const;
 
 export interface ExecutionDetail {
