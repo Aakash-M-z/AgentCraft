@@ -1,6 +1,6 @@
 import { useWorkflowStore } from "@/lib/store";
 import { WorkflowNodeType } from "@workspace/api-client-react";
-import { Bot, Server, GitBranch, Repeat, Zap, ArrowDownToLine, Mail, Database, Webhook, FileText, Timer, Plus, Wand2, Lightbulb, Bug, CalendarClock, Code2, BrainCircuit, MessageSquare, Send, Trash2 } from "lucide-react";
+import { Bot, Server, GitBranch, Repeat, Zap, ArrowDownToLine, Mail, Database, Webhook, FileText, Timer, Plus, Wand2, Lightbulb, Bug, CalendarClock, Code2, BrainCircuit, MessageSquare, Send, Trash2, Github, CloudSun } from "lucide-react";
 import { NodeDebugPanel } from "./NodeDebugPanel";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -142,6 +142,8 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
     ai_solver: <BrainCircuit size={13} className="text-violet-400" />,
     discord_webhook: <MessageSquare size={13} className="text-indigo-400" />,
     telegram_bot: <Send size={13} className="text-sky-400" />,
+    github: <Github size={13} className="text-zinc-300" />,
+    weather: <CloudSun size={13} className="text-sky-400" />,
     whatsapp_monitor: <MessageSquare size={13} className="text-emerald-400" />,
     whatsapp_sender: <Send size={13} className="text-emerald-400" />,
   };
@@ -500,11 +502,104 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
             <>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Bot Token</label>
-                <input type="password" value={cfg.botToken ?? ""} onChange={e => set("botToken", e.target.value)} className={inputClass} placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" />
+                <input type="password" value={cfg.botToken ?? ""} onChange={e => set("botToken", e.target.value)} className={inputClass} placeholder="Optional if set in environment" />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Chat ID</label>
                 <input type="text" value={cfg.chatId ?? ""} onChange={e => set("chatId", e.target.value)} className={inputClass} placeholder="-1001234567890" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Message Template</label>
+                <textarea
+                  value={cfg.messageTemplate ?? "{{input}}"}
+                  onChange={e => set("messageTemplate", e.target.value)}
+                  className={cn(inputClass, "min-h-[100px] font-mono text-xs")}
+                  placeholder="Write message template. Support variables: {{input}}"
+                />
+              </div>
+            </>
+          )}
+
+          {/* GitHub Node */}
+          {node.type === "github" && (
+            <>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">GitHub Access Token</label>
+                <input
+                  type="password"
+                  value={cfg.githubToken ?? ""}
+                  onChange={e => set("githubToken", e.target.value)}
+                  className={inputClass}
+                  placeholder="Optional if set in environment"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">GitHub Username</label>
+                <input
+                  type="text"
+                  value={cfg.username ?? ""}
+                  onChange={e => set("username", e.target.value)}
+                  className={inputClass}
+                  placeholder="e.g. Aakash-M-z"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Repository (Optional)</label>
+                <input
+                  type="text"
+                  value={cfg.repository ?? ""}
+                  onChange={e => set("repository", e.target.value)}
+                  className={inputClass}
+                  placeholder="e.g. owner/repo or repo"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Max Events</label>
+                <input
+                  type="number"
+                  value={cfg.maxEvents ?? 5}
+                  onChange={e => set("maxEvents", parseInt(e.target.value) || 5)}
+                  className={inputClass}
+                  min={1}
+                  max={20}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Weather Node */}
+          {node.type === "weather" && (
+            <>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Weather API Key</label>
+                <input
+                  type="password"
+                  value={cfg.apiKey ?? ""}
+                  onChange={e => set("apiKey", e.target.value)}
+                  className={inputClass}
+                  placeholder="Optional if set in environment"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">City</label>
+                <input
+                  type="text"
+                  value={cfg.city ?? ""}
+                  onChange={e => set("city", e.target.value)}
+                  className={inputClass}
+                  placeholder="e.g. Chennai"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Units</label>
+                <select
+                  value={cfg.units ?? "celsius"}
+                  onChange={e => set("units", e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="celsius">Celsius (°C)</option>
+                  <option value="fahrenheit">Fahrenheit (°F)</option>
+                </select>
               </div>
             </>
           )}

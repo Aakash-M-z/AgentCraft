@@ -41,6 +41,8 @@ _LIFE_OS_EXTRACTOR_TYPES = {"life_os_extractor", "whatsapp_extractor"}
 _LEETCODE_SAVE_TYPES = {"leetcode_save"}
 _FETCH_LIFE_OS_TYPES = {"fetch_life_os"}
 _BRIEFING_GENERATOR_TYPES = {"briefing_generator"}
+_GITHUB_TYPES = {"github", "github_activity"}
+_WEATHER_TYPES = {"weather", "weather_info"}
 
 
 def _now() -> str:
@@ -610,37 +612,261 @@ Return ONLY a valid JSON object (no markdown, no extra text) matching this schem
                         log(f"    ✅ Sent to Discord")
                 output = current
                 
+            # ── weather ──────────────────────────────────────────────────
+            elif node_type in _WEATHER_TYPES:
+                api_key = (config.get("apiKey") or os.getenv("WEATHER_API_KEY") or "").strip()
+                city = (config.get("city") or "").strip()
+                units = (config.get("units") or "celsius").lower().strip()
+
+                if not api_key:
+                    raise ValueError("Weather Node: Weather API Key is missing. Add it to config or set WEATHER_API_KEY in .env.")
+                if not city:
+                    raise ValueError("Weather Node: City parameter is missing.")
+
+                log("🌦 Connecting to Weather API...")
+                log(f"📍 Reading weather for city: {city}...")
+
+                url = "http://api.weatherapi.com/v1/current.json"
+                params = {
+                    "key": api_key,
+                    "q": city,
+                    "aqi": "no"
+                }
+
+                try:
+                    async with httpx.AsyncClient(timeout=10) as http:
+                        resp = await http.get(url, params=params)
+                except httpx.TimeoutException:
+                    raise RuntimeError("Weather Node: Weather API connection timed out.")
+                except Exception as e:
+                    raise RuntimeError(f"Weather Node: Failed to connect to Weather API: {e}")
+
+                if resp.status_code == 400:
+                    err_data = resp.json().get("error", {})
+                    err_msg = err_data.get("message", "")
+                    err_code = err_data.get("code")
+                    if err_code == 1006:
+                        raise ValueError(f"Weather Node: Invalid city name '{city}'. Location not found.")
+                    raise ValueError(f"Weather Node API Error: {err_msg}")
+                elif resp.status_code in (401, 403):
+                    raise ValueError("Weather Node: Invalid Weather API Key provided.")
+                elif resp.status_code != 200:
+                    raise RuntimeError(f"Weather Node API returned HTTP {resp.status_code}: {resp.text}")
+
+                data = resp.json()
+                current_weather = data.get("current", {})
+                condition_data = current_weather.get("condition", {})
+                
+                # Extract requested unit metrics
+                temp = int(round(current_weather.get("temp_c" if units == "celsius" else "temp_f", 0)))
+                wind = current_weather.get("wind_kph" if units == "celsius" else "wind_mph", 0)
+
+                output = {
+                    "city": data.get("location", {}).get("name", city),
+                    "temperature": temp,
+                    "condition": condition_data.get("text", "Unknown"),
+                    "humidity": current_weather.get("humidity", 0),
+                    "wind_speed": int(round(wind))
+                }
+
+                log("✅ Weather data collected.")
+
+            # ── github ───────────────────────────────────────────────────
+            elif node_type in _GITHUB_TYPES:
+                github_token = (config.get("githubToken") or os.getenv("GITHUB_TOKEN") or "").strip()
+                username = (config.get("username") or "").strip()
+                repository = (config.get("repository") or "").strip()
+                
+                try:
+                    max_events = int(config.get("maxEvents") or 5)
+                except ValueError:
+                    max_events = 5
+
+                if not username:
+                    raise ValueError("GitHub Node: Username parameter is missing.")
+
+                log("🐙 Connecting to GitHub...")
+
+                headers = {
+                    "Accept": "application/vnd.github+json",
+                    "User-Agent": "AgentCraft-App",
+                    "X-GitHub-Api-Version": "2022-11-28"
+                }
+                if github_token:
+                    headers["Authorization"] = f"Bearer {github_token}"
+
+                owner = username
+                repo = ""
+                if repository:
+                    log(f"📂 Reading repository: {repository}...")
+                    if "/" in repository:
+                        owner, repo = repository.split("/", 1)
+                        owner = owner.strip()
+                        repo = repo.strip()
+                    else:
+                        repo = repository.strip()
+                else:
+                    log("📂 Accessing global user account...")
+
+                log("📊 Collecting activity...")
+
+                async with httpx.AsyncClient(timeout=15) as http:
+                    # 1. Fetch Pull Requests
+                    pr_query = f"author:{username} type:pr state:open"
+                    if repository:
+                        pr_query += f" repo:{owner}/{repo}"
+                    
+                    try:
+                        pr_resp = await http.get("https://api.github.com/search/issues", headers=headers, params={"q": pr_query})
+                        if pr_resp.status_code != 200:
+                            log(f"    ⚠️ GitHub PR search failed: HTTP {pr_resp.status_code}")
+                            open_prs_count = 0
+                        else:
+                            open_prs_count = pr_resp.json().get("total_count", 0)
+                    except Exception as e:
+                        log(f"    ⚠️ GitHub PR search errored: {e}")
+                        open_prs_count = 0
+
+                    # 2. Fetch Assigned Issues
+                    issue_query = f"assignee:{username} type:issue state:open"
+                    if repository:
+                        issue_query += f" repo:{owner}/{repo}"
+                    
+                    try:
+                        issue_resp = await http.get("https://api.github.com/search/issues", headers=headers, params={"q": issue_query})
+                        if issue_resp.status_code != 200:
+                            log(f"    ⚠️ GitHub Issue search failed: HTTP {issue_resp.status_code}")
+                            assigned_issues_count = 0
+                        else:
+                            assigned_issues_count = issue_resp.json().get("total_count", 0)
+                    except Exception as e:
+                        log(f"    ⚠️ GitHub Issue search errored: {e}")
+                        assigned_issues_count = 0
+
+                    # 3. Fetch Recent Commits
+                    commits = []
+                    if repository:
+                        try:
+                            commits_url = f"https://api.github.com/repos/{owner}/{repo}/commits"
+                            commits_resp = await http.get(commits_url, headers=headers, params={"author": username, "per_page": max_events})
+                            if commits_resp.status_code == 200:
+                                for c in commits_resp.json()[:max_events]:
+                                    commit_data = c.get("commit", {})
+                                    commits.append({
+                                        "sha": c.get("sha", "")[:7],
+                                        "message": commit_data.get("message", "").split("\n")[0],
+                                        "date": commit_data.get("author", {}).get("date", "")
+                                    })
+                            else:
+                                log(f"    ⚠️ GitHub commits fetch failed: HTTP {commits_resp.status_code}")
+                        except Exception as e:
+                            log(f"    ⚠️ GitHub commits fetch errored: {e}")
+                    else:
+                        try:
+                            events_url = f"https://api.github.com/users/{username}/events"
+                            events_resp = await http.get(events_url, headers=headers)
+                            if events_resp.status_code == 200:
+                                events_list = events_resp.json()
+                                for ev in events_list:
+                                    if len(commits) >= max_events:
+                                        break
+                                    if ev.get("type") == "PushEvent":
+                                        payload = ev.get("payload", {})
+                                        repo_name = ev.get("repo", {}).get("name", "")
+                                        for c in payload.get("commits", []):
+                                            if len(commits) >= max_events:
+                                                break
+                                            commits.append({
+                                                "sha": c.get("sha", "")[:7],
+                                                "message": c.get("message", "").split("\n")[0],
+                                                "repository": repo_name
+                                            })
+                            else:
+                                log(f"    ⚠️ GitHub events fetch failed: HTTP {events_resp.status_code}")
+                        except Exception as e:
+                            log(f"    ⚠️ GitHub events fetch errored: {e}")
+
+                    # 4. Fetch Pending Reviews
+                    pending_reviews = 0
+                    review_query = f"review-requested:{username} type:pr state:open"
+                    if repository:
+                        review_query += f" repo:{owner}/{repo}"
+                    try:
+                        review_resp = await http.get("https://api.github.com/search/issues", headers=headers, params={"q": review_query})
+                        if review_resp.status_code == 200:
+                            pending_reviews = review_resp.json().get("total_count", 0)
+                    except Exception:
+                        pass
+
+                output = {
+                    "username": username,
+                    "repository": repository or "all-repositories",
+                    "open_prs": open_prs_count,
+                    "assigned_issues": assigned_issues_count,
+                    "recent_commits": len(commits),
+                    "pending_reviews": pending_reviews,
+                    "recent_activity": commits
+                }
+
+                log("✅ GitHub activity collected.")
+
             # ── telegram_bot ───────────────────────────────────────────────
             elif node_type in _TELEGRAM_TYPES:
-                bot_token = str(config.get("botToken") or "").strip()
-                chat_id = str(config.get("chatId") or "").strip()
+                bot_token = (config.get("botToken") or os.getenv("TELEGRAM_BOT_TOKEN") or "").strip()
+                chat_id = (config.get("chatId") or "").strip()
+                message_template = config.get("messageTemplate") or "{{input}}"
+
                 if not bot_token or not chat_id:
-                    raise ValueError("Telegram Bot Token or Chat ID is missing")
-                    
-                parsed = _parse_json_or_str(current)
-                if isinstance(parsed, dict) and "solution" in parsed:
-                    text = f"🚀 *LeetCode Daily*: {parsed.get('title')} ({parsed.get('difficulty')})\n\n"
-                    text += f"*Approach*:\n{parsed.get('approach')}\n\n"
-                    text += f"*Time*: {parsed.get('time_complexity')} | *Space*: {parsed.get('space_complexity')}\n\n"
-                    text += f"```python\n{parsed.get('solution')}\n```"
-                else:
-                    text = f"AgentCraft Workflow Result:\n{_to_str(current)}"
-                    
+                    raise ValueError("Telegram Node: Bot Token or Chat ID is missing.")
+
+                log("📨 Connecting to Telegram...")
+                log("✉ Sending message...")
+
+                # Interpolate variable
+                text = message_template.replace("{{input}}", _to_str(current))
+
                 url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
                 payload = {
                     "chat_id": chat_id,
                     "text": text[:4096],
                     "parse_mode": "Markdown"
                 }
-                
-                log(f"    ✈️ Sending Telegram message...")
-                async with httpx.AsyncClient(timeout=10) as http:
-                    resp = await http.post(url, json=payload)
-                    if resp.status_code != 200:
-                        log(f"    ⚠️ Telegram API returned {resp.status_code}: {resp.text}")
+
+                try:
+                    async with httpx.AsyncClient(timeout=10) as http:
+                        resp = await http.post(url, json=payload)
+                except httpx.TimeoutException:
+                    raise RuntimeError("Telegram Node: Connection timed out.")
+                except Exception as e:
+                    raise RuntimeError(f"Telegram Node: Failed to connect to Telegram Bot API: {e}")
+
+                if resp.status_code == 404:
+                    raise ValueError("Telegram Node: Invalid Telegram Bot Token (404 Not Found).")
+                elif resp.status_code == 400:
+                    description = resp.json().get("description", "")
+                    if "can't parse entities" in description.lower():
+                        # Fallback to plain text send
+                        log("    ⚠️ Markdown parsing failed. Retrying without formatting...")
+                        payload.pop("parse_mode", None)
+                        async with httpx.AsyncClient(timeout=10) as http:
+                            resp = await http.post(url, json=payload)
+                        if resp.status_code == 200:
+                            log("    ✅ Telegram message delivered.")
+                            output = {"status": "sent", "chat": chat_id}
+                        else:
+                            raise RuntimeError(f"Telegram Node: API Error: {resp.json().get('description', '')}")
+                    elif "chat not found" in description.lower() or "chat_id is empty" in description.lower():
+                        raise ValueError(f"Telegram Node: Chat ID not found or bot is not a member of this chat. Description: {description}")
                     else:
-                        log(f"    ✅ Sent to Telegram")
-                output = current
+                        raise RuntimeError(f"Telegram Node: API Error: {description}")
+                elif resp.status_code != 200:
+                    raise RuntimeError(f"Telegram Node: API returned HTTP {resp.status_code} — {resp.text[:300]}")
+                else:
+                    log("✅ Telegram message delivered.")
+                    output = {
+                        "status": "sent",
+                        "chat": chat_id
+                    }
 
             elif node_type in _SUBMIT_TYPES:
                 from dotenv import load_dotenv
