@@ -1,5 +1,5 @@
 import { Handle, Position } from '@xyflow/react';
-import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail, CheckCircle2, XCircle, Loader2, Clock, Database, Webhook, FileText, Timer, CalendarClock, Code2, BrainCircuit, MessageSquare, Send } from 'lucide-react';
+import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail, CheckCircle2, XCircle, Loader2, Clock, Database, Webhook, FileText, Timer, CalendarClock, Code2, BrainCircuit, MessageSquare, Send, Github, CloudSun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AppNodeData, NodeExecutionStatus, useWorkflowStore } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -185,6 +185,26 @@ export const nodeConfig = {
     hasSource: true,
     hasTarget: true,
   },
+  github: {
+    icon: Github,
+    label: 'GitHub',
+    color: 'text-zinc-300',
+    bg: 'bg-zinc-400/10',
+    border: 'border-zinc-500/50',
+    glow: 'shadow-[0_0_20px_rgba(113,113,122,0.25)]',
+    hasSource: true,
+    hasTarget: true,
+  },
+  weather: {
+    icon: CloudSun,
+    label: 'Weather',
+    color: 'text-sky-400',
+    bg: 'bg-sky-400/10',
+    border: 'border-sky-500/50',
+    glow: 'shadow-[0_0_20px_rgba(56,189,248,0.25)]',
+    hasSource: true,
+    hasTarget: true,
+  },
   whatsapp_monitor: {
     icon: MessageSquare,
     label: 'WhatsApp Monitor',
@@ -275,7 +295,8 @@ export function BaseCustomNode({ data, type, selected, id }: {
   if (selected) {
     if (type === 'input' || type === 'schedule_trigger') nodeGlowClass = 'glow-emerald border-emerald-500/50';
     else if (isAI) nodeGlowClass = 'glow-purple border-violet-500/50';
-    else if (type === 'api_call' || type === 'telegram_bot' || type === 'discord_webhook') nodeGlowClass = 'glow-cyan border-blue-500/50';
+    else if (type === 'api_call' || type === 'telegram_bot' || type === 'discord_webhook' || type === 'weather') nodeGlowClass = 'glow-cyan border-blue-500/50';
+    else if (type === 'github') nodeGlowClass = 'border-zinc-500/70 shadow-[0_0_20px_rgba(113,113,122,0.3)] bg-zinc-950/20';
     else if (type === 'condition' || type === 'delay') nodeGlowClass = 'glow-amber border-amber-500/50';
     else if (type === 'output') nodeGlowClass = 'glow-rose border-rose-500/50';
     else nodeGlowClass = 'glow-purple border-primary/50';
@@ -438,6 +459,8 @@ export const nodeTypes = {
   ai_solver: (props: any) => <BaseCustomNode {...props} type="ai_solver" />,
   discord_webhook: (props: any) => <BaseCustomNode {...props} type="discord_webhook" />,
   telegram_bot: (props: any) => <BaseCustomNode {...props} type="telegram_bot" />,
+  github: (props: any) => <BaseCustomNode {...props} type="github" />,
+  weather: (props: any) => <BaseCustomNode {...props} type="weather" />,
   whatsapp_monitor: (props: any) => <BaseCustomNode {...props} type="whatsapp_monitor" />,
   whatsapp_sender: (props: any) => <BaseCustomNode {...props} type="whatsapp_sender" />,
 };

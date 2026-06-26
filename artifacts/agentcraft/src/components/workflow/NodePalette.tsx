@@ -1,4 +1,4 @@
-import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail, Database, Webhook, FileText, Timer, ChevronDown, ChevronRight, CalendarClock, Code2, BrainCircuit, MessageSquare, Send } from 'lucide-react';
+import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail, Database, Webhook, FileText, Timer, ChevronDown, ChevronRight, CalendarClock, Code2, BrainCircuit, MessageSquare, Send, Github, CloudSun } from 'lucide-react';
 import { WorkflowNodeType } from '@workspace/api-client-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -42,6 +42,8 @@ const groups: { label: string; nodes: PaletteNode[] }[] = [
       { type: WorkflowNodeType.whatsapp_sender, label: 'Send WhatsApp Message', icon: Send, color: 'text-emerald-400', border: 'border-emerald-500/30', description: 'Send automated or approved WhatsApp message' },
       { type: 'discord_webhook', label: 'Discord', icon: MessageSquare, color: 'text-indigo-400', border: 'border-indigo-500/30', description: 'Send Discord message' },
       { type: 'telegram_bot', label: 'Telegram', icon: Send, color: 'text-sky-400', border: 'border-sky-500/30', description: 'Send Telegram message' },
+      { type: 'github', label: 'GitHub', icon: Github, color: 'text-zinc-300', border: 'border-zinc-500/30', description: 'Fetch pull requests, issues, and commits' },
+      { type: 'weather', label: 'Weather', icon: CloudSun, color: 'text-sky-400', border: 'border-sky-500/30', description: 'Fetch live weather conditions and temperature' },
       { type: 'email', label: 'Send Email', icon: Mail, color: 'text-sky-400', border: 'border-sky-500/30', description: 'SMTP email' },
       { type: 'database', label: 'Database', icon: Database, color: 'text-teal-400', border: 'border-teal-500/30', description: 'Read/write DB' },
       { type: 'file_processor', label: 'File', icon: FileText, color: 'text-indigo-400', border: 'border-indigo-500/30', description: 'Process files' },
