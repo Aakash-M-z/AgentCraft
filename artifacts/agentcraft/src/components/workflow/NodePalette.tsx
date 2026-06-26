@@ -35,6 +35,8 @@ const groups: { label: string; nodes: PaletteNode[] }[] = [
     label: 'Integrations',
     nodes: [
       { type: 'leetcode_daily', label: 'LeetCode Daily', icon: Code2, color: 'text-amber-400', border: 'border-amber-500/30', description: 'Fetch daily challenge' },
+      { type: 'leetcode_submit', label: 'LeetCode Submit', icon: Code2, color: 'text-amber-400', border: 'border-amber-500/30', description: 'Submit solution using cookies' },
+      { type: 'leetcode_save', label: 'LeetCode Save', icon: Database, color: 'text-teal-400', border: 'border-teal-500/30', description: 'Save submission status to database' },
       { type: WorkflowNodeType.api_call, label: 'API Request', icon: Server, color: 'text-blue-400', border: 'border-blue-500/30', description: 'HTTP request' },
       { type: WorkflowNodeType.whatsapp_monitor, label: 'WhatsApp Monitor', icon: MessageSquare, color: 'text-emerald-400', border: 'border-emerald-500/30', description: 'Monitor WhatsApp Web group messages' },
       { type: WorkflowNodeType.whatsapp_sender, label: 'Send WhatsApp Message', icon: Send, color: 'text-emerald-400', border: 'border-emerald-500/30', description: 'Send automated or approved WhatsApp message' },

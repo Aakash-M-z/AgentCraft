@@ -38,16 +38,6 @@ export default function ExecutionDetailPage() {
   const executionId = params ? parseInt(params.id) : null;
   const [, navigate] = useLocation();
 
-  const { data: execData, refetch } = useGetExecution(executionId || 0, {
-    query: { enabled: !!executionId, retry: 3, retryDelay: 1000 } as any,
-  });
-
-  const { data: workflowData } = useGetWorkflow(execData?.workflowId || 0, {
-    query: { enabled: !!execData?.workflowId } as any,
-  });
-
-  const cancelMut = useCancelExecution();
-
   const [status, setStatus] = useState<string>("pending");
   const [logs, setLogs] = useState<string[]>([]);
   const [finalOutput, setFinalOutput] = useState<string | null>(null);
@@ -58,6 +48,22 @@ export default function ExecutionDetailPage() {
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [editedMessage, setEditedMessage] = useState<string>("");
+
+  const { data: execData, refetch } = useGetExecution(executionId || 0, {
+    query: {
+      enabled: !!executionId,
+      retry: 3,
+      retryDelay: 1000,
+      staleTime: 0,
+      refetchInterval: ["completed", "failed", "cancelled"].includes(status) ? false : 1500,
+    } as any,
+  });
+
+  const { data: workflowData } = useGetWorkflow(execData?.workflowId || 0, {
+    query: { enabled: !!execData?.workflowId } as any,
+  });
+
+  const cancelMut = useCancelExecution();
 
   const handleStreamEvent = useCallback(
     (data: ExecutionStreamEvent) => {
@@ -103,18 +109,15 @@ export default function ExecutionDetailPage() {
     [refetch],
   );
 
+  const isTerminal = ["completed", "failed", "cancelled"].includes(status);
   const { connectionState } = useExecutionStream(executionId, {
     onEvent: handleStreamEvent,
+    enabled: !isTerminal,
   });
 
-  const isInitializedRef = useRef(false);
   useEffect(() => {
-    if (execData && !isInitializedRef.current) {
-      isInitializedRef.current = true;
+    if (execData) {
       setStatus(execData.status);
-      if (execData.agentLogs) {
-        setLogs(execData.agentLogs);
-      }
       if (execData.finalOutput) {
         setFinalOutput(execData.finalOutput);
         setShowOutput(true);
@@ -125,6 +128,14 @@ export default function ExecutionDetailPage() {
           initialNodeStates[nr.nodeId] = nr.status;
         });
         setNodeStates(initialNodeStates);
+      }
+      if (execData.agentLogs) {
+        setLogs((prev) => {
+          if (execData.agentLogs!.length > prev.length) {
+            return execData.agentLogs!;
+          }
+          return prev;
+        });
       }
     }
   }, [execData]);

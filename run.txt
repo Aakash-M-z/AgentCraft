@@ -3,3 +3,4 @@ python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 
 # Terminal 2 - Frontend
 pnpm dev
+python scripts/login_whatsapp.py

@@ -157,8 +157,20 @@ async def _send_email(to: str, subject: str, body: str, fmt: str = "text") -> di
         )
 
     if resp.status_code not in (200, 201):
+        error_msg = resp.text
+        if "unrecognised IP address" in error_msg.lower():
+            # Extract the IP address if possible
+            import re
+            ip_match = re.search(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|[0-9a-fA-F:]+)", error_msg)
+            ip_str = ip_match.group(1) if ip_match else "your current local IP"
+            raise RuntimeError(
+                f"Brevo API error: Unrecognized IP address ({ip_str}). "
+                "Brevo has blocked the email send request because this IP is not in your authorized list. "
+                "Please log in to your Brevo dashboard, go to Settings -> Security -> Authorized IPs, "
+                "and add this IP address or disable IP security restrictions."
+            )
         raise RuntimeError(
-            f"Brevo API error {resp.status_code}: {resp.text[:300]}"
+            f"Brevo API error {resp.status_code}: {error_msg[:300]}"
         )
 
     logger.info(f"   ✅ Brevo accepted → messageId: {resp.json().get('messageId', '?')}")
@@ -525,7 +537,7 @@ STRICT RULES for the "solution" field:
 - Do NOT include any if __name__ == "__main__" blocks, test code, or examples.
 - Do NOT wrap code in Markdown fences (no ```python).
 - The code must be 100% syntactically valid {language} that LeetCode can run directly.
-- Prefer BFS/DP/Greedy for optimal time complexity. Avoid brute-force O(n^2) on large inputs.
+- CRITICAL: You MUST write the most optimal solution possible. Avoid brute-force approaches that will cause Time Limit Exceeded (TLE) on LeetCode's large hidden test cases. Aim for O(N) or O(N log N) time complexity. Use advanced data structures (like HashMaps, Heaps/PriorityQueues, Segment trees, Monotonic Stacks/Queues) or algorithmic patterns (like Sliding Window, Two Pointers, Dynamic Programming, Binary Search) to optimize time complexity.
 """
                 if starter_code:
                     instruction += f"""- YOU MUST KEEP the exact class and method signatures from this starter code template:
@@ -630,22 +642,88 @@ Return ONLY a valid JSON object (no markdown, no extra text) matching this schem
                         log(f"    ✅ Sent to Telegram")
                 output = current
 
-            # ── leetcode_submit ────────────────────────────────────────────
             elif node_type in _SUBMIT_TYPES:
-                lc_session   = os.getenv("LEETCODE_SESSION", "").strip()
-                csrf_token   = os.getenv("LEETCODE_CSRF_TOKEN", "").strip()
+                from dotenv import load_dotenv
+                load_dotenv(override=True)
+                lc_session   = (config.get("leetcodeSession") or os.getenv("LEETCODE_SESSION") or "").strip()
+                csrf_token   = (config.get("csrfToken") or os.getenv("LEETCODE_CSRF_TOKEN") or "").strip()
                 if not lc_session or not csrf_token:
                     raise ValueError(
-                        "LEETCODE_SESSION and LEETCODE_CSRF_TOKEN must be set in .env to submit solutions."
+                        "LeetCode cookies not found. Please set LEETCODE_SESSION and LEETCODE_CSRF_TOKEN in your Render environment variables or enter them directly in the node configuration."
                     )
 
                 parsed = _parse_json_or_str(current)
                 if not isinstance(parsed, dict):
-                    raise ValueError("leetcode_submit expects a dict from ai_solver output.")
+                    raise ValueError("leetcode_submit expects a dict from upstream node output.")
 
                 title_slug  = parsed.get("titleSlug") or config.get("titleSlug", "")
                 question_id = parsed.get("questionId") or config.get("questionId", "")
                 code        = parsed.get("solution", "")
+
+                if not code and title_slug:
+                    # Autonomous AI Solver fallback
+                    log(f"    💡 Solution code not found in upstream data. Invoking Autonomous AI Solver fallback...")
+                    model = config.get("model") or "llama-3.3-70b-versatile"
+                    config_lang = config.get("language") or "Python"
+
+                    problem_desc = str(parsed)
+                    starter_code = ""
+                    if isinstance(parsed, dict):
+                        problem_desc = f"Title: {parsed.get('title')}\nDifficulty: {parsed.get('difficulty')}\n{parsed.get('content')}"
+                        snippets = parsed.get("codeSnippets") or []
+                        target_lang = config_lang.lower().replace(" ", "")
+                        for snip in snippets:
+                            s_lang = snip.get("lang", "").lower()
+                            s_slug = snip.get("langSlug", "").lower()
+                            if target_lang in s_lang or target_lang in s_slug or s_slug in target_lang:
+                                starter_code = snip.get("code", "")
+                                break
+
+                    instruction = f"""You are an expert competitive programmer. Solve the following LeetCode problem in {config_lang}.
+
+STRICT RULES for the "solution" field:
+- Write ONLY the Solution class (or equivalent top-level function if needed).
+- Do NOT include any import statements (LeetCode already imports them).
+- Do NOT include any if __name__ == "__main__" blocks, test code, or examples.
+- Do NOT wrap code in Markdown fences (no ```python).
+- The code must be 100% syntactically valid {config_lang} that LeetCode can run directly.
+- CRITICAL: You MUST write the most optimal solution possible. Avoid brute-force approaches that will cause Time Limit Exceeded (TLE) on LeetCode's large hidden test cases. Aim for O(N) or O(N log N) time complexity. Use advanced data structures (like HashMaps, Heaps/PriorityQueues, Segment trees, Monotonic Stacks/Queues) or algorithmic patterns (like Sliding Window, Two Pointers, Dynamic Programming, Binary Search) to optimize time complexity.
+"""
+                    if starter_code:
+                        instruction += f"""- YOU MUST KEEP the exact class and method signatures from this starter code template:
+```
+{starter_code}
+```
+"""
+                    else:
+                        instruction += f"""- If you are writing in Python, the class should be named `Solution` and the standard LeetCode method signature must be used.
+"""
+
+                    instruction += f"""
+Problem:
+{problem_desc}
+
+Return ONLY a valid JSON object (no markdown, no extra text) matching this schema:
+{{
+  "title": "Problem Title",
+  "difficulty": "Easy/Medium/Hard",
+  "approach": "Concise explanation of your algorithm",
+  "time_complexity": "O(...)",
+  "space_complexity": "O(...)",
+  "solution": "ONLY the Solution class code here"
+}}"""
+
+                    log(f"    🤖 AI Solver [{model}] - Language: {config_lang}")
+                    raw_output = await call_ai(instruction, model=model, temperature=0.2, force_json=True)
+                    solved_data = _parse_json_or_str(raw_output)
+                    if isinstance(solved_data, dict) and "solution" in solved_data:
+                        import textwrap
+                        code = textwrap.dedent(solved_data["solution"]).strip()
+                        parsed.update(solved_data)
+                        log(f"    💬 Solution generated autonomously")
+                    else:
+                        raise ValueError("Autonomous AI Solver failed to generate solution key.")
+
                 language    = (parsed.get("language") or config.get("language") or "python3").lower()
 
                 # Normalise language slug for LeetCode API
@@ -680,7 +758,13 @@ Return ONLY a valid JSON object (no markdown, no extra text) matching this schem
 
                 async with httpx.AsyncClient(timeout=30, follow_redirects=True) as http:
                     sub_resp = await http.post(submit_url, json=payload, headers=headers)
-                    if sub_resp.status_code not in (200, 201):
+                    if sub_resp.status_code == 403:
+                        raise ValueError(
+                            "LeetCode authentication failed (HTTP 403). Your session cookie is likely expired. "
+                            "Please log in to LeetCode in your browser, copy the latest LEETCODE_SESSION and LEETCODE_CSRF_TOKEN cookies, "
+                            "and update them in your environment variables (.env)."
+                        )
+                    elif sub_resp.status_code not in (200, 201):
                         raise ValueError(
                             f"Submission failed: HTTP {sub_resp.status_code} — {sub_resp.text[:300]}"
                         )
@@ -740,7 +824,7 @@ Return ONLY a valid JSON object (no markdown, no extra text) matching this schem
             elif node_type in _WHATSAPP_SENDER_TYPES:
                 contact_name = str(config.get("contactName") or "").strip()
                 msg_template = str(config.get("messageTemplate") or config.get("message") or "{{input}}")
-                manual_approval = config.get("manualApproval", True)
+                manual_approval = config.get("manualApproval", False)
                 if isinstance(manual_approval, str):
                     manual_approval = manual_approval.lower() == "true"
                 
@@ -917,11 +1001,11 @@ Return ONLY a valid JSON object (no markdown, no extra text) matching this schem
                 sol = parsed.get("solution", "") if isinstance(parsed, dict) else _to_str(current)
                 
                 # Check LeetCode submission status
-                status = "solved"
+                status = "missed"
                 if isinstance(parsed, dict):
                     sub_status = parsed.get("submission_status", "").upper()
-                    if "FAIL" in sub_status or "ERROR" in sub_status:
-                        status = "missed"
+                    if "ACCEPT" in sub_status:
+                        status = "solved"
                 
                 log(f"    🗄️ Saving LeetCode Daily: '{title}' ({diff}) -> status: {status}")
                 async with AsyncSessionLocal() as db:

@@ -128,12 +128,12 @@ export default function LandingPage() {
         delayChildren: 0.2
       }
     }
-  };
+  } as const;
 
   const item = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
-  };
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
+  } as const;
 
   return (
     <div className="min-h-screen bg-[#050507] text-foreground overflow-hidden selection:bg-primary/30 font-sans">
@@ -326,61 +326,59 @@ export default function LandingPage() {
               variants={container}
               initial="hidden"
               animate="show"
-              className="w-full md:max-w-[50%] lg:max-w-[45%] relative z-20"
+              className="w-full md:max-w-2xl lg:max-w-3xl xl:max-w-4xl relative z-20 flex flex-col justify-start"
             >
-              {/* Badge */}
-              <motion.div variants={item} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-primary mb-8 backdrop-blur-md">
-                <Zap size={14} />
-                <span>v2.0 is live: Groq Llama-3.3 Integration</span>
-              </motion.div>
-
               {/* Headline */}
-              <motion.h1 variants={item} className="text-6xl md:text-7xl xl:text-8xl font-display font-extrabold tracking-tighter leading-[1.05] mb-6">
-                The OS for <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-500 to-amber-500">
-                  Autonomous Agents
+              <motion.h1 variants={item} className="text-5xl md:text-6xl lg:text-[68px] font-display font-semibold tracking-tight leading-[1.1] mb-8">
+                <span className="text-white/80">Autonomous agents and workflows </span>
+                <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-500 font-bold">
+                  you can build and control
                 </span>
               </motion.h1>
-
-              {/* Sub-headline */}
-              <motion.p variants={item} className="text-xl md:text-2xl text-muted-foreground font-light mb-8 max-w-xl leading-relaxed">
-                Build, monitor, and orchestrate AI agents that think, automate, and execute in real time.
-              </motion.p>
-
-              {/* Status pills */}
-              <motion.div variants={item} className="flex flex-wrap gap-3 mb-10">
-                <div className="px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 backdrop-blur-md">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-xs font-medium text-emerald-300">AI Agents Active</span>
-                </div>
-                <div className="px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 flex items-center gap-2 backdrop-blur-md">
-                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-xs font-medium text-green-300">WhatsApp Connected</span>
-                </div>
-                <div className="px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center gap-2 backdrop-blur-md">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                  <span className="text-xs font-medium text-blue-300">SSE Streaming</span>
-                </div>
-                <div className="px-4 py-2 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center gap-2 backdrop-blur-md">
-                  <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
-                  <span className="text-xs font-medium text-rose-300">Redis Online</span>
-                </div>
-              </motion.div>
-
+ 
               {/* CTA Buttons */}
-              <motion.div variants={item} className="flex flex-col sm:flex-row items-start gap-4">
+              <motion.div variants={item} className="flex flex-row items-center gap-4 mb-8">
                 <Link href="/builder">
-                  <button className="h-14 px-8 rounded-full bg-gradient-to-r from-primary to-orange-600 text-white font-bold text-lg flex items-center gap-2 hover:scale-105 transition-all shadow-[0_0_30px_rgba(255,79,26,0.3)] hover:shadow-[0_0_50px_rgba(255,79,26,0.5)] group cursor-pointer">
-                    <Play size={20} className="fill-white group-hover:translate-x-1 transition-transform" />
+                  <button className="h-12 px-6 rounded-lg bg-gradient-to-r from-primary to-orange-600 text-white font-semibold text-base hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_25px_rgba(255,79,26,0.25)] cursor-pointer whitespace-nowrap">
                     Launch Command Center
                   </button>
                 </Link>
                 <Link href="/life-os">
-                  <button className="h-14 px-8 rounded-full bg-white/5 border border-white/10 text-white font-medium text-lg flex items-center gap-2 hover:bg-white/10 transition-colors cursor-pointer">
+                  <button className="h-12 px-6 rounded-lg bg-white/5 border border-white/10 text-white/90 font-medium text-base hover:bg-white/10 active:scale-[0.98] transition-colors cursor-pointer whitespace-nowrap">
                     Explore Life OS
-                    <ArrowRight size={18} />
                   </button>
                 </Link>
+              </motion.div>
+ 
+              {/* Sub-headline / Description */}
+              <motion.p variants={item} className="text-base md:text-lg text-white/50 font-normal mb-16 max-w-xl leading-relaxed">
+                Build visually, go deep with code, and automate your life. Every step of your agents' reasoning is traceable in real-time. Deploy on your own secure infrastructure.
+              </motion.p>
+ 
+              {/* Telemetry / Status Section (matches the logos section in n8n) */}
+              <motion.div variants={item} className="pt-6 border-t border-white/5">
+                <p className="text-xs font-mono text-white/30 uppercase tracking-widest mb-4">
+                  Live Engine Telemetry
+                </p>
+                <div className="flex flex-wrap gap-2.5">
+                  <div className="px-3 py-1.5 rounded-md bg-emerald-500/5 border border-emerald-500/10 flex items-center gap-2 backdrop-blur-md">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[10px] font-mono text-emerald-400/80 uppercase tracking-wider">AI Agents Active</span>
+                  </div>
+                  <div className="px-3 py-1.5 rounded-md bg-green-500/5 border border-green-500/10 flex items-center gap-2 backdrop-blur-md">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                    <span className="text-[10px] font-mono text-green-400/80 uppercase tracking-wider">WhatsApp Connected</span>
+                  </div>
+                  <div className="px-3 py-1.5 rounded-md bg-blue-500/5 border border-blue-500/10 flex items-center gap-2 backdrop-blur-md">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                    <span className="text-[10px] font-mono text-blue-400/80 uppercase tracking-wider">SSE Streaming</span>
+                  </div>
+                  <div className="px-3 py-1.5 rounded-md bg-rose-500/5 border border-rose-500/10 flex items-center gap-2 backdrop-blur-md">
+                    <div className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                    <span className="text-[10px] font-mono text-rose-400/80 uppercase tracking-wider">Redis Online</span>
+                  </div>
+                </div>
               </motion.div>
             </motion.div>
           </div>

@@ -102,7 +102,7 @@ async def main():
                 "config": {
                     "contactName": "Mentor",
                     "messageTemplate": "{{input}}",
-                    "manualApproval": True,
+                    "manualApproval": False,
                 },
             },
         ]

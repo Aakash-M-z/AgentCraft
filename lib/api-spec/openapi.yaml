@@ -265,7 +265,7 @@ components:
           type: string
         type:
           type: string
-          enum: [input, ai_agent, api_call, condition, loop, output, email, delay, webhook, database, file_processor, schedule_trigger, leetcode_daily, ai_solver, discord_webhook, telegram_bot]
+          enum: [input, ai_agent, api_call, condition, loop, output, email, delay, webhook, database, file_processor, schedule_trigger, leetcode_daily, ai_solver, discord_webhook, telegram_bot, whatsapp_monitor, whatsapp_sender, leetcode_submit, leetcode_save]
         label:
           type: string
         config:

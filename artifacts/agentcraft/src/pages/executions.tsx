@@ -6,7 +6,15 @@ import { Activity, Clock, CheckCircle2, XCircle, Loader2, Play } from "lucide-re
 import { cn } from "@/lib/utils";
 
 export default function ExecutionsPage() {
-  const { data: executionsRaw, isLoading } = useListExecutions();
+  const { data: executionsRaw, isLoading } = useListExecutions(undefined, {
+    query: {
+      refetchInterval: (data: any) => {
+        const list = Array.isArray(data) ? data : [];
+        const hasActive = list.some((e: any) => e.status === 'running' || e.status === 'pending');
+        return hasActive ? 2000 : false;
+      }
+    } as any
+  });
   const executions = Array.isArray(executionsRaw) ? executionsRaw : [];
 
   const getStatusConfig = (status: string) => {
