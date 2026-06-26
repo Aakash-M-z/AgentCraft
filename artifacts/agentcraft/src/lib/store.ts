@@ -52,6 +52,7 @@ interface WorkflowState {
   setEdges: (edges: Edge[]) => void;
   addNode: (node: AppNode) => void;
   updateNodeData: (id: string, data: Partial<AppNodeData>) => void;
+  deleteNode: (id: string) => void;
   setSelectedNodeId: (id: string | null) => void;
   setWorkflowMeta: (meta: { id?: number | null; name?: string; description?: string }) => void;
   reset: () => void;
@@ -91,7 +92,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     set({ edges: applyEdgeChanges(changes, get().edges) });
   },
   onConnect: (connection: Connection) => {
-    set({ edges: addEdge({ ...connection, animated: true }, get().edges) });
+    set({ edges: addEdge(connection, get().edges) });
   },
   setNodes: (nodes: AppNode[]) => set({ nodes }),
   setEdges: (edges: Edge[]) => set({ edges }),
@@ -105,8 +106,29 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       ),
     });
   },
+  deleteNode: (id) => {
+    // 1. Mark node as deleting to trigger Framer Motion animation
+    set((state) => ({
+      nodes: state.nodes.map(n => n.id === id ? { ...n, data: { ...n.data, isDeleting: true } } : n)
+    }));
+
+    // 2. Wait for the exit animation to finish before removing from store
+    setTimeout(() => {
+      set((state) => ({
+        nodes: state.nodes.filter(n => n.id !== id),
+        edges: state.edges.filter(e => e.source !== id && e.target !== id),
+        selectedNodeId: state.selectedNodeId === id ? null : state.selectedNodeId
+      }));
+    }, 250);
+  },
   setSelectedNodeId: (id: string | null) => set({ selectedNodeId: id }),
-  setWorkflowMeta: (meta) => set((state) => ({ ...state, ...meta })),
+  setWorkflowMeta: (meta) => set(() => {
+    const updates: Partial<WorkflowState> = {};
+    if (meta.id !== undefined) updates.workflowId = meta.id;
+    if (meta.name !== undefined) updates.workflowName = meta.name;
+    if (meta.description !== undefined) updates.workflowDescription = meta.description;
+    return updates;
+  }),
   reset: () => set({
     nodes: initialNodes,
     edges: [],
@@ -165,12 +187,11 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       data: { label: n.label, config: n.config || {} }
     }));
     const edges: Edge[] = apiEdges.map(e => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      label: e.label,
-      animated: true,
-    }));
-    set({ nodes, edges, selectedNodeId: null });
+       id: e.id,
+       source: e.source,
+       target: e.target,
+       label: e.label,
+     }));
+     set({ nodes, edges, selectedNodeId: null });
   }
 }));

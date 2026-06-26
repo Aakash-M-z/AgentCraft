@@ -135,6 +135,26 @@ export const nodeConfig = {
     hasSource: true,
     hasTarget: true,
   },
+  leetcode_submit: {
+    icon: Code2,
+    label: 'LeetCode Submit',
+    color: 'text-amber-400',
+    bg: 'bg-amber-400/10',
+    border: 'border-amber-500/50',
+    glow: 'shadow-[0_0_20px_rgba(251,191,36,0.2)]',
+    hasSource: true,
+    hasTarget: true,
+  },
+  leetcode_save: {
+    icon: Database,
+    label: 'LeetCode Save',
+    color: 'text-teal-400',
+    bg: 'bg-teal-400/10',
+    border: 'border-teal-500/50',
+    glow: 'shadow-[0_0_20px_rgba(20,184,166,0.2)]',
+    hasSource: true,
+    hasTarget: true,
+  },
   ai_solver: {
     icon: BrainCircuit,
     label: 'AI Solver',
@@ -238,7 +258,7 @@ const handleStyle = {
 };
 
 export function BaseCustomNode({ data, type, selected, id }: {
-  data: AppNodeData;
+  data: AppNodeData & { isDeleting?: boolean };
   type: keyof typeof nodeConfig;
   selected?: boolean;
   id: string;
@@ -272,11 +292,13 @@ export function BaseCustomNode({ data, type, selected, id }: {
   const completionTokens = Math.max(148, (debugInfo?.output?.length || 0) * 3 + 64);
   const totalTokens = promptTokens + completionTokens;
 
+  const isDeleting = !!data.isDeleting;
+
   return (
     <motion.div
       initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 350, damping: 22 }}
+      animate={isDeleting ? { scale: 0.3, opacity: 0, rotate: 12, y: 15 } : { scale: 1, opacity: 1, rotate: 0, y: 0 }}
+      transition={isDeleting ? { duration: 0.22, ease: "easeInOut" } : { type: 'spring', stiffness: 350, damping: 22 }}
       className={cn(
         'relative group rounded-2xl glass-card p-4 min-w-[260px] border transition-all duration-300 cursor-pointer overflow-hidden shadow-2xl',
         nodeGlowClass,
@@ -411,6 +433,8 @@ export const nodeTypes = {
   delay: (props: any) => <BaseCustomNode {...props} type="delay" />,
   schedule_trigger: (props: any) => <BaseCustomNode {...props} type="schedule_trigger" />,
   leetcode_daily: (props: any) => <BaseCustomNode {...props} type="leetcode_daily" />,
+  leetcode_submit: (props: any) => <BaseCustomNode {...props} type="leetcode_submit" />,
+  leetcode_save: (props: any) => <BaseCustomNode {...props} type="leetcode_save" />,
   ai_solver: (props: any) => <BaseCustomNode {...props} type="ai_solver" />,
   discord_webhook: (props: any) => <BaseCustomNode {...props} type="discord_webhook" />,
   telegram_bot: (props: any) => <BaseCustomNode {...props} type="telegram_bot" />,

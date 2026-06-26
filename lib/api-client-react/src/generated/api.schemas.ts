@@ -35,6 +35,8 @@ export const WorkflowNodeType = {
   telegram_bot: "telegram_bot",
   whatsapp_monitor: "whatsapp_monitor",
   whatsapp_sender: "whatsapp_sender",
+  leetcode_submit: "leetcode_submit",
+  leetcode_save: "leetcode_save",
 } as const;
 
 export type WorkflowNodeConfig = { [key: string]: unknown };

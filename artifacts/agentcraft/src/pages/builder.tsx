@@ -118,7 +118,10 @@ function ExecutionOutputPanel() {
 function ExecutionStatusBar({ executionId, onDone }: { executionId: number; onDone: () => void }) {
   const { data, refetch } = useGetExecution(executionId, { query: { enabled: true } as any });
   const { setNodeExecutionStatus, setNodeDebugInfo, setIsExecuting, setExecutionProgress, setFinalOutput, setExecutionStatus, nodes } = useWorkflowStore();
-  const { events, connectionState } = useExecutionStream(executionId);
+  const isTerminal = data?.status === 'completed' || data?.status === 'failed' || data?.status === 'cancelled';
+  const { events, connectionState } = useExecutionStream(executionId, {
+    enabled: !isTerminal,
+  });
   const onDoneRef = useRef(onDone);
   const doneCalledRef = useRef(false);
   useEffect(() => { onDoneRef.current = onDone; });
@@ -586,7 +589,6 @@ function BuilderCanvas() {
   const handleExecute = () => setRunInputOpen(true);
 
   const doExecute = async () => {
-    setRunInputOpen(false);
     clearExecutionState();
     setIsExecuting(true);
     const apiData = getApiFormat();
@@ -599,12 +601,21 @@ function BuilderCanvas() {
           onSuccess: (res) => {
             console.log('🚀 Execution started:', res.id);
             toast({ title: '▶ Execution started' });
+            setRunInputOpen(false);
 
             // 🔥 CRITICAL: Navigate immediately to execution page
             navigate(`/executions/${res.id}`);
+            // Fallback for router desync: force redirect if wouter navigation didn't trigger route change after 200ms
+            setTimeout(() => {
+              if (!window.location.pathname.includes(`/executions/${res.id}`)) {
+                const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+                window.location.href = `${base}/executions/${res.id}`;
+              }
+            }, 200);
           },
           onError: () => {
             setIsExecuting(false);
+            setRunInputOpen(false);
             toast({ title: 'Failed to start execution', variant: 'destructive' });
           },
         }
@@ -614,7 +625,13 @@ function BuilderCanvas() {
     if (workflowId) {
       updateMut.mutate(
         { id: workflowId, data: { name: workflowName, ...apiData } },
-        { onSuccess: () => doRun(workflowId) }
+        {
+          onSuccess: () => doRun(workflowId),
+          onError: () => {
+            setIsExecuting(false);
+            setRunInputOpen(false);
+          }
+        }
       );
     } else {
       createMut.mutate(
@@ -627,6 +644,7 @@ function BuilderCanvas() {
           },
           onError: () => {
             setIsExecuting(false);
+            setRunInputOpen(false);
             toast({ title: 'Failed to save workflow', variant: 'destructive' });
           },
         }
@@ -738,7 +756,7 @@ function BuilderCanvas() {
             deleteKeyCode="Delete"
             snapToGrid={true}
             snapGrid={[12, 12]}
-            defaultEdgeOptions={{ animated: true, style: { stroke: 'hsl(16 95% 55% / 0.6)', strokeWidth: 2 } }}
+            defaultEdgeOptions={{ animated: isExecuting, style: { stroke: isExecuting ? 'hsl(16 95% 55% / 0.8)' : 'hsl(16 95% 55% / 0.5)', strokeWidth: 2 } }}
             connectionLineStyle={{ stroke: 'hsl(16 95% 55%)', strokeWidth: 2, strokeDasharray: '6 3' }}
             className="bg-[#050507]"
           >
@@ -923,19 +941,33 @@ function BuilderCanvas() {
                 autoFocus
                 value={runInput}
                 onChange={e => setRunInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) doExecute(); }}
+                onKeyDown={e => { 
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { 
+                    e.preventDefault(); 
+                    if (!isExecuting) doExecute(); 
+                  } 
+                }}
                 placeholder="E.g., Artificial intelligence is transforming every industry..."
                 className="w-full bg-background border border-border rounded-xl p-4 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 min-h-[100px] mb-4 resize-none"
               />
               <div className="flex justify-between items-center">
                 <p className="text-xs text-muted-foreground">Ctrl+Enter to run</p>
                 <div className="flex gap-2">
-                  <button onClick={() => setRunInputOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground">Cancel</button>
+                  <button onClick={() => setRunInputOpen(false)} disabled={isExecuting} className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground disabled:opacity-50">Cancel</button>
                   <button
                     onClick={doExecute}
-                    className="px-5 py-2 rounded-lg text-sm font-bold bg-gradient-to-r from-cyan-500 to-violet-600 text-white shadow-lg flex items-center gap-2"
+                    disabled={isExecuting}
+                    className="px-5 py-2 rounded-lg text-sm font-bold bg-gradient-to-r from-cyan-500 to-violet-600 text-white shadow-lg flex items-center gap-2 disabled:opacity-50"
                   >
-                    <Play size={14} className="fill-white" /> Run Now
+                    {isExecuting ? (
+                      <>
+                        <Loader2 className="animate-spin" size={14} /> Running...
+                      </>
+                    ) : (
+                      <>
+                        <Play size={14} className="fill-white" /> Run Now
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

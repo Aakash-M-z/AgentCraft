@@ -23,7 +23,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [selectedWorkspace, setSelectedWorkspace] = useState(WORKSPACES[0]);
 
   const navItems = [
-    { href: "/", icon: GitMerge, label: "Visual Canvas" },
+    { href: "/builder", icon: GitMerge, label: "Visual Canvas" },
     { href: "/workflows", icon: LayoutDashboard, label: "Library & Metrics" },
     { href: "/executions", icon: Activity, label: "Spacecraft Logs" },
   ];

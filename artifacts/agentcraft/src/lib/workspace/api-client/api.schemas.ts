@@ -30,6 +30,8 @@ export const WorkflowNodeType = {
   file_processor: "file_processor",
   schedule_trigger: "schedule_trigger",
   leetcode_daily: "leetcode_daily",
+  leetcode_submit: "leetcode_submit",
+  leetcode_save: "leetcode_save",
   ai_solver: "ai_solver",
   discord_webhook: "discord_webhook",
   telegram_bot: "telegram_bot",
