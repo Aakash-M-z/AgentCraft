@@ -135,6 +135,7 @@ STRICT RULES for the "solution" field:
   * For searching, use binary search O(log N) instead of linear scan O(N) when data is sorted.
   * For sliding window or two-pointer problems, maintain linear runtime O(N).
   * Avoid any unnecessary array duplication or nested loops where a single pass or hashmap-assisted lookup suffices.
+  * CRITICAL: Be extremely careful of infinite loops caused by math traps (such as repeated squaring, multiplication, or division when the value is 0 or 1. e.g. x = x * x remains 1 forever). Always handle these edge cases (like 1s and 0s) explicitly and separately to prevent hanging.
 """
     if starter_code:
         instruction += f"""- YOU MUST KEEP the exact class and method signatures from this starter code template:
