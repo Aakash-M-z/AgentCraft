@@ -117,7 +117,80 @@ def _sanitize_subject(subject: str) -> str:
     return first_line[:200] or "AgentCraft Workflow Result"
 
 
-def _get_solver_instruction(language: str, problem_desc: str, starter_code: str) -> str:
+async def _search_leetcode_solutions(title_slug: str, language: str) -> str:
+    """Search the web for LeetCode solutions to guide the solver towards the optimal answer."""
+    if not title_slug:
+        return ""
+    
+    import urllib.parse
+    import html as html_lib
+    import re
+    
+    query = f"leetcode {title_slug} {language} solution"
+    encoded_query = urllib.parse.quote_plus(query)
+    search_url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    }
+    
+    links = []
+    try:
+        async with httpx.AsyncClient(timeout=10, headers=headers) as client:
+            resp = await client.get(search_url)
+            if resp.status_code == 200:
+                html_text = resp.text
+                raw_links = re.findall(r'href="([^"]+)"', html_text)
+                for link in raw_links:
+                    if 'uddg=' in link:
+                        actual_url = urllib.parse.unquote(link.split('uddg=')[1].split('&')[0])
+                        if "leetcode.com/problems/" not in actual_url and actual_url not in links:
+                            links.append(actual_url)
+    except Exception:
+        pass
+        
+    if not links:
+        return ""
+        
+    contexts = []
+    # Fetch top 2 links to keep it fast
+    async with httpx.AsyncClient(timeout=10, headers=headers) as client:
+        for url in links[:2]:
+            try:
+                resp = await client.get(url)
+                if resp.status_code != 200:
+                    continue
+                
+                content = resp.text
+                # Remove scripts and style
+                content = re.sub(r'<script(?:[^>]*?)>[\s\S]*?</script>', '', content)
+                content = re.sub(r'<style(?:[^>]*?)>[\s\S]*?</style>', '', content)
+                
+                # Extract code blocks
+                code_blocks = re.findall(r'<pre(?:[^>]*?)>([\s\S]*?)</pre>', content)
+                found_code = []
+                for block in code_blocks:
+                    clean = re.sub(r'<[^>]*?>', '', block)
+                    clean = html_lib.unescape(clean).strip()
+                    if any(x in clean for x in ["class Solution", "def ", "function", "vector<", "public:", "int ", "long ", "return"]):
+                        found_code.append(clean)
+                
+                if found_code:
+                    contexts.append(f"Source: {url}\n" + "\n---\n".join(found_code[:3]))
+                else:
+                    text_content = re.sub(r'<[^>]*?>', ' ', content)
+                    text_content = html_lib.unescape(text_content)
+                    text_content = re.sub(r'\s+', ' ', text_content).strip()
+                    match = re.search(r'(class\s+Solution[\s\S]{1,800})', text_content)
+                    if match:
+                        contexts.append(f"Source: {url} (Text match):\n{match.group(1)}")
+            except Exception:
+                pass
+                
+    return "\n\n=========================================\n\n".join(contexts)
+
+
+def _get_solver_instruction(language: str, problem_desc: str, starter_code: str, web_solutions: str = "") -> str:
     """Compile a highly-optimized competitive programming prompt to prevent LeetCode TLE."""
     instruction = f"""You are an expert competitive programmer and algorithms specialist. Solve the following LeetCode problem in {language}.
 
@@ -136,7 +209,32 @@ STRICT RULES for the "solution" field:
   * For sliding window or two-pointer problems, maintain linear runtime O(N).
   * Avoid any unnecessary array duplication or nested loops where a single pass or hashmap-assisted lookup suffices.
   * CRITICAL: Be extremely careful of infinite loops caused by math traps (such as repeated squaring, multiplication, or division when the value is 0 or 1. e.g. x = x * x remains 1 forever). Always handle these edge cases (like 1s and 0s) explicitly and separately to prevent hanging.
+  * CRITICAL: Prevent integer overflow in typed languages like C++ and Java! Repeated squaring (x *= x) will overflow 32-bit signed integers (max 2*10^9) or 64-bit integers. If x can grow large, check limits before squaring (e.g., in C++, if (x > 100000) break or do not multiply anymore) or use long long. Overflow can result in negative values or zero, causing incorrect outputs (Wrong Answer) or infinite loops.
+  * PROMPT WRONG VS CORRECT CODE ANTI-PATTERN:
+    - WRONG (causes infinite loop TLE when x = 1):
+      ```python
+      while x in num_count:
+          x *= x  # or x = x * x
+      ```
+    - CORRECT (prevents infinite loop TLE):
+      ```python
+      while x > 1 and x in num_count:
+          x *= x
+      ```
+      or handle 1 separately:
+      ```python
+      ones = num_count.get(1, 0)
+      # process ones...
+      ```
 """
+    if web_solutions:
+        instruction += f"""
+CRITICAL: Below are some reference solution code blocks scraped from the web for this specific problem. Use them as a reference to write a 100% correct, bug-free, and optimal solution matching LeetCode's constraints:
+```
+{web_solutions}
+```
+"""
+
     if starter_code:
         instruction += f"""- YOU MUST KEEP the exact class and method signatures from this starter code template:
 ```
@@ -577,7 +675,16 @@ async def run_workflow(
                             starter_code = snip.get("code", "")
                             break
                 
-                instruction = _get_solver_instruction(language, problem_desc, starter_code)
+                title_slug = lc_data.get("titleSlug", "") if isinstance(lc_data, dict) else ""
+                web_solutions = ""
+                if title_slug:
+                    log(f"    🔍 Searching web for optimal solution...")
+                    web_solutions = await _search_leetcode_solutions(title_slug, language)
+                    if web_solutions:
+                        log(f"    ✅ Reference solutions found and loaded as context")
+                    else:
+                        log(f"    ⚠️ No reference solutions found on web, falling back to pure generation")
+                instruction = _get_solver_instruction(language, problem_desc, starter_code, web_solutions)
                 
                 log(f"    🤖 AI Solver [{model}] - Language: {language}")
                 raw_output  = await call_ai(instruction, model=model, temperature=temperature, force_json=True)
@@ -919,7 +1026,15 @@ async def run_workflow(
                                 starter_code = snip.get("code", "")
                                 break
 
-                    instruction = _get_solver_instruction(config_lang, problem_desc, starter_code)
+                    web_solutions = ""
+                    if title_slug:
+                        log(f"    🔍 Searching web for optimal solution...")
+                        web_solutions = await _search_leetcode_solutions(title_slug, config_lang)
+                        if web_solutions:
+                            log(f"    ✅ Reference solutions found and loaded as context")
+                        else:
+                            log(f"    ⚠️ No reference solutions found on web, falling back to pure generation")
+                    instruction = _get_solver_instruction(config_lang, problem_desc, starter_code, web_solutions)
 
                     log(f"    🤖 AI Solver [{model}] - Language: {config_lang}")
                     raw_output = await call_ai(instruction, model=model, temperature=0.2, force_json=True)
