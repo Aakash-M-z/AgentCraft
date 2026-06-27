@@ -117,6 +117,51 @@ def _sanitize_subject(subject: str) -> str:
     return first_line[:200] or "AgentCraft Workflow Result"
 
 
+def _get_solver_instruction(language: str, problem_desc: str, starter_code: str) -> str:
+    """Compile a highly-optimized competitive programming prompt to prevent LeetCode TLE."""
+    instruction = f"""You are an expert competitive programmer and algorithms specialist. Solve the following LeetCode problem in {language}.
+
+STRICT RULES for the "solution" field:
+- Write ONLY the Solution class (or equivalent top-level function if needed).
+- Do NOT include any import statements (LeetCode already imports them).
+- Do NOT include any if __name__ == "__main__" blocks, test code, or examples.
+- Do NOT wrap code in Markdown fences (no ```python).
+- The code must be 100% syntactically valid {language} that LeetCode can run directly.
+- CRITICAL: You MUST write the most optimal solution possible. Avoid brute-force approaches that cause Time Limit Exceeded (TLE) on LeetCode's large hidden test cases. 
+  * Aim for O(N), O(N log N), or O(log N) time complexity.
+  * For list/array lookups, use sets/hashmaps (O(1)) instead of list scans/checks (O(N)).
+  * For queue/deque operations, use `collections.deque` in Python (O(1)) instead of `list.insert(0)` or `list.pop(0)` (O(N)).
+  * For Dynamic Programming, ALWAYS use memoization/caching (e.g. `@lru_cache(None)` or standard memoization dict in Python) or bottom-up tabulation to avoid exponential time complexity O(2^N).
+  * For searching, use binary search O(log N) instead of linear scan O(N) when data is sorted.
+  * For sliding window or two-pointer problems, maintain linear runtime O(N).
+  * Avoid any unnecessary array duplication or nested loops where a single pass or hashmap-assisted lookup suffices.
+"""
+    if starter_code:
+        instruction += f"""- YOU MUST KEEP the exact class and method signatures from this starter code template:
+```
+{starter_code}
+```
+"""
+    else:
+        instruction += f"""- If you are writing in Python, the class should be named `Solution` and the standard LeetCode method signature must be used.
+"""
+
+    instruction += f"""
+Problem:
+{problem_desc}
+
+Return ONLY a valid JSON object (no markdown, no extra text) matching this schema:
+{{
+  "title": "Problem Title",
+  "difficulty": "Easy/Medium/Hard",
+  "approach": "Concise explanation of your algorithm",
+  "time_complexity": "O(...)",
+  "space_complexity": "O(...)",
+  "solution": "ONLY the Solution class code here"
+}}"""
+    return instruction
+
+
 async def _send_email(to: str, subject: str, body: str, fmt: str = "text") -> dict:
     """
     Send email via Brevo Transactional Email REST API.
@@ -531,39 +576,7 @@ async def run_workflow(
                             starter_code = snip.get("code", "")
                             break
                 
-                instruction = f"""You are an expert competitive programmer. Solve the following LeetCode problem in {language}.
-
-STRICT RULES for the "solution" field:
-- Write ONLY the Solution class (or equivalent top-level function if needed).
-- Do NOT include any import statements (LeetCode already imports them).
-- Do NOT include any if __name__ == "__main__" blocks, test code, or examples.
-- Do NOT wrap code in Markdown fences (no ```python).
-- The code must be 100% syntactically valid {language} that LeetCode can run directly.
-- CRITICAL: You MUST write the most optimal solution possible. Avoid brute-force approaches that will cause Time Limit Exceeded (TLE) on LeetCode's large hidden test cases. Aim for O(N) or O(N log N) time complexity. Use advanced data structures (like HashMaps, Heaps/PriorityQueues, Segment trees, Monotonic Stacks/Queues) or algorithmic patterns (like Sliding Window, Two Pointers, Dynamic Programming, Binary Search) to optimize time complexity.
-"""
-                if starter_code:
-                    instruction += f"""- YOU MUST KEEP the exact class and method signatures from this starter code template:
-```
-{starter_code}
-```
-"""
-                else:
-                    instruction += f"""- If you are writing in Python, the class should be named `Solution` and the standard LeetCode method signature must be used.
-"""
-
-                instruction += f"""
-Problem:
-{problem_desc}
-
-Return ONLY a valid JSON object (no markdown, no extra text) matching this schema:
-{{
-  "title": "Problem Title",
-  "difficulty": "Easy/Medium/Hard",
-  "approach": "Concise explanation of your algorithm",
-  "time_complexity": "O(...)",
-  "space_complexity": "O(...)",
-  "solution": "ONLY the Solution class code here"
-}}"""
+                instruction = _get_solver_instruction(language, problem_desc, starter_code)
                 
                 log(f"    🤖 AI Solver [{model}] - Language: {language}")
                 raw_output  = await call_ai(instruction, model=model, temperature=temperature, force_json=True)
@@ -905,39 +918,7 @@ Return ONLY a valid JSON object (no markdown, no extra text) matching this schem
                                 starter_code = snip.get("code", "")
                                 break
 
-                    instruction = f"""You are an expert competitive programmer. Solve the following LeetCode problem in {config_lang}.
-
-STRICT RULES for the "solution" field:
-- Write ONLY the Solution class (or equivalent top-level function if needed).
-- Do NOT include any import statements (LeetCode already imports them).
-- Do NOT include any if __name__ == "__main__" blocks, test code, or examples.
-- Do NOT wrap code in Markdown fences (no ```python).
-- The code must be 100% syntactically valid {config_lang} that LeetCode can run directly.
-- CRITICAL: You MUST write the most optimal solution possible. Avoid brute-force approaches that will cause Time Limit Exceeded (TLE) on LeetCode's large hidden test cases. Aim for O(N) or O(N log N) time complexity. Use advanced data structures (like HashMaps, Heaps/PriorityQueues, Segment trees, Monotonic Stacks/Queues) or algorithmic patterns (like Sliding Window, Two Pointers, Dynamic Programming, Binary Search) to optimize time complexity.
-"""
-                    if starter_code:
-                        instruction += f"""- YOU MUST KEEP the exact class and method signatures from this starter code template:
-```
-{starter_code}
-```
-"""
-                    else:
-                        instruction += f"""- If you are writing in Python, the class should be named `Solution` and the standard LeetCode method signature must be used.
-"""
-
-                    instruction += f"""
-Problem:
-{problem_desc}
-
-Return ONLY a valid JSON object (no markdown, no extra text) matching this schema:
-{{
-  "title": "Problem Title",
-  "difficulty": "Easy/Medium/Hard",
-  "approach": "Concise explanation of your algorithm",
-  "time_complexity": "O(...)",
-  "space_complexity": "O(...)",
-  "solution": "ONLY the Solution class code here"
-}}"""
+                    instruction = _get_solver_instruction(config_lang, problem_desc, starter_code)
 
                     log(f"    🤖 AI Solver [{model}] - Language: {config_lang}")
                     raw_output = await call_ai(instruction, model=model, temperature=0.2, force_json=True)
