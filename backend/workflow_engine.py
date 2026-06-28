@@ -43,6 +43,13 @@ _FETCH_LIFE_OS_TYPES = {"fetch_life_os"}
 _BRIEFING_GENERATOR_TYPES = {"briefing_generator"}
 _GITHUB_TYPES = {"github", "github_activity"}
 _WEATHER_TYPES = {"weather", "weather_info"}
+_PROCUREMENT_ANALYST_TYPES  = {"procurement_ai_analyst"}
+_PROCUREMENT_DUPLICATE_TYPES = {"procurement_duplicate"}
+_PROCUREMENT_BUDGET_TYPES   = {"procurement_budget"}
+_PROCUREMENT_VENDOR_TYPES   = {"procurement_vendor"}
+_PROCUREMENT_RISK_TYPES     = {"procurement_risk"}
+_PROCUREMENT_PO_TYPES       = {"procurement_po"}
+_PROCUREMENT_AUDIT_TYPES    = {"procurement_audit"}
 
 
 def _now() -> str:
@@ -1413,6 +1420,134 @@ async def run_workflow(
                 
                 log("    ✓ AI Briefing generated and logged.")
                 output = briefing_text
+
+            # ── procurement_ai_analyst ─────────────────────────────────────
+            elif node_type in _PROCUREMENT_ANALYST_TYPES:
+                from .procurement_engine import analyze_requirement
+                request_text = _to_str(current)
+                log("    🏢 Procurement AI Analyst: Analyzing purchase request...")
+                analysis = await analyze_requirement(request_text)
+                log(f"    📋 Extracted: item='{analysis.get('item_name', 'N/A')}' dept='{analysis.get('department', 'N/A')}' amt=₹{analysis.get('amount', 0):,}")
+                output = analysis
+
+            # ── procurement_duplicate ──────────────────────────────────────
+            elif node_type in _PROCUREMENT_DUPLICATE_TYPES:
+                from .procurement_engine import detect_duplicate
+                parsed = _parse_json_or_str(current)
+                if isinstance(parsed, dict):
+                    item_name = parsed.get("item_name", "")
+                    department = parsed.get("department", "Engineering")
+                else:
+                    item_name = _to_str(current)[:100]
+                    department = config.get("department", "Engineering")
+                log(f"    🔍 Duplicate Detection: Checking '{item_name}' for {department}...")
+                dup_result = detect_duplicate(item_name, department)
+                if dup_result.get("duplicate"):
+                    log(f"    ⚠️  Duplicate detected: {dup_result.get('similar_item')}")
+                else:
+                    log("    ✅ No duplicate found")
+                if isinstance(parsed, dict):
+                    output = {**parsed, "duplicate_detected": dup_result.get("duplicate", False), "duplicate_info": dup_result}
+                else:
+                    output = {"item_name": item_name, "department": department, "duplicate_detected": dup_result.get("duplicate", False), "duplicate_info": dup_result}
+
+            # ── procurement_budget ─────────────────────────────────────────
+            elif node_type in _PROCUREMENT_BUDGET_TYPES:
+                from .procurement_engine import verify_budget
+                parsed = _parse_json_or_str(current)
+                if isinstance(parsed, dict):
+                    amount = int(parsed.get("amount", 0) or 0)
+                    department = str(parsed.get("department", "Engineering"))
+                else:
+                    amount = int(config.get("amount", 50000))
+                    department = str(config.get("department", "Engineering"))
+                log(f"    💰 Budget Verification: ₹{amount:,} for {department}...")
+                budget_result = verify_budget(amount, department)
+                log(f"    📊 Budget: {budget_result['status']} | Tier: {budget_result['approval_tier']} | Remaining: ₹{budget_result['remaining_budget']:,}")
+                if isinstance(parsed, dict):
+                    output = {**parsed, "budget_status": budget_result["status"], "approval_tier": budget_result["approval_tier"], "approval_label": budget_result["approval_label"], "remaining_budget": budget_result["remaining_budget"], "budget_info": budget_result}
+                else:
+                    output = {"amount": amount, "department": department, "budget_status": budget_result["status"], "approval_tier": budget_result["approval_tier"], "budget_info": budget_result}
+
+            # ── procurement_vendor ─────────────────────────────────────────
+            elif node_type in _PROCUREMENT_VENDOR_TYPES:
+                from .procurement_engine import recommend_vendor
+                parsed = _parse_json_or_str(current)
+                if isinstance(parsed, dict):
+                    item_category = str(parsed.get("item_category", "Hardware"))
+                    item_name = str(parsed.get("item_name", ""))
+                    amount = int(parsed.get("amount", 0) or 0)
+                else:
+                    item_category = str(config.get("itemCategory", "Hardware"))
+                    item_name = str(config.get("itemName", ""))
+                    amount = int(config.get("amount", 50000))
+                log(f"    🏪 Vendor AI: Finding best vendor for '{item_name}' ({item_category})...")
+                vendor_result = await recommend_vendor(item_category, item_name, amount)
+                log(f"    🏆 Recommended: {vendor_result['recommended_vendor']} (score: {vendor_result['composite_score']}/100)")
+                if isinstance(parsed, dict):
+                    output = {**parsed, "recommended_vendor": vendor_result["recommended_vendor"], "vendor_score": vendor_result["composite_score"], "vendor_delivery_days": vendor_result["delivery_days"], "vendor_matrix": vendor_result["vendor_matrix"], "vendor_reasoning": vendor_result["ai_reasoning"]}
+                else:
+                    output = vendor_result
+
+            # ── procurement_risk ───────────────────────────────────────────
+            elif node_type in _PROCUREMENT_RISK_TYPES:
+                from .procurement_engine import generate_risk_score
+                parsed = _parse_json_or_str(current)
+                analysis_data = parsed if isinstance(parsed, dict) else {"amount": 50000}
+                log("    ⚠️  Risk Scoring: Calculating composite risk score...")
+                risk_result = await generate_risk_score(analysis_data)
+                log(f"    📈 Risk Score: {risk_result['risk_score']}/100 ({risk_result['risk_level']} Risk)")
+                if isinstance(parsed, dict):
+                    output = {**parsed, "risk_score": risk_result["risk_score"], "risk_level": risk_result["risk_level"], "risk_color": risk_result["risk_color"], "mitigation": risk_result["mitigation_recommendations"]}
+                else:
+                    output = risk_result
+
+            # ── procurement_po ─────────────────────────────────────────────
+            elif node_type in _PROCUREMENT_PO_TYPES:
+                from .procurement_engine import generate_purchase_order, save_procurement_request
+                parsed = _parse_json_or_str(current)
+                procurement_data = parsed if isinstance(parsed, dict) else {}
+                if execution_id:
+                    procurement_data["execution_id"] = execution_id
+                log("    📄 Purchase Order: Generating formal PO document...")
+                po_result = await generate_purchase_order(procurement_data)
+                log(f"    ✅ PO Generated: {po_result['po_number']} — Total incl GST: ₹{po_result['total_with_gst']:,}")
+                # Merge PO data and save to database
+                full_data = {**procurement_data, **po_result, "status": "po_generated"}
+                save_result = await save_procurement_request(full_data)
+                if save_result.get("saved"):
+                    log(f"    💾 Saved to database: {save_result['request_id']}")
+                output = {**full_data, "po_number": po_result["po_number"], "po_document": po_result["po_document"], "saved": save_result.get("saved", False)}
+
+            # ── procurement_audit ──────────────────────────────────────────
+            elif node_type in _PROCUREMENT_AUDIT_TYPES:
+                from .procurement_engine import store_audit_entry
+                parsed = _parse_json_or_str(current)
+                if isinstance(parsed, dict):
+                    request_id = parsed.get("po_number") or parsed.get("request_id") or f"REQ-{execution_id or 'UNKNOWN'}"
+                    action = str(config.get("action") or "po_issued")
+                    actor = str(config.get("actor") or "AgentCraft AI System")
+                    details = str(config.get("details") or f"PO {request_id} processed. Risk: {parsed.get('risk_level', 'N/A')}. Vendor: {parsed.get('recommended_vendor', 'N/A')}. Amount: ₹{parsed.get('amount', 0):,}")
+                    old_status = "analyzing"
+                    new_status = parsed.get("status", "approved")
+                else:
+                    request_id = f"REQ-{execution_id or 'UNKNOWN'}"
+                    action = str(config.get("action") or "completed")
+                    actor = str(config.get("actor") or "AgentCraft AI System")
+                    details = "Procurement workflow completed."
+                    old_status = None
+                    new_status = "completed"
+                log(f"    📋 Audit Logger: Recording [{action}] for {request_id}...")
+                audit_result = await store_audit_entry(
+                    request_id=request_id,
+                    action=action,
+                    actor=actor,
+                    details=details,
+                    old_status=old_status,
+                    new_status=new_status
+                )
+                log(f"    ✅ Audit entry saved: {audit_result.get('action', action)}")
+                output = {"audit_logged": audit_result.get("logged", False), "action": action, "request_id": request_id, "procurement_summary": parsed if isinstance(parsed, dict) else {}}
 
             # ── unknown ────────────────────────────────────────────────────
             else:
