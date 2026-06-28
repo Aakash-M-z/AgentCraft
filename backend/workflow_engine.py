@@ -43,6 +43,13 @@ _FETCH_LIFE_OS_TYPES = {"fetch_life_os"}
 _BRIEFING_GENERATOR_TYPES = {"briefing_generator"}
 _GITHUB_TYPES = {"github", "github_activity"}
 _WEATHER_TYPES = {"weather", "weather_info"}
+_PROCUREMENT_ANALYST_TYPES  = {"procurement_ai_analyst"}
+_PROCUREMENT_DUPLICATE_TYPES = {"procurement_duplicate"}
+_PROCUREMENT_BUDGET_TYPES   = {"procurement_budget"}
+_PROCUREMENT_VENDOR_TYPES   = {"procurement_vendor"}
+_PROCUREMENT_RISK_TYPES     = {"procurement_risk"}
+_PROCUREMENT_PO_TYPES       = {"procurement_po"}
+_PROCUREMENT_AUDIT_TYPES    = {"procurement_audit"}
 
 
 def _now() -> str:
@@ -117,7 +124,80 @@ def _sanitize_subject(subject: str) -> str:
     return first_line[:200] or "AgentCraft Workflow Result"
 
 
-def _get_solver_instruction(language: str, problem_desc: str, starter_code: str) -> str:
+async def _search_leetcode_solutions(title_slug: str, language: str) -> str:
+    """Search the web for LeetCode solutions to guide the solver towards the optimal answer."""
+    if not title_slug:
+        return ""
+    
+    import urllib.parse
+    import html as html_lib
+    import re
+    
+    query = f"leetcode {title_slug} {language} solution"
+    encoded_query = urllib.parse.quote_plus(query)
+    search_url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    }
+    
+    links = []
+    try:
+        async with httpx.AsyncClient(timeout=10, headers=headers) as client:
+            resp = await client.get(search_url)
+            if resp.status_code == 200:
+                html_text = resp.text
+                raw_links = re.findall(r'href="([^"]+)"', html_text)
+                for link in raw_links:
+                    if 'uddg=' in link:
+                        actual_url = urllib.parse.unquote(link.split('uddg=')[1].split('&')[0])
+                        if "leetcode.com/problems/" not in actual_url and actual_url not in links:
+                            links.append(actual_url)
+    except Exception:
+        pass
+        
+    if not links:
+        return ""
+        
+    contexts = []
+    # Fetch top 2 links to keep it fast
+    async with httpx.AsyncClient(timeout=10, headers=headers) as client:
+        for url in links[:2]:
+            try:
+                resp = await client.get(url)
+                if resp.status_code != 200:
+                    continue
+                
+                content = resp.text
+                # Remove scripts and style
+                content = re.sub(r'<script(?:[^>]*?)>[\s\S]*?</script>', '', content)
+                content = re.sub(r'<style(?:[^>]*?)>[\s\S]*?</style>', '', content)
+                
+                # Extract code blocks
+                code_blocks = re.findall(r'<pre(?:[^>]*?)>([\s\S]*?)</pre>', content)
+                found_code = []
+                for block in code_blocks:
+                    clean = re.sub(r'<[^>]*?>', '', block)
+                    clean = html_lib.unescape(clean).strip()
+                    if any(x in clean for x in ["class Solution", "def ", "function", "vector<", "public:", "int ", "long ", "return"]):
+                        found_code.append(clean)
+                
+                if found_code:
+                    contexts.append(f"Source: {url}\n" + "\n---\n".join(found_code[:3]))
+                else:
+                    text_content = re.sub(r'<[^>]*?>', ' ', content)
+                    text_content = html_lib.unescape(text_content)
+                    text_content = re.sub(r'\s+', ' ', text_content).strip()
+                    match = re.search(r'(class\s+Solution[\s\S]{1,800})', text_content)
+                    if match:
+                        contexts.append(f"Source: {url} (Text match):\n{match.group(1)}")
+            except Exception:
+                pass
+                
+    return "\n\n=========================================\n\n".join(contexts)
+
+
+def _get_solver_instruction(language: str, problem_desc: str, starter_code: str, web_solutions: str = "") -> str:
     """Compile a highly-optimized competitive programming prompt to prevent LeetCode TLE."""
     instruction = f"""You are an expert competitive programmer and algorithms specialist. Solve the following LeetCode problem in {language}.
 
@@ -136,7 +216,32 @@ STRICT RULES for the "solution" field:
   * For sliding window or two-pointer problems, maintain linear runtime O(N).
   * Avoid any unnecessary array duplication or nested loops where a single pass or hashmap-assisted lookup suffices.
   * CRITICAL: Be extremely careful of infinite loops caused by math traps (such as repeated squaring, multiplication, or division when the value is 0 or 1. e.g. x = x * x remains 1 forever). Always handle these edge cases (like 1s and 0s) explicitly and separately to prevent hanging.
+  * CRITICAL: Prevent integer overflow in typed languages like C++ and Java! Repeated squaring (x *= x) will overflow 32-bit signed integers (max 2*10^9) or 64-bit integers. If x can grow large, check limits before squaring (e.g., in C++, if (x > 100000) break or do not multiply anymore) or use long long. Overflow can result in negative values or zero, causing incorrect outputs (Wrong Answer) or infinite loops.
+  * PROMPT WRONG VS CORRECT CODE ANTI-PATTERN:
+    - WRONG (causes infinite loop TLE when x = 1):
+      ```python
+      while x in num_count:
+          x *= x  # or x = x * x
+      ```
+    - CORRECT (prevents infinite loop TLE):
+      ```python
+      while x > 1 and x in num_count:
+          x *= x
+      ```
+      or handle 1 separately:
+      ```python
+      ones = num_count.get(1, 0)
+      # process ones...
+      ```
 """
+    if web_solutions:
+        instruction += f"""
+CRITICAL: Below are some reference solution code blocks scraped from the web for this specific problem. Use them as a reference to write a 100% correct, bug-free, and optimal solution matching LeetCode's constraints:
+```
+{web_solutions}
+```
+"""
+
     if starter_code:
         instruction += f"""- YOU MUST KEEP the exact class and method signatures from this starter code template:
 ```
@@ -577,7 +682,16 @@ async def run_workflow(
                             starter_code = snip.get("code", "")
                             break
                 
-                instruction = _get_solver_instruction(language, problem_desc, starter_code)
+                title_slug = lc_data.get("titleSlug", "") if isinstance(lc_data, dict) else ""
+                web_solutions = ""
+                if title_slug:
+                    log(f"    🔍 Searching web for optimal solution...")
+                    web_solutions = await _search_leetcode_solutions(title_slug, language)
+                    if web_solutions:
+                        log(f"    ✅ Reference solutions found and loaded as context")
+                    else:
+                        log(f"    ⚠️ No reference solutions found on web, falling back to pure generation")
+                instruction = _get_solver_instruction(language, problem_desc, starter_code, web_solutions)
                 
                 log(f"    🤖 AI Solver [{model}] - Language: {language}")
                 raw_output  = await call_ai(instruction, model=model, temperature=temperature, force_json=True)
@@ -919,7 +1033,15 @@ async def run_workflow(
                                 starter_code = snip.get("code", "")
                                 break
 
-                    instruction = _get_solver_instruction(config_lang, problem_desc, starter_code)
+                    web_solutions = ""
+                    if title_slug:
+                        log(f"    🔍 Searching web for optimal solution...")
+                        web_solutions = await _search_leetcode_solutions(title_slug, config_lang)
+                        if web_solutions:
+                            log(f"    ✅ Reference solutions found and loaded as context")
+                        else:
+                            log(f"    ⚠️ No reference solutions found on web, falling back to pure generation")
+                    instruction = _get_solver_instruction(config_lang, problem_desc, starter_code, web_solutions)
 
                     log(f"    🤖 AI Solver [{model}] - Language: {config_lang}")
                     raw_output = await call_ai(instruction, model=model, temperature=0.2, force_json=True)
@@ -1298,6 +1420,134 @@ async def run_workflow(
                 
                 log("    ✓ AI Briefing generated and logged.")
                 output = briefing_text
+
+            # ── procurement_ai_analyst ─────────────────────────────────────
+            elif node_type in _PROCUREMENT_ANALYST_TYPES:
+                from .procurement_engine import analyze_requirement
+                request_text = _to_str(current)
+                log("    🏢 Procurement AI Analyst: Analyzing purchase request...")
+                analysis = await analyze_requirement(request_text)
+                log(f"    📋 Extracted: item='{analysis.get('item_name', 'N/A')}' dept='{analysis.get('department', 'N/A')}' amt=₹{analysis.get('amount', 0):,}")
+                output = analysis
+
+            # ── procurement_duplicate ──────────────────────────────────────
+            elif node_type in _PROCUREMENT_DUPLICATE_TYPES:
+                from .procurement_engine import detect_duplicate
+                parsed = _parse_json_or_str(current)
+                if isinstance(parsed, dict):
+                    item_name = parsed.get("item_name", "")
+                    department = parsed.get("department", "Engineering")
+                else:
+                    item_name = _to_str(current)[:100]
+                    department = config.get("department", "Engineering")
+                log(f"    🔍 Duplicate Detection: Checking '{item_name}' for {department}...")
+                dup_result = detect_duplicate(item_name, department)
+                if dup_result.get("duplicate"):
+                    log(f"    ⚠️  Duplicate detected: {dup_result.get('similar_item')}")
+                else:
+                    log("    ✅ No duplicate found")
+                if isinstance(parsed, dict):
+                    output = {**parsed, "duplicate_detected": dup_result.get("duplicate", False), "duplicate_info": dup_result}
+                else:
+                    output = {"item_name": item_name, "department": department, "duplicate_detected": dup_result.get("duplicate", False), "duplicate_info": dup_result}
+
+            # ── procurement_budget ─────────────────────────────────────────
+            elif node_type in _PROCUREMENT_BUDGET_TYPES:
+                from .procurement_engine import verify_budget
+                parsed = _parse_json_or_str(current)
+                if isinstance(parsed, dict):
+                    amount = int(parsed.get("amount", 0) or 0)
+                    department = str(parsed.get("department", "Engineering"))
+                else:
+                    amount = int(config.get("amount", 50000))
+                    department = str(config.get("department", "Engineering"))
+                log(f"    💰 Budget Verification: ₹{amount:,} for {department}...")
+                budget_result = verify_budget(amount, department)
+                log(f"    📊 Budget: {budget_result['status']} | Tier: {budget_result['approval_tier']} | Remaining: ₹{budget_result['remaining_budget']:,}")
+                if isinstance(parsed, dict):
+                    output = {**parsed, "budget_status": budget_result["status"], "approval_tier": budget_result["approval_tier"], "approval_label": budget_result["approval_label"], "remaining_budget": budget_result["remaining_budget"], "budget_info": budget_result}
+                else:
+                    output = {"amount": amount, "department": department, "budget_status": budget_result["status"], "approval_tier": budget_result["approval_tier"], "budget_info": budget_result}
+
+            # ── procurement_vendor ─────────────────────────────────────────
+            elif node_type in _PROCUREMENT_VENDOR_TYPES:
+                from .procurement_engine import recommend_vendor
+                parsed = _parse_json_or_str(current)
+                if isinstance(parsed, dict):
+                    item_category = str(parsed.get("item_category", "Hardware"))
+                    item_name = str(parsed.get("item_name", ""))
+                    amount = int(parsed.get("amount", 0) or 0)
+                else:
+                    item_category = str(config.get("itemCategory", "Hardware"))
+                    item_name = str(config.get("itemName", ""))
+                    amount = int(config.get("amount", 50000))
+                log(f"    🏪 Vendor AI: Finding best vendor for '{item_name}' ({item_category})...")
+                vendor_result = await recommend_vendor(item_category, item_name, amount)
+                log(f"    🏆 Recommended: {vendor_result['recommended_vendor']} (score: {vendor_result['composite_score']}/100)")
+                if isinstance(parsed, dict):
+                    output = {**parsed, "recommended_vendor": vendor_result["recommended_vendor"], "vendor_score": vendor_result["composite_score"], "vendor_delivery_days": vendor_result["delivery_days"], "vendor_matrix": vendor_result["vendor_matrix"], "vendor_reasoning": vendor_result["ai_reasoning"]}
+                else:
+                    output = vendor_result
+
+            # ── procurement_risk ───────────────────────────────────────────
+            elif node_type in _PROCUREMENT_RISK_TYPES:
+                from .procurement_engine import generate_risk_score
+                parsed = _parse_json_or_str(current)
+                analysis_data = parsed if isinstance(parsed, dict) else {"amount": 50000}
+                log("    ⚠️  Risk Scoring: Calculating composite risk score...")
+                risk_result = await generate_risk_score(analysis_data)
+                log(f"    📈 Risk Score: {risk_result['risk_score']}/100 ({risk_result['risk_level']} Risk)")
+                if isinstance(parsed, dict):
+                    output = {**parsed, "risk_score": risk_result["risk_score"], "risk_level": risk_result["risk_level"], "risk_color": risk_result["risk_color"], "mitigation": risk_result["mitigation_recommendations"]}
+                else:
+                    output = risk_result
+
+            # ── procurement_po ─────────────────────────────────────────────
+            elif node_type in _PROCUREMENT_PO_TYPES:
+                from .procurement_engine import generate_purchase_order, save_procurement_request
+                parsed = _parse_json_or_str(current)
+                procurement_data = parsed if isinstance(parsed, dict) else {}
+                if execution_id:
+                    procurement_data["execution_id"] = execution_id
+                log("    📄 Purchase Order: Generating formal PO document...")
+                po_result = await generate_purchase_order(procurement_data)
+                log(f"    ✅ PO Generated: {po_result['po_number']} — Total incl GST: ₹{po_result['total_with_gst']:,}")
+                # Merge PO data and save to database
+                full_data = {**procurement_data, **po_result, "status": "po_generated"}
+                save_result = await save_procurement_request(full_data)
+                if save_result.get("saved"):
+                    log(f"    💾 Saved to database: {save_result['request_id']}")
+                output = {**full_data, "po_number": po_result["po_number"], "po_document": po_result["po_document"], "saved": save_result.get("saved", False)}
+
+            # ── procurement_audit ──────────────────────────────────────────
+            elif node_type in _PROCUREMENT_AUDIT_TYPES:
+                from .procurement_engine import store_audit_entry
+                parsed = _parse_json_or_str(current)
+                if isinstance(parsed, dict):
+                    request_id = parsed.get("po_number") or parsed.get("request_id") or f"REQ-{execution_id or 'UNKNOWN'}"
+                    action = str(config.get("action") or "po_issued")
+                    actor = str(config.get("actor") or "AgentCraft AI System")
+                    details = str(config.get("details") or f"PO {request_id} processed. Risk: {parsed.get('risk_level', 'N/A')}. Vendor: {parsed.get('recommended_vendor', 'N/A')}. Amount: ₹{parsed.get('amount', 0):,}")
+                    old_status = "analyzing"
+                    new_status = parsed.get("status", "approved")
+                else:
+                    request_id = f"REQ-{execution_id or 'UNKNOWN'}"
+                    action = str(config.get("action") or "completed")
+                    actor = str(config.get("actor") or "AgentCraft AI System")
+                    details = "Procurement workflow completed."
+                    old_status = None
+                    new_status = "completed"
+                log(f"    📋 Audit Logger: Recording [{action}] for {request_id}...")
+                audit_result = await store_audit_entry(
+                    request_id=request_id,
+                    action=action,
+                    actor=actor,
+                    details=details,
+                    old_status=old_status,
+                    new_status=new_status
+                )
+                log(f"    ✅ Audit entry saved: {audit_result.get('action', action)}")
+                output = {"audit_logged": audit_result.get("logged", False), "action": action, "request_id": request_id, "procurement_summary": parsed if isinstance(parsed, dict) else {}}
 
             # ── unknown ────────────────────────────────────────────────────
             else:

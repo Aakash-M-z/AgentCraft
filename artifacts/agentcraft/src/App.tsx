@@ -12,6 +12,7 @@ import PersonalLifeOSPage from "@/pages/life-os";
 import AssignmentsPage from "@/pages/assignments";
 import PlacementsPage from "@/pages/placements";
 import LeetCodePage from "@/pages/leetcode";
+import ProcurementPage from "@/pages/procurement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/life-os/assignments" component={AssignmentsPage} />
       <Route path="/life-os/placements" component={PlacementsPage} />
       <Route path="/life-os/leetcode" component={LeetCodePage} />
+      <Route path="/procurement" component={ProcurementPage} />
       <Route component={NotFound} />
     </Switch>
   );

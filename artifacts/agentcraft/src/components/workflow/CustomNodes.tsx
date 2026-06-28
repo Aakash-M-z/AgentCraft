@@ -1,5 +1,5 @@
 import { Handle, Position } from '@xyflow/react';
-import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail, CheckCircle2, XCircle, Loader2, Clock, Database, Webhook, FileText, Timer, CalendarClock, Code2, BrainCircuit, MessageSquare, Send, Github, CloudSun } from 'lucide-react';
+import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail, CheckCircle2, XCircle, Loader2, Clock, Database, Webhook, FileText, Timer, CalendarClock, Code2, BrainCircuit, MessageSquare, Send, Github, CloudSun, Building2, Search, DollarSign, Store, ShieldAlert, FileCheck, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AppNodeData, NodeExecutionStatus, useWorkflowStore } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -205,6 +205,76 @@ export const nodeConfig = {
     hasSource: true,
     hasTarget: true,
   },
+  procurement_ai_analyst: {
+    icon: Building2,
+    label: 'AI Analyst',
+    color: 'text-blue-400',
+    bg: 'bg-blue-400/10',
+    border: 'border-blue-500/50',
+    glow: 'shadow-[0_0_20px_rgba(96,165,250,0.3)]',
+    hasSource: true,
+    hasTarget: true,
+  },
+  procurement_duplicate: {
+    icon: Search,
+    label: 'Duplicate Check',
+    color: 'text-orange-400',
+    bg: 'bg-orange-400/10',
+    border: 'border-orange-500/50',
+    glow: 'shadow-[0_0_20px_rgba(251,146,60,0.25)]',
+    hasSource: true,
+    hasTarget: true,
+  },
+  procurement_budget: {
+    icon: DollarSign,
+    label: 'Budget Verify',
+    color: 'text-emerald-400',
+    bg: 'bg-emerald-400/10',
+    border: 'border-emerald-500/50',
+    glow: 'shadow-[0_0_20px_rgba(52,211,153,0.25)]',
+    hasSource: true,
+    hasTarget: true,
+  },
+  procurement_vendor: {
+    icon: Store,
+    label: 'Vendor AI',
+    color: 'text-violet-400',
+    bg: 'bg-violet-400/10',
+    border: 'border-violet-500/50',
+    glow: 'shadow-[0_0_20px_rgba(139,92,246,0.3)]',
+    hasSource: true,
+    hasTarget: true,
+  },
+  procurement_risk: {
+    icon: ShieldAlert,
+    label: 'Risk Scorer',
+    color: 'text-rose-400',
+    bg: 'bg-rose-400/10',
+    border: 'border-rose-500/50',
+    glow: 'shadow-[0_0_20px_rgba(244,63,94,0.25)]',
+    hasSource: true,
+    hasTarget: true,
+  },
+  procurement_po: {
+    icon: FileCheck,
+    label: 'Generate PO',
+    color: 'text-amber-400',
+    bg: 'bg-amber-400/10',
+    border: 'border-amber-500/50',
+    glow: 'shadow-[0_0_20px_rgba(251,191,36,0.25)]',
+    hasSource: true,
+    hasTarget: true,
+  },
+  procurement_audit: {
+    icon: ClipboardList,
+    label: 'Audit Logger',
+    color: 'text-teal-400',
+    bg: 'bg-teal-400/10',
+    border: 'border-teal-500/50',
+    glow: 'shadow-[0_0_20px_rgba(45,212,191,0.25)]',
+    hasSource: true,
+    hasTarget: true,
+  },
   whatsapp_monitor: {
     icon: MessageSquare,
     label: 'WhatsApp Monitor',
@@ -293,12 +363,12 @@ export function BaseCustomNode({ data, type, selected, id }: {
   
   let nodeGlowClass = 'border-border/60 hover:border-muted-foreground/30 shadow-xl';
   if (selected) {
-    if (type === 'input' || type === 'schedule_trigger') nodeGlowClass = 'glow-emerald border-emerald-500/50';
-    else if (isAI) nodeGlowClass = 'glow-purple border-violet-500/50';
-    else if (type === 'api_call' || type === 'telegram_bot' || type === 'discord_webhook' || type === 'weather') nodeGlowClass = 'glow-cyan border-blue-500/50';
+    if (type === 'input' || type === 'schedule_trigger' || type === 'procurement_budget' || type === 'procurement_audit') nodeGlowClass = 'glow-emerald border-emerald-500/50';
+    else if (isAI || type === 'procurement_vendor') nodeGlowClass = 'glow-purple border-violet-500/50';
+    else if (type === 'api_call' || type === 'telegram_bot' || type === 'discord_webhook' || type === 'weather' || type === 'procurement_ai_analyst') nodeGlowClass = 'glow-cyan border-blue-500/50';
     else if (type === 'github') nodeGlowClass = 'border-zinc-500/70 shadow-[0_0_20px_rgba(113,113,122,0.3)] bg-zinc-950/20';
-    else if (type === 'condition' || type === 'delay') nodeGlowClass = 'glow-amber border-amber-500/50';
-    else if (type === 'output') nodeGlowClass = 'glow-rose border-rose-500/50';
+    else if (type === 'condition' || type === 'delay' || type === 'procurement_duplicate' || type === 'procurement_po') nodeGlowClass = 'glow-amber border-amber-500/50';
+    else if (type === 'output' || type === 'procurement_risk') nodeGlowClass = 'glow-rose border-rose-500/50';
     else nodeGlowClass = 'glow-purple border-primary/50';
   }
 
@@ -463,4 +533,11 @@ export const nodeTypes = {
   weather: (props: any) => <BaseCustomNode {...props} type="weather" />,
   whatsapp_monitor: (props: any) => <BaseCustomNode {...props} type="whatsapp_monitor" />,
   whatsapp_sender: (props: any) => <BaseCustomNode {...props} type="whatsapp_sender" />,
+  procurement_ai_analyst: (props: any) => <BaseCustomNode {...props} type="procurement_ai_analyst" />,
+  procurement_duplicate: (props: any) => <BaseCustomNode {...props} type="procurement_duplicate" />,
+  procurement_budget: (props: any) => <BaseCustomNode {...props} type="procurement_budget" />,
+  procurement_vendor: (props: any) => <BaseCustomNode {...props} type="procurement_vendor" />,
+  procurement_risk: (props: any) => <BaseCustomNode {...props} type="procurement_risk" />,
+  procurement_po: (props: any) => <BaseCustomNode {...props} type="procurement_po" />,
+  procurement_audit: (props: any) => <BaseCustomNode {...props} type="procurement_audit" />,
 };

@@ -152,6 +152,64 @@ class DailyBriefing(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
+class ProcurementRequest(Base):
+    """Enterprise Procurement request lifecycle tracking."""
+    __tablename__ = "procurement_requests"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    request_id = Column(String(50), nullable=False, unique=True)  # PO-2024-XXXX
+    requester = Column(String(255), nullable=False)
+    department = Column(String(100), nullable=False)
+    item_name = Column(String(500), nullable=False)
+    item_category = Column(String(100), nullable=False)  # Hardware, Software, Services, etc.
+    quantity = Column(Integer, nullable=False, default=1)
+    amount = Column(Integer, nullable=False)  # in INR
+    business_justification = Column(Text, nullable=True)
+    priority = Column(String(20), nullable=False, default="medium")  # low, medium, high, critical
+    status = Column(String(50), nullable=False, default="pending")  # pending, analyzing, approved, rejected, po_generated
+    approval_tier = Column(String(20), nullable=True)  # L1, L2, L3 (based on amount)
+    risk_score = Column(Integer, nullable=True)  # 0-100
+    risk_level = Column(String(20), nullable=True)  # Low, Medium, High
+    recommended_vendor = Column(String(255), nullable=True)
+    vendor_score = Column(Integer, nullable=True)  # 0-100
+    po_number = Column(String(50), nullable=True)
+    duplicate_detected = Column(String(10), nullable=False, default="no")  # yes, no
+    budget_available = Column(Integer, nullable=True)  # remaining budget for dept
+    ai_analysis = Column(Text, nullable=True)  # AI reasoning
+    execution_id = Column(Integer, nullable=True)  # linked workflow execution
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class ProcurementAuditLog(Base):
+    """Immutable audit trail for all procurement actions."""
+    __tablename__ = "procurement_audit_logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    request_id = Column(String(50), nullable=False, index=True)
+    action = Column(String(100), nullable=False)  # created, analyzed, approved, rejected, po_issued, notified
+    actor = Column(String(100), nullable=False)  # AI Agent, Manager, System
+    details = Column(Text, nullable=True)
+    old_status = Column(String(50), nullable=True)
+    new_status = Column(String(50), nullable=True)
+    timestamp = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class ProcurementVendor(Base):
+    """Vendor master data for AI-driven recommendations."""
+    __tablename__ = "procurement_vendors"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    category = Column(String(100), nullable=False)  # Hardware, Software, Cloud, Networking, Office
+    rating = Column(Integer, nullable=False, default=80)  # 0-100
+    avg_delivery_days = Column(Integer, nullable=False, default=7)
+    price_competitiveness = Column(Integer, nullable=False, default=80)  # 0-100 (higher=better price)
+    compliance_score = Column(Integer, nullable=False, default=90)  # 0-100
+    active = Column(String(5), nullable=False, default="true")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
 # ── Database Session Dependency ───────────────────────────────────────────────
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

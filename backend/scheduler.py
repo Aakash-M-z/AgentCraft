@@ -4,6 +4,7 @@ APScheduler integration for scheduled workflows.
 import os
 import logging
 import redis
+import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.jobstores.memory import MemoryJobStore
@@ -49,16 +50,32 @@ async def execute_scheduled_workflow(workflow_id: int):
 
     logger.info(f"⏰ Triggering scheduled workflow {workflow_id}...")
     try:
-        # Use localhost endpoint since this runs in the same container/server
-        url = f"http://127.0.0.1:8000/api/executions"
-        payload = {"workflowId": workflow_id, "input": "Scheduled daily trigger"}
+        from .database import AsyncSessionLocal
+        from .repository import WorkflowRepository, ExecutionRepository
+        from .main import _run_execution
         
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(url, json=payload, timeout=5.0)
-            resp.raise_for_status()
-            logger.info(f"✅ Scheduled execution triggered for workflow {workflow_id}")
+        async with AsyncSessionLocal() as db:
+            workflow = await WorkflowRepository.get_by_id(db, workflow_id)
+            if not workflow:
+                logger.error(f"❌ Scheduled workflow {workflow_id} not found in database.")
+                return
+            
+            execution = await ExecutionRepository.create(
+                db,
+                workflow_id=workflow_id,
+                input_text="Scheduled daily trigger",
+            )
+            
+            # Commit the transaction so execution record is saved and visible in other sessions
+            await db.commit()
+            
+            logger.info(f"✅ Created execution id={execution.id} for scheduled workflow {workflow_id}")
+            
+            # Start background execution
+            asyncio.create_task(_run_execution(execution.id, workflow, "Scheduled daily trigger"))
+            logger.info(f"🚀 Scheduled execution started locally for workflow {workflow_id}")
     except Exception as exc:
-        logger.error(f"❌ Failed to trigger scheduled workflow {workflow_id}: {exc}")
+        logger.error(f"❌ Failed to trigger scheduled workflow {workflow_id}: {exc}", exc_info=True)
 
 def update_workflow_schedule(workflow_id: int, cron_expr: str, timezone: str = "UTC"):
     """Add or update a workflow schedule."""

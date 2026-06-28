@@ -81,6 +81,9 @@ app.add_middleware(
 from .life_os_api import router as life_os_router
 app.include_router(life_os_router)
 
+from .procurement_api import router as procurement_router
+app.include_router(procurement_router)
+
 # ── Lifecycle Events ──────────────────────────────────────────────────────────
 
 @app.on_event("startup")
@@ -119,8 +122,52 @@ async def startup_event():
         register_life_os_jobs()
     except Exception as e:
         logger.error(f"❌ Failed to register static background jobs for Personal Life OS: {e}")
-                
+
+    # Seed the Enterprise AI Procurement Orchestrator workflow
+    try:
+        await _seed_procurement_workflow()
+    except Exception as e:
+        logger.error(f"❌ Failed to seed procurement workflow: {e}")
+
     logger.info("✅ AgentCraft ready!")
+
+
+async def _seed_procurement_workflow():
+    """Create the pre-built Enterprise AI Procurement Orchestrator workflow if it doesn't exist."""
+    import json as _json
+    async with AsyncSessionLocal() as db:
+        existing = await WorkflowRepository.list_all(db)
+        if any(w.name == "Enterprise AI Procurement Orchestrator" for w in existing):
+            return  # Already seeded
+
+        nodes = [
+            {"id": "n1",  "type": "input",                  "position": {"x": 400, "y": 0},   "data": {"label": "Purchase Request", "config": {"prompt": "Enter your purchase request in natural language"}}},
+            {"id": "n2",  "type": "procurement_ai_analyst",  "position": {"x": 400, "y": 120}, "data": {"label": "AI Requirement Analyst", "config": {}}},
+            {"id": "n3",  "type": "procurement_duplicate",   "position": {"x": 400, "y": 240}, "data": {"label": "Duplicate Purchase Check", "config": {}}},
+            {"id": "n4",  "type": "procurement_budget",      "position": {"x": 400, "y": 360}, "data": {"label": "Budget Verification", "config": {}}},
+            {"id": "n5",  "type": "procurement_vendor",      "position": {"x": 400, "y": 480}, "data": {"label": "AI Vendor Recommender", "config": {}}},
+            {"id": "n6",  "type": "procurement_risk",        "position": {"x": 400, "y": 600}, "data": {"label": "Risk Scorer", "config": {}}},
+            {"id": "n7",  "type": "ai_agent",                "position": {"x": 400, "y": 720}, "data": {"label": "Approval Decision", "config": {"model": "llama-3.3-70b-versatile", "role": "validator", "temperature": 0.2, "instruction": "You are an enterprise procurement validator. Review this procurement data and make an approval decision. State APPROVED or REJECTED with a brief justification. Data: {{input}}"}}},
+            {"id": "n8",  "type": "procurement_po",          "position": {"x": 400, "y": 840}, "data": {"label": "Generate Purchase Order", "config": {}}},
+            {"id": "n9",  "type": "telegram_bot",            "position": {"x": 400, "y": 960}, "data": {"label": "Telegram Notification", "config": {"botToken": "8627862228:AAGiSbQNXjgS4b6Z9W0CSGRd8EZ1pfCYXs4", "chatId": "1874336235", "message": "🏢 *Enterprise Procurement Alert*\n\n{{input}}\n\n_Powered by AgentCraft AI_"}}},
+            {"id": "n10", "type": "procurement_audit",       "position": {"x": 400, "y": 1080}, "data": {"label": "Audit Trail Logger", "config": {"action": "po_issued", "actor": "AgentCraft AI System"}}},
+            {"id": "n11", "type": "output",                  "position": {"x": 400, "y": 1200}, "data": {"label": "Procurement Complete", "config": {"format": "markdown"}}},
+        ]
+        edges = [
+            {"id": "e1-2",   "source": "n1",  "target": "n2"},
+            {"id": "e2-3",   "source": "n2",  "target": "n3"},
+            {"id": "e3-4",   "source": "n3",  "target": "n4"},
+            {"id": "e4-5",   "source": "n4",  "target": "n5"},
+            {"id": "e5-6",   "source": "n5",  "target": "n6"},
+            {"id": "e6-7",   "source": "n6",  "target": "n7"},
+            {"id": "e7-8",   "source": "n7",  "target": "n8"},
+            {"id": "e8-9",   "source": "n8",  "target": "n9"},
+            {"id": "e9-10",  "source": "n9",  "target": "n10"},
+            {"id": "e10-11", "source": "n10", "target": "n11"},
+        ]
+        await WorkflowRepository.create(db, name="Enterprise AI Procurement Orchestrator", nodes=nodes, edges=edges)
+        await db.commit()
+        logger.info("🏢 Seeded Enterprise AI Procurement Orchestrator workflow")
 
 
 @app.on_event("shutdown")

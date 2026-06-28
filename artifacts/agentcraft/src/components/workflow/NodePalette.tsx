@@ -1,4 +1,4 @@
-import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail, Database, Webhook, FileText, Timer, ChevronDown, ChevronRight, CalendarClock, Code2, BrainCircuit, MessageSquare, Send, Github, CloudSun } from 'lucide-react';
+import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail, Database, Webhook, FileText, Timer, ChevronDown, ChevronRight, CalendarClock, Code2, BrainCircuit, MessageSquare, Send, Github, CloudSun, Building2, Search, DollarSign, Store, ShieldAlert, FileCheck, ClipboardList } from 'lucide-react';
 import { WorkflowNodeType } from '@workspace/api-client-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -47,6 +47,18 @@ const groups: { label: string; nodes: PaletteNode[] }[] = [
       { type: 'email', label: 'Send Email', icon: Mail, color: 'text-sky-400', border: 'border-sky-500/30', description: 'SMTP email' },
       { type: 'database', label: 'Database', icon: Database, color: 'text-teal-400', border: 'border-teal-500/30', description: 'Read/write DB' },
       { type: 'file_processor', label: 'File', icon: FileText, color: 'text-indigo-400', border: 'border-indigo-500/30', description: 'Process files' },
+    ],
+  },
+  {
+    label: 'Enterprise Procurement',
+    nodes: [
+      { type: 'procurement_ai_analyst', label: 'AI Analyst', icon: Building2, color: 'text-blue-400', border: 'border-blue-500/30', description: 'AI extracts structured fields from purchase request' },
+      { type: 'procurement_duplicate', label: 'Duplicate Check', icon: Search, color: 'text-orange-400', border: 'border-orange-500/30', description: 'Detect duplicate purchase in history' },
+      { type: 'procurement_budget', label: 'Budget Verify', icon: DollarSign, color: 'text-emerald-400', border: 'border-emerald-500/30', description: 'Check department budget & approval tier' },
+      { type: 'procurement_vendor', label: 'Vendor AI', icon: Store, color: 'text-violet-400', border: 'border-violet-500/30', description: 'AI vendor scoring & recommendation' },
+      { type: 'procurement_risk', label: 'Risk Scorer', icon: ShieldAlert, color: 'text-rose-400', border: 'border-rose-500/30', description: 'Composite AI risk scoring 0-100' },
+      { type: 'procurement_po', label: 'Generate PO', icon: FileCheck, color: 'text-amber-400', border: 'border-amber-500/30', description: 'Issue formal Purchase Order document' },
+      { type: 'procurement_audit', label: 'Audit Logger', icon: ClipboardList, color: 'text-teal-400', border: 'border-teal-500/30', description: 'Write immutable audit trail entry' },
     ],
   },
   {
