@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { 
   Activity, GitMerge, LayoutDashboard, TerminalSquare, 
   ChevronDown, Database, Cpu, MessageSquare, Globe, Bot, Shield, Check, Settings,
-  BookOpen, Briefcase, Code
+  BookOpen, Briefcase, Code, Building2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +33,10 @@ export function AppLayout({ children }: AppLayoutProps) {
     { href: "/life-os/assignments", icon: BookOpen, label: "Assignments" },
     { href: "/life-os/placements", icon: Briefcase, label: "Placement Pipeline" },
     { href: "/life-os/leetcode", icon: Code, label: "LeetCode Solver" },
+  ];
+
+  const enterpriseItems = [
+    { href: "/procurement", icon: Building2, label: "Procurement Hub" },
   ];
 
   return (
@@ -129,6 +133,30 @@ export function AppLayout({ children }: AppLayoutProps) {
             <nav className="space-y-1.5 w-full">
               {lifeOsItems.map((item) => {
                 const isActive = location === item.href || (item.href !== "/life-os" && location.startsWith(item.href));
+                return (
+                  <Link key={item.href} href={item.href} className="block">
+                    <div
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-300 group cursor-pointer text-sm font-medium",
+                        isActive 
+                          ? "bg-primary/10 text-primary shadow-[0_0_15px_rgba(139,92,246,0.05)] border-l-2 border-primary" 
+                          : "text-muted-foreground hover:bg-secondary/30 hover:text-foreground border-l-2 border-transparent"
+                      )}
+                    >
+                      <item.icon className={cn("w-4 h-4 transition-transform group-hover:scale-105", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+                      <span>{item.label}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider px-3 mb-2">Enterprise</p>
+            <nav className="space-y-1.5 w-full">
+              {enterpriseItems.map((item) => {
+                const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
                 return (
                   <Link key={item.href} href={item.href} className="block">
                     <div
