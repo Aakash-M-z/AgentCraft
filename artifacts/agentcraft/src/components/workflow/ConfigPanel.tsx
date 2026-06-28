@@ -1,6 +1,6 @@
 import { useWorkflowStore } from "@/lib/store";
 import { WorkflowNodeType } from "@workspace/api-client-react";
-import { Bot, Server, GitBranch, Repeat, Zap, ArrowDownToLine, Mail, Database, Webhook, FileText, Timer, Plus, Wand2, Lightbulb, Bug, CalendarClock, Code2, BrainCircuit, MessageSquare, Send, Trash2, Github, CloudSun } from "lucide-react";
+import { Bot, Server, GitBranch, Repeat, Zap, ArrowDownToLine, Mail, Database, Webhook, FileText, Timer, Plus, Wand2, Lightbulb, Bug, CalendarClock, Code2, BrainCircuit, MessageSquare, Send, Trash2, Github, CloudSun, Building2, Search, DollarSign, Store, ShieldAlert, FileCheck, ClipboardList } from "lucide-react";
 import { NodeDebugPanel } from "./NodeDebugPanel";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -118,6 +118,8 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
   const cfg = node.data.config ?? {};
   const set = (key: string, value: any) =>
     updateNodeData(node.id, { config: { ...cfg, [key]: value } });
+  // Cast to string so non-enum node types (integrations, procurement) can be compared safely
+  const nt = node.type as string;
 
   const execStatus = nodeExecutionStatus[node.id] ?? 'idle';
   const debugInfo = nodeDebugInfo[node.id];
@@ -521,7 +523,7 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
           )}
 
           {/* GitHub Node */}
-          {node.type === "github" && (
+          {nt === "github" && (
             <>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">GitHub Access Token</label>
@@ -568,7 +570,7 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
           )}
 
           {/* Weather Node */}
-          {node.type === "weather" && (
+          {nt === "weather" && (
             <>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Weather API Key</label>
@@ -666,6 +668,125 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
                   onChange={e => set("manualApproval", e.target.checked)}
                   className="w-4 h-4 rounded border-border text-emerald-500 focus:ring-emerald-500 focus:ring-opacity-25"
                 />
+              </div>
+            </>
+          )}
+
+          {/* Procurement AI Analyst */}
+          {nt === "procurement_ai_analyst" && (
+            <>
+              <div className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Building2 size={14} className="text-blue-400" />
+                  <p className="text-xs font-semibold text-blue-300">AI Requirement Analyzer</p>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">Extracts structured fields (item, department, amount, category, priority, business justification) from the previous node's natural language purchase request using AI.</p>
+              </div>
+              <div className="p-2 rounded-lg bg-secondary/30 border border-border">
+                <p className="text-[10px] font-mono text-muted-foreground">Input: Natural language purchase request</p>
+                <p className="text-[10px] font-mono text-muted-foreground mt-0.5">Output: Structured procurement JSON</p>
+              </div>
+            </>
+          )}
+
+          {/* Procurement Duplicate Check */}
+          {nt === "procurement_duplicate" && (
+            <>
+              <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Search size={14} className="text-orange-400" />
+                  <p className="text-xs font-semibold text-orange-300">Duplicate Purchase Detector</p>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">Checks recent purchase history for similar items in the same department. Flags duplicates and provides recommendations.</p>
+              </div>
+              <div className="p-2 rounded-lg bg-secondary/30 border border-border">
+                <p className="text-[10px] font-mono text-muted-foreground">Input: Procurement JSON from AI Analyst</p>
+                <p className="text-[10px] font-mono text-muted-foreground mt-0.5">Output: + duplicate_detected, duplicate_info</p>
+              </div>
+            </>
+          )}
+
+          {/* Procurement Budget Verify */}
+          {nt === "procurement_budget" && (
+            <>
+              <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign size={14} className="text-emerald-400" />
+                  <p className="text-xs font-semibold text-emerald-300">Budget & Approval Tier</p>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">Checks department budget availability. Assigns L1/L2/L3/L4 approval tier based on amount. Detects budget overruns.</p>
+              </div>
+              <div className="p-2 rounded-lg bg-secondary/30 border border-border">
+                <p className="text-[10px] font-mono text-muted-foreground">L1: ≤₹10K | L2: ≤₹50K | L3: ≤₹2L | L4: Above</p>
+              </div>
+            </>
+          )}
+
+          {/* Procurement Vendor AI */}
+          {nt === "procurement_vendor" && (
+            <>
+              <div className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Store size={14} className="text-violet-400" />
+                  <p className="text-xs font-semibold text-violet-300">AI Vendor Recommender</p>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">Scores all vendors by quality (40%), price (30%), delivery speed (20%), compliance (10%). AI writes executive recommendation.</p>
+              </div>
+              <div className="p-2 rounded-lg bg-secondary/30 border border-border">
+                <p className="text-[10px] font-mono text-muted-foreground">Vendors: Dell, HP, Lenovo, AWS, Azure, Cisco...</p>
+              </div>
+            </>
+          )}
+
+          {/* Procurement Risk Score */}
+          {nt === "procurement_risk" && (
+            <>
+              <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <ShieldAlert size={14} className="text-rose-400" />
+                  <p className="text-xs font-semibold text-rose-300">Composite Risk Scorer</p>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">AI risk scoring 0–100 based on amount, duplicate history, budget status, and priority. Returns Low/Medium/High with mitigations.</p>
+              </div>
+              <div className="p-2 rounded-lg bg-secondary/30 border border-border">
+                <p className="text-[10px] font-mono text-muted-foreground">0-39: Low | 40-69: Medium | 70-100: High</p>
+              </div>
+            </>
+          )}
+
+          {/* Procurement PO Generator */}
+          {nt === "procurement_po" && (
+            <>
+              <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileCheck size={14} className="text-amber-400" />
+                  <p className="text-xs font-semibold text-amber-300">Purchase Order Generator</p>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">Generates a formal PO document with unique PO number (PO-YYYY-XXXXXX), GST calculation, line items, and saves to database.</p>
+              </div>
+              <div className="p-2 rounded-lg bg-secondary/30 border border-border">
+                <p className="text-[10px] font-mono text-muted-foreground">Auto-saves to procurement_requests table</p>
+              </div>
+            </>
+          )}
+
+          {/* Procurement Audit Logger */}
+          {nt === "procurement_audit" && (
+            <>
+              <div className="p-3 rounded-xl bg-teal-500/5 border border-teal-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <ClipboardList size={14} className="text-teal-400" />
+                  <p className="text-xs font-semibold text-teal-300">Immutable Audit Trail</p>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">Writes an immutable timestamped audit log entry. Used for compliance, SOX, and governance requirements.</p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Action Label</label>
+                <input type="text" value={cfg.action ?? 'po_issued'} onChange={e => set('action', e.target.value)} className={inputClass} placeholder="po_issued" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actor</label>
+                <input type="text" value={cfg.actor ?? 'AgentCraft AI System'} onChange={e => set('actor', e.target.value)} className={inputClass} placeholder="AgentCraft AI System" />
               </div>
             </>
           )}
