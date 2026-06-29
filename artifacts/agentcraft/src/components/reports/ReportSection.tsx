@@ -1,5 +1,3 @@
-import { FileText } from 'lucide-react';
-
 interface ReportSectionProps {
     title: string;
     data: any;
@@ -7,36 +5,35 @@ interface ReportSectionProps {
 
 export function ReportSection({ title, data }: ReportSectionProps) {
     const renderContent = () => {
-        // Handle empty or null data
         if (!data || (Array.isArray(data) && data.length === 0) || (typeof data === 'object' && Object.keys(data).length === 0)) {
-            return <p className="text-sm text-muted-foreground italic">No data available</p>;
+            return <p className="text-sm text-slate-500 italic">No data available.</p>;
         }
 
-        // Handle object (key-value pairs)
         if (typeof data === 'object' && !Array.isArray(data)) {
             return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Object.entries(data).map(([key, value]) => (
-                        <div key={key} className="p-3 rounded-lg bg-muted/30 border border-border">
-                            <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wide">
-                                {key.replace(/_/g, ' ')}
-                            </p>
-                            <p className="text-sm text-foreground font-medium">
-                                {String(value)}
-                            </p>
-                        </div>
-                    ))}
-                </div>
+                <table className="w-full text-sm border-collapse">
+                    <tbody>
+                        {Object.entries(data).map(([key, value]) => (
+                            <tr key={key} className="border-b border-slate-100 dark:border-slate-800 last:border-0">
+                                <td className="py-2.5 pr-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide align-top whitespace-nowrap w-48">
+                                    {key.replace(/_/g, ' ')}
+                                </td>
+                                <td className="py-2.5 text-slate-800 dark:text-slate-200 font-medium break-words">
+                                    {String(value)}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             );
         }
 
-        // Handle array (list items)
         if (Array.isArray(data)) {
             return (
-                <ul className="space-y-2">
+                <ul className="space-y-1.5">
                     {data.map((item, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm text-foreground">
-                            <span className="text-primary mt-1.5">•</span>
+                        <li key={index} className="flex items-start gap-3 text-sm text-slate-800 dark:text-slate-200">
+                            <span className="text-slate-400 mt-0.5 shrink-0 font-mono text-xs">{String(index + 1).padStart(2, '0')}.</span>
                             <span className="flex-1">{String(item)}</span>
                         </li>
                     ))}
@@ -44,28 +41,19 @@ export function ReportSection({ title, data }: ReportSectionProps) {
             );
         }
 
-        // Handle plain text
         return (
-            <div className="prose prose-sm max-w-none">
-                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                    {String(data)}
-                </p>
-            </div>
+            <p className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+                {String(data)}
+            </p>
         );
     };
 
     return (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="flex items-center gap-3">
-                <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/30">
-                    <FileText className="w-4 h-4 text-primary" />
-                </div>
-                <h4 className="text-lg font-bold text-foreground">{title}</h4>
-            </div>
-
-            <div className="pl-9">
-                {renderContent()}
-            </div>
+        <div className="space-y-3">
+            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-500 uppercase tracking-widest pb-2 border-b border-slate-200 dark:border-slate-800">
+                {title}
+            </h4>
+            <div>{renderContent()}</div>
         </div>
     );
 }
