@@ -517,6 +517,116 @@ async def get_execution(execution_id: int, db: AsyncSession = Depends(get_db)):
     return _ex_detail_response(execution)
 
 
+@app.get("/api/executions/{execution_id}/report")
+async def get_execution_report(execution_id: int, db: AsyncSession = Depends(get_db)):
+    """Generate and return report data for execution."""
+    from .report_generator import ReportGeneratorService
+    
+    try:
+        # Get execution
+        execution = await ExecutionRepository.get_by_id(db, execution_id)
+        if not execution:
+            raise HTTPException(status_code=404, detail="Execution not found")
+        
+        # Get workflow
+        workflow = await WorkflowRepository.get_by_id(db, execution.workflow_id)
+        if not workflow:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        
+        # Build execution data structure
+        execution_data = {
+            'id': execution.id,
+            'workflowId': execution.workflow_id,
+            'status': execution.status,
+            'input': execution.input,
+            'finalOutput': execution.final_output,
+            'nodeResults': execution.node_results or [],
+            'agentLogs': execution.agent_logs or [],
+            'createdAt': execution.created_at.isoformat() if execution.created_at else None,
+            'updatedAt': execution.updated_at.isoformat() if execution.updated_at else None,
+        }
+        
+        # Generate report
+        report_data = await ReportGeneratorService.generate_report(
+            execution_id=execution.id,
+            workflow_id=workflow.id,
+            workflow_name=workflow.name,
+            workflow_nodes=workflow.nodes or [],
+            execution_data=execution_data
+        )
+        
+        logger.info(f"GET /api/executions/{execution_id}/report → generated")
+        return report_data
+        
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(f"Failed to generate report for execution {execution_id}: {exc}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to generate report: {str(exc)}")
+
+
+@app.post("/api/executions/{execution_id}/generate-pdf")
+async def generate_pdf_report(execution_id: int, db: AsyncSession = Depends(get_db)):
+    """Generate and download PDF report for execution."""
+    from .report_generator import ReportGeneratorService
+    from .pdf_generator import PDFGeneratorService
+    from fastapi.responses import Response
+    
+    try:
+        # Get execution
+        execution = await ExecutionRepository.get_by_id(db, execution_id)
+        if not execution:
+            raise HTTPException(status_code=404, detail="Execution not found")
+        
+        # Get workflow
+        workflow = await WorkflowRepository.get_by_id(db, execution.workflow_id)
+        if not workflow:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        
+        # Build execution data structure
+        execution_data = {
+            'id': execution.id,
+            'workflowId': execution.workflow_id,
+            'status': execution.status,
+            'input': execution.input,
+            'finalOutput': execution.final_output,
+            'nodeResults': execution.node_results or [],
+            'agentLogs': execution.agent_logs or [],
+            'createdAt': execution.created_at.isoformat() if execution.created_at else None,
+            'updatedAt': execution.updated_at.isoformat() if execution.updated_at else None,
+        }
+        
+        # Generate report data
+        report_data = await ReportGeneratorService.generate_report(
+            execution_id=execution.id,
+            workflow_id=workflow.id,
+            workflow_name=workflow.name,
+            workflow_nodes=workflow.nodes or [],
+            execution_data=execution_data
+        )
+        
+        # Generate PDF
+        pdf_bytes = PDFGeneratorService.generate_pdf(report_data)
+        
+        # Return PDF as download
+        filename = f"AgentCraft_Report_{execution.id}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.pdf"
+        
+        logger.info(f"POST /api/executions/{execution_id}/generate-pdf → {len(pdf_bytes)} bytes")
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(f"Failed to generate PDF for execution {execution_id}: {exc}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {str(exc)}")
+
+
 @app.post("/api/executions/{execution_id}/cancel")
 async def cancel_execution(execution_id: int, db: AsyncSession = Depends(get_db)):
     """Cancel an execution."""

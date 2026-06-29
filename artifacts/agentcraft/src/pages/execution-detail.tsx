@@ -4,7 +4,7 @@ import { useRoute, useLocation } from "wouter";
 import { format } from "date-fns";
 import { ReactFlow, Background, ReactFlowProvider } from "@xyflow/react";
 import { nodeTypes } from "@/components/workflow/CustomNodes";
-import { Loader2, StopCircle, Terminal, Sparkles, CheckCircle2, XCircle, Clock, ArrowLeft, WifiOff } from "lucide-react";
+import { Loader2, StopCircle, Terminal, Sparkles, CheckCircle2, XCircle, Clock, ArrowLeft, WifiOff, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE } from "@/lib/api";
@@ -13,6 +13,7 @@ import {
   type ExecutionStreamEvent,
   type SseConnectionState,
 } from "@/hooks/use-websocket";
+import { ReportViewer } from "@/components/reports/ReportViewer";
 
 function getStatusLabel(status: string, connectionState: SseConnectionState): string {
   if (connectionState === "reconnecting") return "Reconnecting SSE...";
@@ -48,6 +49,7 @@ export default function ExecutionDetailPage() {
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [editedMessage, setEditedMessage] = useState<string>("");
+  const [showReport, setShowReport] = useState(false);
 
   const { data: execData, refetch } = useGetExecution(executionId || 0, {
     query: {
@@ -308,10 +310,15 @@ export default function ExecutionDetailPage() {
   const statusSpin =
     status === "running" || connectionState === "reconnecting";
 
+  // Show report viewer if status is completed or failed
+  if (showReport && (status === "completed" || status === "failed")) {
+    return <ReportViewer executionId={executionId!} onClose={() => setShowReport(false)} />;
+  }
+
   return (
     <AppLayout>
       <div className="flex-1 flex flex-col h-full bg-[#030303] overflow-hidden select-none">
-        
+
         {/* Cockpit Top Bar */}
         <div className="h-16 border-b border-border bg-card/60 backdrop-blur flex items-center justify-between px-6 z-10 shrink-0">
           <div className="flex items-center gap-4">
@@ -357,6 +364,14 @@ export default function ExecutionDetailPage() {
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/30 transition-all cursor-pointer"
             >
               <StopCircle size={14} /> Abort Mission
+            </button>
+          )}
+          {(status === "completed" || status === "failed") && (
+            <button
+              onClick={() => setShowReport(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer shadow-lg"
+            >
+              <FileText size={14} /> View Enterprise Report
             </button>
           )}
         </div>
@@ -410,7 +425,7 @@ export default function ExecutionDetailPage() {
 
           {/* Right Console: Spacecraft Logs & Telemetry checklist */}
           <div className="w-[480px] flex flex-col bg-[#09090b]/75 backdrop-blur-xl border-l border-border/80 relative">
-            
+
             {/* step duration timeline */}
             <div className="px-4 py-3.5 bg-[#060608]/40 border-b border-border/60">
               <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest mb-2 flex items-center gap-1.5">
@@ -420,27 +435,27 @@ export default function ExecutionDetailPage() {
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
                 {(execData.nodeResults || []).map((nr: any, index: number) => {
                   const nodeName = workflowData?.nodes?.find((n: any) => n.id === nr.nodeId)?.label || `Node #${nr.nodeId.slice(0, 4)}`;
-                  const durationMs = nr.updatedAt && nr.createdAt 
-                    ? new Date(nr.updatedAt).getTime() - new Date(nr.createdAt).getTime() 
+                  const durationMs = nr.updatedAt && nr.createdAt
+                    ? new Date(nr.updatedAt).getTime() - new Date(nr.createdAt).getTime()
                     : 1200; // Convincing realistic fallback duration if DB metrics overlap
-                  
-                  const formattedDuration = durationMs > 1000 
-                    ? `${(durationMs / 1000).toFixed(2)}s` 
+
+                  const formattedDuration = durationMs > 1000
+                    ? `${(durationMs / 1000).toFixed(2)}s`
                     : `${durationMs}ms`;
-                  
+
                   const isSuccess = nr.status === 'success';
                   const isFailed = nr.status === 'failed';
                   const isApproval = nr.status === 'waiting_approval';
 
                   return (
-                    <div 
-                      key={nr.nodeId} 
+                    <div
+                      key={nr.nodeId}
                       className={cn(
                         "flex items-center gap-2 px-3 py-1.5 rounded-xl border shrink-0 text-[10px] font-mono transition-all",
                         isSuccess ? "bg-emerald-500/5 border-emerald-500/25 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.02)]" :
-                        isFailed ? "bg-rose-500/5 border-rose-500/25 text-rose-400" :
-                        isApproval ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-300 animate-pulse" :
-                        "bg-[#0a0a0c]/60 border-white/5 text-muted-foreground/80"
+                          isFailed ? "bg-rose-500/5 border-rose-500/25 text-rose-400" :
+                            isApproval ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-300 animate-pulse" :
+                              "bg-[#0a0a0c]/60 border-white/5 text-muted-foreground/80"
                       )}
                     >
                       <span className="font-bold">{index + 1}. {nodeName}</span>
@@ -458,7 +473,7 @@ export default function ExecutionDetailPage() {
             {status === "waiting_approval" && (
               <div className="m-4 p-4.5 rounded-2xl border border-yellow-500/30 bg-yellow-500/5 backdrop-blur-md shadow-[0_0_40px_rgba(234,179,8,0.12)] animate-in fade-in slide-in-from-top-4 duration-300 space-y-4 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600" />
-                
+
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-xl bg-yellow-500/10 border border-yellow-500/25 text-yellow-400 shrink-0">
                     <Clock size={16} className="animate-pulse" />
