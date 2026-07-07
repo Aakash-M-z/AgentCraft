@@ -247,6 +247,19 @@ CRITICAL: Below are some reference solution code blocks scraped from the web for
 ```
 {starter_code}
 ```
+- CRITICAL WARNING: The reference solutions found above might use a different or outdated method signature (e.g. `sumAndMultiply`) than the starter code template (e.g. `concatenateAndMultiply`).
+  To prevent runtime AttributeErrors (e.g. if LeetCode's backend grading runner uses a different signature than the frontend description), YOU MUST define BOTH the starter template signature and any alternative signatures found in the reference solutions inside your class. Define one as a simple alias that calls the other, for example:
+  ```python
+  class Solution:
+      def concatenateAndMultiply(self, n: int) -> int:
+          # Your actual correct code here
+          pass
+          
+      def sumAndMultiply(self, n: int) -> int:
+          # Alias/fallback calling the main method
+          return self.concatenateAndMultiply(n)
+  ```
+- Always use exactly 4 spaces for class method and nested block indentation. Never use 3 spaces or tabs.
 """
     else:
         instruction += f"""- If you are writing in Python, the class should be named `Solution` and the standard LeetCode method signature must be used.
