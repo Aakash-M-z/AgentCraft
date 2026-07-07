@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import {
   Terminal, Zap, BrainCircuit, Lock, Play,
   ArrowRight, Activity, GitBranch, Cpu,
@@ -458,46 +458,41 @@ export default function LandingPage() {
           </motion.div>
         </div>
 
+        {/* Template Gallery */}
+        <section id="templates" className="border-t border-white/5 py-24 bg-[#050507]">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="mb-12">
+              <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">Template Library</p>
+              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Start from a proven workflow</h2>
+              <p className="text-muted-foreground text-base max-w-2xl">
+                Production-tested templates for enterprise automation. Deploy in seconds, customise in the visual builder.
+              </p>
+            </div>
+            <TemplateGallery />
+          </div>
+        </section>
+
         {/* Values Section */}
         <section id="features" className="max-w-7xl mx-auto px-6 py-24 border-t border-white/5">
-          <div className="mb-16 text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-5xl font-display font-bold mb-6">Why AgentCraft?</h2>
-            <p className="text-muted-foreground text-lg">
-              We built AgentCraft because standard no-code tools are too limiting for AI, and coding everything from scratch is too slow.
-            </p>
+          <div className="mb-12">
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">Why AgentCraft</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Built for production, not demos</h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            <FeatureCard
-              icon={<BrainCircuit className="text-primary" />}
-              title="AI-Native Architecture"
-              description="Built from the ground up for LLMs. Seamlessly integrate Groq, Llama, OpenAI, and custom local models without wrappers."
-            />
-            <FeatureCard
-              icon={<GitBranch className="text-cyan-400" />}
-              title="Code Meets No-Code"
-              description="Visually orchestrate your logic, but drop down into raw Python or JS instantly when you need granular control."
-            />
-            <FeatureCard
-              icon={<Activity className="text-rose-400" />}
-              title="Real-Time Telemetry"
-              description="SSE-powered live execution logs. Watch data flow through your nodes in milliseconds. No more refreshing dashboards."
-            />
-            <FeatureCard
-              icon={<Lock className="text-amber-400" />}
-              title="Zero Vendor Lock-in"
-              description="Self-host easily. Use your own Redis and Postgres. Total control over your infrastructure and your agents' data."
-            />
-            <FeatureCard
-              icon={<Globe className="text-emerald-400" />}
-              title="Browser Automation"
-              description="Built-in Playwright integration. Let your AI agents navigate the real web, scrape dynamic data, and perform actions."
-            />
-            <FeatureCard
-              icon={<Cpu className="text-violet-400" />}
-              title="High-Performance Engine"
-              description="Powered by FastAPI async routes and Redis caching. Capable of handling thousands of parallel agent executions."
-            />
+          <div className="grid md:grid-cols-3 gap-px bg-border/30 border border-white/5 rounded-xl overflow-hidden">
+            {[
+              { title: "AI-Native Architecture", description: "Built from the ground up for LLMs. Integrate Groq, Llama, OpenAI, and custom local models without wrappers." },
+              { title: "Code When You Need It", description: "Visually orchestrate your logic, then drop into raw Python or JS instantly for granular control." },
+              { title: "Real-Time Streaming", description: "SSE-powered live execution logs. Watch data flow through each node in milliseconds." },
+              { title: "Zero Vendor Lock-in", description: "Self-host on your own infrastructure. Bring your own Redis and Postgres. Full data sovereignty." },
+              { title: "Browser Automation", description: "Built-in Playwright integration. Let agents navigate the real web, scrape dynamic data, and perform actions." },
+              { title: "Enterprise-Grade Engine", description: "FastAPI async core with Redis. Handles thousands of parallel agent executions with full audit trail." },
+            ].map(({ title, description }) => (
+              <div key={title} className="p-6 bg-[#06060a] hover:bg-white/[0.02] transition-colors">
+                <h3 className="text-sm font-semibold text-foreground mb-2">{title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -656,6 +651,126 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+// ── Template Gallery ──────────────────────────────────────────────────────────
+
+const TEMPLATES = [
+  // Enterprise
+  { id: "procurement", category: "Enterprise", name: "AI Procurement Orchestrator", description: "End-to-end purchase request lifecycle with AI validation, budget checks, vendor selection, and audit trail.", industry: "Procurement", difficulty: "Advanced", runtime: "4–8 sec", integrations: ["AI Analysis", "Budget API", "Email", "Telegram"] },
+  { id: "invoice", category: "Enterprise", name: "Invoice Audit Automation", description: "Validate invoices against PO records, detect anomalies, route for approval, and log to ERP.", industry: "Finance", difficulty: "Medium", runtime: "2–4 sec", integrations: ["OCR", "ERP", "Email", "Slack"] },
+  { id: "onboarding", category: "Enterprise", name: "Employee Onboarding", description: "Automate new-hire provisioning across HR, IT, and department systems with approval checkpoints.", industry: "HR", difficulty: "Medium", runtime: "5–10 sec", integrations: ["HR System", "Active Directory", "Email", "Slack"] },
+  { id: "expense", category: "Enterprise", name: "Expense Approval Workflow", description: "Capture expense reports, classify by policy, flag violations, and route to approvers.", industry: "Finance", difficulty: "Low", runtime: "1–3 sec", integrations: ["Email", "ERP", "Slack"] },
+  { id: "security", category: "Enterprise", name: "Security Incident Response", description: "Detect anomalies, classify severity, alert security team, and auto-remediate known threat patterns.", industry: "Security", difficulty: "Advanced", runtime: "3–6 sec", integrations: ["SIEM", "Slack", "PagerDuty", "Jira"] },
+  { id: "recruitment", category: "Enterprise", name: "Recruitment Pipeline", description: "Screen CVs with AI, schedule interviews, send offer letters, and track pipeline status.", industry: "HR", difficulty: "Medium", runtime: "3–5 sec", integrations: ["LinkedIn", "Email", "Calendar", "ATS"] },
+
+  // Developer
+  { id: "github", category: "Developer", name: "GitHub Release Automation", description: "Tag release, generate changelog from commits, create GitHub Release, and notify team on Slack.", industry: "DevOps", difficulty: "Low", runtime: "2–4 sec", integrations: ["GitHub", "Slack", "Jira"] },
+  { id: "api-monitor", category: "Developer", name: "API Health Monitor", description: "Ping endpoints on a schedule, detect latency spikes, and page on-call via PagerDuty.", industry: "Infrastructure", difficulty: "Low", runtime: "< 1 sec", integrations: ["HTTP", "PagerDuty", "Slack", "Telegram"] },
+  { id: "devops", category: "Developer", name: "CI/CD Pipeline Notifier", description: "Listen to build events, parse failure logs with AI, and send actionable summaries to engineers.", industry: "DevOps", difficulty: "Medium", runtime: "2–5 sec", integrations: ["GitHub Actions", "Slack", "Jira"] },
+
+  // AI Productivity
+  { id: "daily-brief", category: "AI Productivity", name: "AI Daily Brief", description: "Aggregates news, calendar, emails, and tasks each morning into a personalized briefing via WhatsApp.", industry: "Productivity", difficulty: "Low", runtime: "3–5 sec", integrations: ["Gmail", "Google Calendar", "WhatsApp", "Groq"] },
+  { id: "email-auto", category: "AI Productivity", name: "Smart Email Responder", description: "Classify inbound emails, draft context-aware replies with LLM, and queue for human review before sending.", industry: "Productivity", difficulty: "Medium", runtime: "2–4 sec", integrations: ["Gmail", "Groq", "Slack"] },
+  { id: "telegram", category: "AI Productivity", name: "Telegram AI Assistant", description: "Natural language command interface — ask questions, set reminders, and trigger workflows via Telegram.", industry: "Productivity", difficulty: "Low", runtime: "1–3 sec", integrations: ["Telegram", "Groq", "Redis"] },
+  { id: "leetcode", category: "AI Productivity", name: "LeetCode Daily Solver", description: "Fetch daily challenge, solve with AI chain-of-thought, save solution to Notion, and send summary.", industry: "Learning", difficulty: "Medium", runtime: "5–8 sec", integrations: ["LeetCode", "Groq", "Notion", "WhatsApp"] },
+];
+
+const CATEGORIES = ["Enterprise", "Developer", "AI Productivity"] as const;
+
+function TemplateGallery() {
+  const [activeCategory, setActiveCategory] = useState<string>("Enterprise");
+
+  const filtered = TEMPLATES.filter(t => t.category === activeCategory);
+
+  const difficultyStyle = (d: string) => {
+    if (d === "Advanced") return "text-rose-400 border-rose-500/20 bg-rose-500/5";
+    if (d === "Medium") return "text-amber-400 border-amber-500/20 bg-amber-500/5";
+    return "text-emerald-400 border-emerald-500/20 bg-emerald-500/5";
+  };
+
+  return (
+    <div>
+      {/* Category tabs */}
+      <div className="flex gap-1 mb-8 border border-white/8 rounded-lg p-1 w-fit bg-white/[0.02]">
+        {CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer ${
+              activeCategory === cat
+                ? "bg-white/10 text-white"
+                : "text-white/40 hover:text-white/70"
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Template grid */}
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {filtered.map(t => (
+          <div
+            key={t.id}
+            className="group flex flex-col border border-white/8 rounded-xl bg-white/[0.015] hover:bg-white/[0.03] hover:border-white/15 transition-all duration-200 overflow-hidden"
+          >
+            {/* Accent bar */}
+            <div className="h-px w-full bg-gradient-to-r from-primary/60 to-transparent" />
+
+            <div className="p-5 flex flex-col flex-1">
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <h3 className="text-sm font-semibold text-white/90 leading-snug">{t.name}</h3>
+                <span className={`shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border ${difficultyStyle(t.difficulty)}`}>
+                  {t.difficulty}
+                </span>
+              </div>
+
+              <p className="text-xs text-white/40 leading-relaxed mb-4 flex-1">{t.description}</p>
+
+              {/* Meta row */}
+              <div className="flex items-center justify-between text-[11px] text-white/30 mb-4">
+                <span>{t.industry}</span>
+                <span className="font-mono">{t.runtime}</span>
+              </div>
+
+              {/* Integrations */}
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {t.integrations.map(int => (
+                  <span key={int} className="px-2 py-0.5 rounded text-[10px] text-white/40 border border-white/8 bg-white/[0.02]">
+                    {int}
+                  </span>
+                ))}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 mt-auto">
+                <Link href="/workflows">
+                  <button className="flex-1 py-2 text-xs font-medium text-white/60 border border-white/10 rounded-lg hover:border-white/20 hover:text-white/80 transition-all cursor-pointer">
+                    Preview
+                  </button>
+                </Link>
+                <Link href="/builder">
+                  <button className="flex-1 py-2 text-xs font-semibold bg-white/8 text-white/90 border border-white/10 rounded-lg hover:bg-white/12 hover:border-white/20 transition-all cursor-pointer">
+                    Use Template
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-8 text-center">
+        <Link href="/builder">
+          <button className="px-5 py-2.5 text-xs font-semibold text-white/70 border border-white/10 rounded-full hover:border-white/20 hover:text-white transition-all cursor-pointer">
+            Browse all {TEMPLATES.length} templates
+          </button>
+        </Link>
+      </div>
     </div>
   );
 }

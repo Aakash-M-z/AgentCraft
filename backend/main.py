@@ -149,7 +149,7 @@ async def _seed_procurement_workflow():
             {"id": "n6",  "type": "procurement_risk",        "position": {"x": 400, "y": 600}, "data": {"label": "Risk Scorer", "config": {}}},
             {"id": "n7",  "type": "ai_agent",                "position": {"x": 400, "y": 720}, "data": {"label": "Approval Decision", "config": {"model": "llama-3.3-70b-versatile", "role": "validator", "temperature": 0.2, "instruction": "You are an enterprise procurement validator. Review this procurement data and make an approval decision. State APPROVED or REJECTED with a brief justification. Data: {{input}}"}}},
             {"id": "n8",  "type": "procurement_po",          "position": {"x": 400, "y": 840}, "data": {"label": "Generate Purchase Order", "config": {}}},
-            {"id": "n9",  "type": "telegram_bot",            "position": {"x": 400, "y": 960}, "data": {"label": "Telegram Notification", "config": {"botToken": "8627862228:AAGiSbQNXjgS4b6Z9W0CSGRd8EZ1pfCYXs4", "chatId": "1874336235", "message": "🏢 *Enterprise Procurement Alert*\n\n{{input}}\n\n_Powered by AgentCraft AI_"}}},
+            {"id": "n9",  "type": "telegram_bot",            "position": {"x": 400, "y": 960}, "data": {"label": "Telegram Notification", "config": {"botToken": "", "chatId": "1874336235", "message": "🏢 *Enterprise Procurement Alert*\n\n{{input}}\n\n_Powered by AgentCraft AI_"}}},
             {"id": "n10", "type": "procurement_audit",       "position": {"x": 400, "y": 1080}, "data": {"label": "Audit Trail Logger", "config": {"action": "po_issued", "actor": "AgentCraft AI System"}}},
             {"id": "n11", "type": "output",                  "position": {"x": 400, "y": 1200}, "data": {"label": "Procurement Complete", "config": {"format": "markdown"}}},
         ]

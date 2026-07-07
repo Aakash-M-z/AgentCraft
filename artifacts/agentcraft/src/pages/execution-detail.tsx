@@ -4,7 +4,7 @@ import { useRoute, useLocation } from "wouter";
 import { format } from "date-fns";
 import { ReactFlow, Background, ReactFlowProvider } from "@xyflow/react";
 import { nodeTypes } from "@/components/workflow/CustomNodes";
-import { Loader2, StopCircle, Terminal, Sparkles, CheckCircle2, XCircle, Clock, ArrowLeft, WifiOff, FileText } from "lucide-react";
+import { Loader2, Square, Terminal, ChevronRight, CheckCircle2, XCircle, Clock, ArrowLeft, WifiOff, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE } from "@/lib/api";
@@ -330,25 +330,25 @@ export default function ExecutionDetailPage() {
             </button>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-base font-bold font-display text-foreground/90 leading-tight">
-                  Telemetry Monitor #{execData.id}
+                <h1 className="text-base font-semibold text-foreground leading-tight">
+                  Execution #{execData.id}
                 </h1>
                 <span
                   className={cn(
-                    "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold border transition-all duration-500",
+                    "inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium border transition-all duration-300",
                     sc.bg,
                     sc.color,
                   )}
                 >
                   <StatusIcon
-                    size={11}
+                    size={10}
                     className={statusSpin ? "animate-spin" : ""}
                   />
                   {statusLabel}
                 </span>
               </div>
-              <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                SSE Link: {connectionState === "connected" ? "⚡ CONNECTED (98% signal)" : "⚠️ DISCONNECTED"} · {format(new Date(execData.createdAt), "MMM d, yyyy · HH:mm:ss")}
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {connectionState === "connected" ? "Live" : "Disconnected"} · {format(new Date(execData.createdAt), "MMM d, yyyy · HH:mm")}
               </p>
             </div>
           </div>
@@ -361,9 +361,9 @@ export default function ExecutionDetailPage() {
                 )
               }
               disabled={cancelMut.isPending}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/30 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/20 transition-all cursor-pointer"
             >
-              <StopCircle size={14} /> Abort Mission
+              <Square size={12} /> Cancel
             </button>
           )}
           {(status === "completed" || status === "failed") && (
@@ -379,12 +379,12 @@ export default function ExecutionDetailPage() {
         <div className="flex-1 flex overflow-hidden">
           {/* Left Canvas: Spacecraft Telemetry Canvas */}
           <div className="flex-1 relative bg-[#060608] border-r border-border/80">
-            {/* Flagship Human Approval Frozen Blur Overlay */}
+            {/* Approval overlay */}
             {status === "waiting_approval" && (
-              <div className="absolute inset-0 bg-[#000000]/30 backdrop-blur-[2px] border-2 border-yellow-500/25 z-10 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-500">
-                <div className="px-5 py-2.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 font-bold font-mono text-[10px] flex items-center gap-2 shadow-[0_0_30px_rgba(234,179,8,0.2)] animate-pulse">
-                  <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-ping" />
-                  PIPELINE HALTED: MAN-IN-THE-LOOP APPROVAL REQUIRED
+              <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px] border border-amber-500/20 z-10 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-300">
+                <div className="px-4 py-2 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 text-amber-700 dark:text-amber-400 text-xs font-medium flex items-center gap-2">
+                  <Clock size={12} />
+                  Awaiting Approval
                 </div>
               </div>
             )}
@@ -427,10 +427,9 @@ export default function ExecutionDetailPage() {
           <div className="w-[480px] flex flex-col bg-[#09090b]/75 backdrop-blur-xl border-l border-border/80 relative">
 
             {/* step duration timeline */}
-            <div className="px-4 py-3.5 bg-[#060608]/40 border-b border-border/60">
-              <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse shrink-0" />
-                Pipeline Steps Telemetry
+            <div className="px-4 py-3 border-b border-border/60">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                Steps
               </p>
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
                 {(execData.nodeResults || []).map((nr: any, index: number) => {
@@ -475,12 +474,12 @@ export default function ExecutionDetailPage() {
                 <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600" />
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-xl bg-yellow-500/10 border border-yellow-500/25 text-yellow-400 shrink-0">
-                    <Clock size={16} className="animate-pulse" />
+                  <div className="p-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-500 shrink-0">
+                    <Clock size={14} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-sm text-yellow-400 tracking-tight leading-none">
-                      Human Intervention Requested
+                    <h4 className="font-semibold text-sm text-foreground leading-none">
+                      Approval Required
                     </h4>
                     <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">
                       A message preview was generated for{" "}
@@ -530,11 +529,11 @@ export default function ExecutionDetailPage() {
               </div>
             )}
 
-            {/* Timeline Header */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-[#060608]/40 shrink-0">
-              <Terminal size={14} className="text-primary" />
-              <span className="text-xs font-bold text-foreground/90 uppercase tracking-widest">
-                Spacecraft Logs Console
+            {/* Log header */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-border shrink-0">
+              <Terminal size={13} className="text-muted-foreground" />
+              <span className="text-xs font-semibold text-foreground">
+                Execution Log
               </span>
               {isRunning && (
                 <span className="ml-auto flex gap-1">
@@ -600,15 +599,13 @@ export default function ExecutionDetailPage() {
                 showOutput ? "max-h-[35%] opacity-100" : "max-h-0 opacity-0",
               )}
             >
-              <div className="flex items-center gap-2 px-4 py-3.5 border-b border-border bg-[#060608]/40 select-none">
-                <Sparkles
-                  size={14}
-                  className={
-                    status === "failed" ? "text-rose-400" : "text-amber-400"
-                  }
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-border select-none">
+                <ChevronRight
+                  size={13}
+                  className="text-muted-foreground"
                 />
-                <span className="text-xs font-bold text-foreground/90 uppercase tracking-widest">
-                  {status === "failed" ? "Mission Error Output" : "Final Pipeline Output"}
+                <span className="text-xs font-semibold text-foreground">
+                  {status === "failed" ? "Error Output" : "Execution Output"}
                 </span>
                 {status === "completed" && (
                   <CheckCircle2 size={13} className="ml-auto text-emerald-400" />
@@ -627,12 +624,12 @@ export default function ExecutionDetailPage() {
                 style={{ maxHeight: "calc(35vh - 48px)" }}
               >
                 {finalOutput ? (
-                  <span className="animate-in fade-in duration-700">
+                  <span className="animate-in fade-in duration-500">
                     {finalOutput}
                   </span>
                 ) : (
                   <span className="text-muted-foreground italic">
-                    Pipeline completed without diagnostic outputs.
+                    No output was returned for this execution.
                   </span>
                 )}
               </div>
