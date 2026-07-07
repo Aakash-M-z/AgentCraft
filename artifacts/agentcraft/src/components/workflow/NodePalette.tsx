@@ -1,4 +1,10 @@
-import { Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail, Database, Webhook, FileText, Timer, ChevronDown, ChevronRight, CalendarClock, Code2, BrainCircuit, MessageSquare, Send, Github, CloudSun, Building2, Search, DollarSign, Store, ShieldAlert, FileCheck, ClipboardList } from 'lucide-react';
+import {
+  Bot, Play, Server, ArrowRightFromLine, Repeat, Sparkles, Mail,
+  Database, Webhook, FileText, Timer, ChevronDown, ChevronRight,
+  CalendarClock, Code2, BrainCircuit, MessageSquare, Send, Github,
+  CloudSun, Building2, Search, DollarSign, Store, ShieldAlert,
+  FileCheck, ClipboardList
+} from 'lucide-react';
 import { WorkflowNodeType } from '@workspace/api-client-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -7,8 +13,6 @@ type PaletteNode = {
   type: string;
   label: string;
   icon: React.ElementType;
-  color: string;
-  border: string;
   description: string;
 };
 
@@ -16,55 +20,55 @@ const groups: { label: string; nodes: PaletteNode[] }[] = [
   {
     label: 'Triggers',
     nodes: [
-      { type: WorkflowNodeType.input, label: 'Manual Trigger', icon: Play, color: 'text-emerald-400', border: 'border-emerald-500/30', description: 'Start with user input' },
-      { type: 'schedule_trigger', label: 'Schedule', icon: CalendarClock, color: 'text-emerald-400', border: 'border-emerald-500/30', description: 'Run on a cron schedule' },
-      { type: 'webhook', label: 'Webhook', icon: Webhook, color: 'text-orange-400', border: 'border-orange-500/30', description: 'HTTP trigger' },
+      { type: WorkflowNodeType.input, label: 'Manual Trigger', icon: Play, description: 'Start with user input' },
+      { type: 'schedule_trigger', label: 'Schedule', icon: CalendarClock, description: 'Run on a cron schedule' },
+      { type: 'webhook', label: 'Webhook', icon: Webhook, description: 'HTTP trigger' },
     ],
   },
   {
     label: 'AI & Logic',
     nodes: [
-      { type: WorkflowNodeType.ai_agent, label: 'AI Agent', icon: Bot, color: 'text-violet-400', border: 'border-violet-500/30', description: 'LLM-powered step' },
-      { type: 'ai_solver', label: 'AI Solver', icon: BrainCircuit, color: 'text-violet-400', border: 'border-violet-500/30', description: 'Solve LeetCode problems' },
-      { type: WorkflowNodeType.condition, label: 'Condition', icon: ArrowRightFromLine, color: 'text-amber-400', border: 'border-amber-500/30', description: 'Branch on condition' },
-      { type: WorkflowNodeType.loop, label: 'Loop', icon: Repeat, color: 'text-pink-400', border: 'border-pink-500/30', description: 'Iterate N times' },
-      { type: 'delay', label: 'Delay', icon: Timer, color: 'text-yellow-400', border: 'border-yellow-500/30', description: 'Wait N seconds' },
+      { type: WorkflowNodeType.ai_agent, label: 'AI Agent', icon: Bot, description: 'LLM-powered step' },
+      { type: 'ai_solver', label: 'AI Solver', icon: BrainCircuit, description: 'Solve LeetCode problems' },
+      { type: WorkflowNodeType.condition, label: 'Condition', icon: ArrowRightFromLine, description: 'Branch on condition' },
+      { type: WorkflowNodeType.loop, label: 'Loop', icon: Repeat, description: 'Iterate N times' },
+      { type: 'delay', label: 'Delay', icon: Timer, description: 'Wait N seconds' },
     ],
   },
   {
     label: 'Integrations',
     nodes: [
-      { type: 'leetcode_daily', label: 'LeetCode Daily', icon: Code2, color: 'text-amber-400', border: 'border-amber-500/30', description: 'Fetch daily challenge' },
-      { type: 'leetcode_submit', label: 'LeetCode Submit', icon: Code2, color: 'text-amber-400', border: 'border-amber-500/30', description: 'Submit solution using cookies' },
-      { type: 'leetcode_save', label: 'LeetCode Save', icon: Database, color: 'text-teal-400', border: 'border-teal-500/30', description: 'Save submission status to database' },
-      { type: WorkflowNodeType.api_call, label: 'API Request', icon: Server, color: 'text-blue-400', border: 'border-blue-500/30', description: 'HTTP request' },
-      { type: WorkflowNodeType.whatsapp_monitor, label: 'WhatsApp Monitor', icon: MessageSquare, color: 'text-emerald-400', border: 'border-emerald-500/30', description: 'Monitor WhatsApp Web group messages' },
-      { type: WorkflowNodeType.whatsapp_sender, label: 'Send WhatsApp Message', icon: Send, color: 'text-emerald-400', border: 'border-emerald-500/30', description: 'Send automated or approved WhatsApp message' },
-      { type: 'discord_webhook', label: 'Discord', icon: MessageSquare, color: 'text-indigo-400', border: 'border-indigo-500/30', description: 'Send Discord message' },
-      { type: 'telegram_bot', label: 'Telegram', icon: Send, color: 'text-sky-400', border: 'border-sky-500/30', description: 'Send Telegram message' },
-      { type: 'github', label: 'GitHub', icon: Github, color: 'text-zinc-300', border: 'border-zinc-500/30', description: 'Fetch pull requests, issues, and commits' },
-      { type: 'weather', label: 'Weather', icon: CloudSun, color: 'text-sky-400', border: 'border-sky-500/30', description: 'Fetch live weather conditions and temperature' },
-      { type: 'email', label: 'Send Email', icon: Mail, color: 'text-sky-400', border: 'border-sky-500/30', description: 'SMTP email' },
-      { type: 'database', label: 'Database', icon: Database, color: 'text-teal-400', border: 'border-teal-500/30', description: 'Read/write DB' },
-      { type: 'file_processor', label: 'File', icon: FileText, color: 'text-indigo-400', border: 'border-indigo-500/30', description: 'Process files' },
+      { type: 'leetcode_daily', label: 'LeetCode Daily', icon: Code2, description: 'Fetch daily challenge' },
+      { type: 'leetcode_submit', label: 'LeetCode Submit', icon: Code2, description: 'Submit solution' },
+      { type: 'leetcode_save', label: 'LeetCode Save', icon: Database, description: 'Save to database' },
+      { type: WorkflowNodeType.api_call, label: 'API Request', icon: Server, description: 'HTTP request' },
+      { type: WorkflowNodeType.whatsapp_monitor, label: 'WhatsApp Monitor', icon: MessageSquare, description: 'Monitor group messages' },
+      { type: WorkflowNodeType.whatsapp_sender, label: 'WhatsApp Send', icon: Send, description: 'Send WhatsApp message' },
+      { type: 'discord_webhook', label: 'Discord', icon: MessageSquare, description: 'Send Discord message' },
+      { type: 'telegram_bot', label: 'Telegram', icon: Send, description: 'Send Telegram message' },
+      { type: 'github', label: 'GitHub', icon: Github, description: 'Fetch PRs, issues, commits' },
+      { type: 'weather', label: 'Weather', icon: CloudSun, description: 'Live weather data' },
+      { type: 'email', label: 'Send Email', icon: Mail, description: 'SMTP email' },
+      { type: 'database', label: 'Database', icon: Database, description: 'Read/write DB' },
+      { type: 'file_processor', label: 'File', icon: FileText, description: 'Process files' },
     ],
   },
   {
-    label: 'Enterprise Procurement',
+    label: 'Procurement',
     nodes: [
-      { type: 'procurement_ai_analyst', label: 'AI Analyst', icon: Building2, color: 'text-blue-400', border: 'border-blue-500/30', description: 'AI extracts structured fields from purchase request' },
-      { type: 'procurement_duplicate', label: 'Duplicate Check', icon: Search, color: 'text-orange-400', border: 'border-orange-500/30', description: 'Detect duplicate purchase in history' },
-      { type: 'procurement_budget', label: 'Budget Verify', icon: DollarSign, color: 'text-emerald-400', border: 'border-emerald-500/30', description: 'Check department budget & approval tier' },
-      { type: 'procurement_vendor', label: 'Vendor AI', icon: Store, color: 'text-violet-400', border: 'border-violet-500/30', description: 'AI vendor scoring & recommendation' },
-      { type: 'procurement_risk', label: 'Risk Scorer', icon: ShieldAlert, color: 'text-rose-400', border: 'border-rose-500/30', description: 'Composite AI risk scoring 0-100' },
-      { type: 'procurement_po', label: 'Generate PO', icon: FileCheck, color: 'text-amber-400', border: 'border-amber-500/30', description: 'Issue formal Purchase Order document' },
-      { type: 'procurement_audit', label: 'Audit Logger', icon: ClipboardList, color: 'text-teal-400', border: 'border-teal-500/30', description: 'Write immutable audit trail entry' },
+      { type: 'procurement_ai_analyst', label: 'AI Analyst', icon: Building2, description: 'Extract structured fields' },
+      { type: 'procurement_duplicate', label: 'Duplicate Check', icon: Search, description: 'Detect duplicate purchase' },
+      { type: 'procurement_budget', label: 'Budget Verify', icon: DollarSign, description: 'Check budget & approval tier' },
+      { type: 'procurement_vendor', label: 'Vendor AI', icon: Store, description: 'AI vendor scoring' },
+      { type: 'procurement_risk', label: 'Risk Scorer', icon: ShieldAlert, description: 'Composite risk scoring' },
+      { type: 'procurement_po', label: 'Generate PO', icon: FileCheck, description: 'Issue Purchase Order' },
+      { type: 'procurement_audit', label: 'Audit Logger', icon: ClipboardList, description: 'Write audit trail' },
     ],
   },
   {
     label: 'Output',
     nodes: [
-      { type: WorkflowNodeType.output, label: 'Output', icon: Sparkles, color: 'text-rose-400', border: 'border-rose-500/30', description: 'Final result' },
+      { type: WorkflowNodeType.output, label: 'Output', icon: Sparkles, description: 'Final result' },
     ],
   },
 ];
@@ -78,16 +82,20 @@ function PaletteGroup({ label, nodes }: { label: string; nodes: PaletteNode[] })
   };
 
   return (
-    <div>
+    <div className="mb-1">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+        className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-semibold text-white/25 uppercase tracking-widest hover:text-white/40 transition-colors duration-150 cursor-pointer"
       >
         {label}
-        {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        {open
+          ? <ChevronDown size={10} className="shrink-0" />
+          : <ChevronRight size={10} className="shrink-0" />
+        }
       </button>
+
       {open && (
-        <div className="px-3 pb-2 flex flex-col gap-1.5">
+        <div className="px-2 pb-1">
           {nodes.map((n) => (
             <div
               key={n.type}
@@ -95,17 +103,13 @@ function PaletteGroup({ label, nodes }: { label: string; nodes: PaletteNode[] })
               draggable
               title={n.description}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl border bg-background cursor-grab active:cursor-grabbing',
-                'transition-all duration-150 hover:-translate-y-px hover:shadow-lg hover:bg-secondary/80',
-                n.border,
+                'flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-grab active:cursor-grabbing',
+                'transition-all duration-100 hover:bg-white/[0.05] group'
               )}
             >
-              <div className={cn('p-1.5 rounded-lg bg-card/50', n.color)}>
-                <n.icon size={15} />
-              </div>
+              <n.icon size={13} className="text-white/30 group-hover:text-white/55 transition-colors shrink-0" />
               <div className="min-w-0">
-                <p className="font-medium text-sm text-foreground leading-none">{n.label}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{n.description}</p>
+                <p className="text-[12px] font-medium text-white/55 group-hover:text-white/80 transition-colors leading-none truncate">{n.label}</p>
               </div>
             </div>
           ))}
@@ -116,14 +120,40 @@ function PaletteGroup({ label, nodes }: { label: string; nodes: PaletteNode[] })
 }
 
 export function NodePalette() {
+  const [search, setSearch] = useState('');
+
+  const filteredGroups = search.trim()
+    ? groups.map(g => ({
+        ...g,
+        nodes: g.nodes.filter(n =>
+          n.label.toLowerCase().includes(search.toLowerCase()) ||
+          n.description.toLowerCase().includes(search.toLowerCase())
+        )
+      })).filter(g => g.nodes.length > 0)
+    : groups;
+
   return (
-    <div className="w-60 bg-card border-r border-border h-full flex flex-col z-10 shadow-xl">
-      <div className="p-4 border-b border-border bg-secondary/30 shrink-0">
-        <h2 className="font-display font-bold text-base text-foreground">Nodes</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">Drag onto canvas</p>
+    <div className="w-[200px] bg-[#111113] border-r border-white/[0.06] h-full flex flex-col z-10 shrink-0">
+      {/* Header */}
+      <div className="px-3 pt-4 pb-3 shrink-0">
+        <p className="text-[11px] font-semibold text-white/50 mb-2.5">Node Library</p>
+        <div className="relative">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search nodes..."
+            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-md px-2.5 py-1.5 text-[11px] text-white/60 placeholder:text-white/20 focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all"
+          />
+        </div>
       </div>
-      <div className="flex-1 overflow-y-auto py-2">
-        {groups.map((g) => (
+
+      {/* Drag hint */}
+      <p className="text-[9px] text-white/20 px-3 pb-2 shrink-0">Drag onto canvas to add</p>
+
+      {/* Node groups */}
+      <div className="flex-1 overflow-y-auto py-1 scrollbar-none">
+        {filteredGroups.map((g) => (
           <PaletteGroup key={g.label} label={g.label} nodes={g.nodes} />
         ))}
       </div>

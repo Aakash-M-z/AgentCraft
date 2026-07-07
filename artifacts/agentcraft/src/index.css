@@ -46,44 +46,42 @@
 }
 
 :root {
-  /* Force Dark Mode Palette - Black & Reddish Orange */
-  --background: 0 0% 2%;
-  /* #050505 - pure pitch black background */
-  --foreground: 0 0% 98%;
-  /* #fafafa */
+  /* Premium Dark Mode — Charcoal / Near Black */
+  --background: 240 8% 5%;
+  /* #0b0b0d */
+  --foreground: 0 0% 95%;
+  /* #f2f2f2 */
 
-  --card: 0 0% 4%;
-  /* #0a0a0a - very dark grey cards */
-  --card-foreground: 0 0% 98%;
-  --card-border: 0 0% 8%;
-  /* #141414 */
+  --card: 240 8% 8%;
+  /* #111113 — slightly lighter than bg */
+  --card-foreground: 0 0% 92%;
+  --card-border: 240 6% 12%;
 
-  --popover: 0 0% 4%;
-  --popover-foreground: 0 0% 98%;
-  --popover-border: 0 0% 8%;
+  --popover: 240 8% 9%;
+  --popover-foreground: 0 0% 92%;
+  --popover-border: 240 6% 14%;
 
   --primary: 16 95% 55%;
-  /* #ff4f1a - Reddish Orange */
+  /* #ff4f1a */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 0 0% 6%;
-  --secondary-foreground: 0 0% 98%;
+  --secondary: 240 6% 11%;
+  --secondary-foreground: 0 0% 80%;
 
-  --muted: 0 0% 8%;
-  --muted-foreground: 0 0% 55%;
+  --muted: 240 5% 13%;
+  --muted-foreground: 0 0% 45%;
 
   --accent: 24 95% 53%;
-  /* #f97316 - Warm Orange */
   --accent-foreground: 0 0% 98%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 0 0% 10%;
-  --input: 0 0% 10%;
+  --border: 240 5% 13%;
+  --input: 240 5% 11%;
   --ring: 16 95% 55%;
 
-  --radius: 0.75rem;
+  --radius: 0.625rem;
 }
 
 @layer base {
@@ -150,11 +148,10 @@
 }
 
 .react-flow__handle:hover {
-  width: 18px !important;
-  height: 18px !important;
-  border-color: hsl(16 95% 55%) !important;
-  background: hsl(16 95% 55% / 0.2) !important;
-  box-shadow: 0 0 12px hsl(16 95% 55% / 0.5) !important;
+  width: 14px !important;
+  height: 14px !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 .react-flow__handle-connecting {
@@ -165,7 +162,6 @@
 .react-flow__handle-valid {
   border-color: hsl(142 71% 45%) !important;
   background: hsl(142 71% 45% / 0.3) !important;
-  box-shadow: 0 0 12px hsl(142 71% 45% / 0.5) !important;
 }
 
 /* ── Animated edges ──────────────────────────────────────────────────────── */
@@ -201,30 +197,23 @@
   animation: spin-slow 6s linear infinite;
 }
 
-/* ── Premium Futuristic Operations Styling ──────────────────────────────── */
+/* ── Clean Surface Styling ───────────────────────────────────────────────── */
 
-/* Glassmorphism base styling */
 .glass-card {
-  background: rgba(10, 10, 12, 0.65) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4) !important;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  background: #16161a !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.35) !important;
+  transition: all 0.15s ease !important;
 }
 
 .glass-card:hover {
-  background: rgba(13, 13, 16, 0.8) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6), 0 0 15px rgba(139, 92, 246, 0.1) !important;
-  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.5) !important;
 }
 
 .glass-panel {
-  background: rgba(7, 7, 9, 0.7) !important;
-  backdrop-filter: blur(25px) !important;
-  -webkit-backdrop-filter: blur(25px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: #111113 !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
 /* Edge active pulse traversal */

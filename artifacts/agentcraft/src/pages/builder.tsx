@@ -655,18 +655,18 @@ function BuilderCanvas() {
   const isSaving = createMut.isPending || updateMut.isPending;
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0a0a0a]">
+    <div className="flex-1 flex flex-col h-full bg-[#0b0b0d]">
       {/* Top Toolbar */}
-      <div className="h-14 border-b border-border bg-card/80 backdrop-blur flex items-center justify-between px-5 z-20 shrink-0">
+      <div className="h-12 border-b border-white/[0.07] bg-[#111113] flex items-center justify-between px-4 z-20 shrink-0">
         <div className="flex items-center gap-3">
           <input
             type="text"
             value={workflowName}
             onChange={(e) => setWorkflowMeta({ name: e.target.value })}
-            className="bg-transparent text-lg font-display font-bold text-foreground border-none outline-none focus:ring-2 focus:ring-primary/40 rounded px-2 py-1 w-56"
+            className="bg-transparent text-sm font-semibold text-white/80 border-none outline-none focus:ring-1 focus:ring-white/20 rounded px-2 py-1 w-48 hover:bg-white/[0.04] transition-colors"
           />
           {workflowId && (
-            <span className="text-xs px-2 py-0.5 bg-secondary text-muted-foreground rounded-full border border-border">
+            <span className="text-[10px] px-1.5 py-0.5 bg-white/[0.05] text-white/25 rounded border border-white/[0.06] font-mono">
               #{workflowId}
             </span>
           )}
@@ -674,48 +674,48 @@ function BuilderCanvas() {
             <motion.span
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
-              className="text-xs text-blue-400 font-mono"
+              className="text-[11px] text-blue-400/70 font-mono"
             >
-              Running {executionProgress.current}/{executionProgress.total}
+              {executionProgress.current}/{executionProgress.total} nodes
             </motion.span>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => setPromptOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-foreground hover:bg-muted transition-colors border border-border"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium bg-white/[0.05] text-white/50 hover:bg-white/[0.08] hover:text-white/75 transition-all border border-white/[0.07]"
           >
-            <Sparkles size={14} className="text-amber-400" />
-            AI Generate
+            <Sparkles size={12} className="text-amber-400/80" />
+            Generate
           </button>
           <button
             onClick={handleExplain}
             disabled={isExplaining || !workflowId}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-foreground hover:bg-muted transition-colors border border-border disabled:opacity-40"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium bg-white/[0.05] text-white/50 hover:bg-white/[0.08] hover:text-white/75 transition-all border border-white/[0.07] disabled:opacity-30"
           >
-            {isExplaining ? <RefreshCw size={14} className="animate-spin" /> : <Wand2 size={14} className="text-cyan-400" />}
+            {isExplaining ? <RefreshCw size={12} className="animate-spin" /> : <Wand2 size={12} />}
             Explain
           </button>
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium bg-white/[0.05] text-white/50 hover:bg-white/[0.08] hover:text-white/75 transition-all border border-white/[0.07] disabled:opacity-40"
             title="Save (Ctrl+S)"
           >
-            {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+            {isSaving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
             Save
           </button>
           <button
             onClick={handleExecute}
             disabled={isExecuting || isSaving}
-            className="flex items-center gap-1.5 px-5 py-1.5 rounded-lg text-sm font-bold bg-gradient-to-r from-cyan-500 to-violet-600 text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 hover:-translate-y-px transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-[12px] font-semibold bg-white/90 text-[#0b0b0d] hover:bg-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             title="Run (Ctrl+Enter)"
           >
             {isExecuting
-              ? <RefreshCw size={14} className="animate-spin" />
-              : <Play size={14} className="fill-white" />}
-            {isExecuting ? 'Running...' : 'Run'}
+              ? <RefreshCw size={12} className="animate-spin" />
+              : <Play size={12} className="fill-current" />}
+            {isExecuting ? 'Running' : 'Run'}
           </button>
         </div>
       </div>
@@ -755,36 +755,46 @@ function BuilderCanvas() {
             proOptions={{ hideAttribution: true }}
             deleteKeyCode="Delete"
             snapToGrid={true}
-            snapGrid={[12, 12]}
-            defaultEdgeOptions={{ animated: isExecuting, style: { stroke: isExecuting ? 'hsl(16 95% 55% / 0.8)' : 'hsl(16 95% 55% / 0.5)', strokeWidth: 2 } }}
-            connectionLineStyle={{ stroke: 'hsl(16 95% 55%)', strokeWidth: 2, strokeDasharray: '6 3' }}
-            className="bg-[#050507]"
+            snapGrid={[16, 16]}
+            defaultEdgeOptions={{
+              animated: isExecuting,
+              style: {
+                stroke: isExecuting ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.12)',
+                strokeWidth: 1.5
+              }
+            }}
+            connectionLineStyle={{
+              stroke: 'rgba(255,255,255,0.35)',
+              strokeWidth: 1.5,
+              strokeDasharray: '5 4'
+            }}
+            className="bg-[#0b0b0d]"
           >
             <Background
               variant={BackgroundVariant.Dots}
-              color="#1a1a24"
-              gap={24}
-              size={1.2}
+              color="rgba(255,255,255,0.04)"
+              gap={28}
+              size={1}
             />
             <Controls
-              className="bg-card/85 border border-border/80 rounded-xl overflow-hidden shadow-xl"
+              className="!bg-[#111113] !border !border-white/[0.08] !rounded-xl !overflow-hidden !shadow-xl"
               showInteractive={false}
             />
             <MiniMap
               nodeColor={(n) => {
                 const colors: Record<string, string> = {
-                  input: '#34d399', ai_agent: '#8b5cf6', api_call: '#60a5fa',
-                  condition: '#fbbf24', loop: '#f472b6', output: '#f43f5e',
+                  input: '#34d399', ai_agent: '#a78bfa', api_call: '#60a5fa',
+                  condition: '#fbbf24', loop: '#f472b6', output: '#fb7185',
                   email: '#38bdf8', database: '#2dd4bf', webhook: '#fb923c',
                   file_processor: '#818cf8', delay: '#facc15',
                 };
-                return colors[n.type ?? ''] ?? '#555';
+                return colors[n.type ?? ''] ?? '#444';
               }}
-              maskColor="rgba(0,0,0,0.85)"
-              style={{ background: 'hsl(240 10% 6%)', border: '1px solid rgba(255,255,255,0.06)' }}
+              maskColor="rgba(11,11,13,0.88)"
+              style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px' }}
             />
             
-            {/* Custom Snap & Fit Canvas Controls */}
+            {/* Controls */}
             <div className="absolute bottom-4 right-4 z-10 flex gap-2">
               <button
                 onClick={() => {
@@ -792,25 +802,24 @@ function BuilderCanvas() {
                   const sorted = [...nodes].sort((a, b) => a.position.y - b.position.y);
                   const formattedNodes = sorted.map((node, index) => ({
                     ...node,
-                    position: { x: 100 + (index % 3) * 280, y: 100 + Math.floor(index / 3) * 160 }
+                    position: { x: 120 + (index % 3) * 300, y: 120 + Math.floor(index / 3) * 180 }
                   }));
-                  // Set new coordinates in Zustand store
                   const { setNodes } = useWorkflowStore.getState();
                   setNodes(formattedNodes);
-                  toast({ title: "✓ Canvas aligned & structured" });
+                  toast({ title: "Canvas aligned" });
                 }}
-                className="px-3 py-2 rounded-lg bg-card/90 backdrop-blur border border-border/80 text-muted-foreground hover:text-cyan-400 hover:bg-secondary cursor-pointer transition-colors shadow-lg flex items-center gap-1.5 text-xs font-semibold"
+                className="px-2.5 py-1.5 rounded-lg bg-[#111113]/90 backdrop-blur border border-white/[0.08] text-white/35 hover:text-white/60 hover:bg-[#111113] cursor-pointer transition-colors shadow-lg flex items-center gap-1.5 text-[11px] font-medium"
                 title="Auto-align canvas"
               >
-                <SparklesIcon size={13} className="text-cyan-400" />
-                Tidy Map
+                <SparklesIcon size={11} className="text-white/40" />
+                Tidy
               </button>
               <button
-                onClick={() => fitView({ padding: 0.15, duration: 500 })}
-                className="p-2 rounded-lg bg-card/90 backdrop-blur border border-border/80 text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors shadow-lg"
+                onClick={() => fitView({ padding: 0.15, duration: 400 })}
+                className="p-1.5 rounded-lg bg-[#111113]/90 backdrop-blur border border-white/[0.08] text-white/35 hover:text-white/60 hover:bg-[#111113] cursor-pointer transition-colors shadow-lg"
                 title="Fit view"
               >
-                <Maximize2 size={13} />
+                <Maximize2 size={12} />
               </button>
             </div>
           </ReactFlow>
