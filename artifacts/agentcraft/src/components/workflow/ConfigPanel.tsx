@@ -29,7 +29,7 @@ const GROQ_MODELS = [
 ];
 
 const inputClass =
-  "w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all";
+  "w-full bg-white/[0.04] border border-white/[0.08] rounded-md px-3 py-1.5 text-[12.5px] text-white/70 focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all placeholder:text-white/25";
 
 const TIPS = [
   "Drag nodes from the palette onto the canvas to build your workflow.",
@@ -43,47 +43,44 @@ const TIPS = [
 function EmptyPanel({ onOpenGenerate }: { onOpenGenerate?: () => void }) {
   const tip = TIPS[Math.floor(Math.random() * TIPS.length)];
   return (
-    <div className="flex flex-col h-full p-5 gap-4">
+    <div className="flex flex-col h-full p-4 gap-4">
       {/* Quick actions */}
       <div>
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Actions</p>
-        <div className="flex flex-col gap-2">
+        <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-2.5">Quick Actions</p>
+        <div className="flex flex-col gap-1.5">
           <button
             onClick={onOpenGenerate}
-            className="flex items-center gap-3 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/40 transition-all text-sm font-medium text-amber-300 group"
+            className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.14] transition-all text-[12px] font-medium text-white/50 hover:text-white/75 group"
           >
-            <Wand2 size={16} className="group-hover:rotate-12 transition-transform" />
-            Generate Workflow with AI
+            <Wand2 size={13} className="text-white/35 group-hover:text-white/60 shrink-0" />
+            Generate with AI
           </button>
           <button
-            className="flex items-center gap-3 p-3 rounded-xl border border-border bg-secondary/30 hover:bg-secondary transition-all text-sm font-medium text-foreground group"
+            className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.14] transition-all text-[12px] font-medium text-white/50 hover:text-white/75 group"
             onClick={() => {
               const event = new CustomEvent('add-ai-agent');
               window.dispatchEvent(event);
             }}
           >
-            <Plus size={16} className="text-violet-400" />
+            <Plus size={13} className="text-white/35 group-hover:text-white/60 shrink-0" />
             Add AI Agent Node
           </button>
         </div>
       </div>
 
-      <div className="h-px bg-border" />
+      <div className="h-px bg-white/[0.06]" />
 
       {/* Tip */}
-      <div className="p-3 rounded-xl bg-secondary/40 border border-border">
+      <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.06]">
         <div className="flex items-start gap-2">
-          <Lightbulb size={14} className="text-amber-400 mt-0.5 shrink-0" />
-          <p className="text-xs text-muted-foreground leading-relaxed">{tip}</p>
+          <Lightbulb size={12} className="text-white/25 mt-0.5 shrink-0" />
+          <p className="text-[11px] text-white/30 leading-relaxed">{tip}</p>
         </div>
       </div>
 
       <div className="mt-auto text-center">
-        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mx-auto mb-3">
-          <div className="w-6 h-6 rounded-full border-2 border-dashed border-muted-foreground/30 animate-spin" style={{ animationDuration: '3s' }} />
-        </div>
-        <p className="text-sm font-medium text-foreground">No node selected</p>
-        <p className="text-xs text-muted-foreground mt-1">Click any node to configure it</p>
+        <p className="text-[11px] font-medium text-white/25">No node selected</p>
+        <p className="text-[10px] text-white/15 mt-1">Click any node to configure it</p>
       </div>
     </div>
   );
@@ -100,12 +97,9 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
 
   if (!selectedNodeId) {
     return (
-      <div className="w-80 border-l border-border/80 bg-card/65 backdrop-blur-xl h-full flex flex-col z-10 shadow-2xl overflow-y-auto">
-        <div className="p-4 border-b border-border/50 bg-secondary/25 sticky top-0 z-10">
-          <h3 className="font-bold text-base text-foreground/90 tracking-tight flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            Inspector
-          </h3>
+      <div className="w-72 border-l border-white/[0.07] bg-[#111113] h-full flex flex-col z-10 overflow-y-auto shrink-0">
+        <div className="px-4 py-3 border-b border-white/[0.07] sticky top-0 z-10 bg-[#111113]">
+          <p className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Inspector</p>
         </div>
         <EmptyPanel onOpenGenerate={onOpenGenerate} />
       </div>
@@ -151,14 +145,14 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
   };
 
   return (
-    <div className="w-80 border-l border-border/80 bg-card/65 backdrop-blur-xl h-full flex flex-col shadow-2xl z-10 overflow-y-auto relative">
+    <div className="w-80 border-l border-white/[0.07] bg-[#111113] h-full flex flex-col shadow-2xl z-10 overflow-y-auto relative">
       {/* Header */}
-      <div className="p-4 border-b border-border/50 bg-secondary/25 sticky top-0 z-10">
-        <h3 className="font-bold text-base text-foreground/90 tracking-tight flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+      <div className="p-4 border-b border-white/[0.07] bg-[#111113] sticky top-0 z-10">
+        <h3 className="font-bold text-sm text-white/90 tracking-tight flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           Inspector
         </h3>
-        <span className="inline-flex items-center gap-1.5 mt-2 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-[#000000]/40 border border-border/60 text-muted-foreground capitalize">
+        <span className="inline-flex items-center gap-1.5 mt-2 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.07] text-white/50 capitalize">
           {typeIcons[node.type ?? ""] ?? null}
           {node.type?.replace(/_/g, " ")}
         </span>
@@ -172,13 +166,13 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors capitalize',
+                'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold transition-colors capitalize',
                 activeTab === tab
-                  ? 'text-primary border-b-2 border-primary bg-primary/5'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'text-white/75 border-b border-white/30'
+                  : 'text-white/25 hover:text-white/50'
               )}
             >
-              {tab === 'debug' ? <Bug size={12} /> : null}
+              {tab === 'debug' ? <Bug size={11} /> : null}
               {tab}
             </button>
           ))}
@@ -194,10 +188,10 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
 
       {/* Config tab */}
       {activeTab === 'config' && (
-        <div className="p-5 flex flex-col gap-5">
+        <div className="p-4 flex flex-col gap-4">
           {/* Label */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Node Label</label>
+            <label className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Node Label</label>
             <input
               type="text"
               value={node.data.label}
@@ -206,7 +200,7 @@ export function ConfigPanel({ onOpenGenerate }: ConfigPanelProps) {
             />
           </div>
 
-          <div className="h-px bg-border" />
+          <div className="h-px bg-white/[0.06]" />
 
           {/* AI Agent */}
           {node.type === WorkflowNodeType.ai_agent && (
