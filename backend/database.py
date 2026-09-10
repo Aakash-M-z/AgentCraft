@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import AsyncGenerator
 from urllib.parse import urlparse, parse_qs
 
-from sqlalchemy import Column, String, DateTime, Text, Integer, JSON, create_engine
+from sqlalchemy import Column, String, DateTime, Text, Integer, JSON, Boolean, ForeignKey, create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from dotenv import load_dotenv
@@ -207,6 +207,94 @@ class ProcurementVendor(Base):
     price_competitiveness = Column(Integer, nullable=False, default=80)  # 0-100 (higher=better price)
     compliance_score = Column(Integer, nullable=False, default=90)  # 0-100
     active = Column(String(5), nullable=False, default="true")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class GitHubAccount(Base):
+    """Connected GitHub Account identity and synchronization metadata."""
+    __tablename__ = "github_accounts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    github_user_id = Column(String(100), nullable=False, unique=True)
+    username = Column(String(255), nullable=False, index=True)
+    name = Column(String(255), nullable=True)
+    avatar_url = Column(String(500), nullable=True)
+    account_type = Column(String(50), nullable=False, default="User")  # User or Organization
+    access_token = Column(String(500), nullable=False)
+    webhook_secret = Column(String(100), nullable=True)
+    connected_status = Column(String(50), nullable=False, default="connected")  # connected, disconnected
+    monitoring_enabled = Column(Boolean, nullable=False, default=True)
+    notification_preferences = Column(Text, nullable=True)  # JSON config
+    last_synced_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class GitHubProject(Base):
+    """Accessible GitHub repositories discovered under the connected account."""
+    __tablename__ = "github_projects"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    github_account_id = Column(Integer, ForeignKey("github_accounts.id", ondelete="CASCADE"), nullable=False, index=True)
+    repo_id = Column(String(100), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=False, index=True)
+    owner = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    is_private = Column(Boolean, nullable=False, default=False)
+    is_fork = Column(Boolean, nullable=False, default=False)
+    is_archived = Column(Boolean, nullable=False, default=False)
+    default_branch = Column(String(100), nullable=False, default="main")
+    language = Column(String(100), nullable=True)
+    stars_count = Column(Integer, nullable=False, default=0)
+    forks_count = Column(Integer, nullable=False, default=0)
+    open_issues_count = Column(Integer, nullable=False, default=0)
+    open_prs_count = Column(Integer, nullable=False, default=0)
+    category = Column(String(50), nullable=False, default="my_projects")  # my_projects, collaborative, archived
+    monitoring_enabled = Column(Boolean, nullable=False, default=True)
+    health_score = Column(Integer, nullable=False, default=85)  # 0-100
+    ci_status = Column(String(20), nullable=False, default="UNKNOWN")  # PASS, WARNING, FAILED, UNKNOWN
+    security_status = Column(String(20), nullable=False, default="PASS")  # PASS, WARNING, CRITICAL
+    risk_level = Column(String(20), nullable=False, default="LOW")  # LOW, MEDIUM, HIGH, CRITICAL
+    last_analyzed_at = Column(DateTime(timezone=True), nullable=True)
+    html_url = Column(String(500), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class GitHubAnalysis(Base):
+    """Historical and real-time engineering analysis of changes/commits."""
+    __tablename__ = "github_analyses"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_id = Column(Integer, ForeignKey("github_projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    account_id = Column(Integer, nullable=False, index=True)
+    commit_sha = Column(String(100), nullable=False, index=True)
+    commit_short_sha = Column(String(20), nullable=True)
+    branch = Column(String(100), nullable=False, default="main")
+    author_name = Column(String(255), nullable=True)
+    author_avatar = Column(String(500), nullable=True)
+    commit_message = Column(Text, nullable=True)
+    event_type = Column(String(50), nullable=False, default="push")  # push, pull_request, manual, workflow_run
+    status = Column(String(50), nullable=False, default="completed")  # pending, analyzing, completed, failed
+    health_score = Column(Integer, nullable=False, default=85)
+    build_status = Column(String(20), nullable=False, default="UNKNOWN")
+    test_status = Column(String(20), nullable=False, default="UNKNOWN")
+    security_status = Column(String(20), nullable=False, default="PASS")
+    risk_level = Column(String(20), nullable=False, default="LOW")
+    issues_count = Column(Integer, nullable=False, default=0)
+    what_changed = Column(Text, nullable=True)
+    why_changed = Column(Text, nullable=True)
+    affected_components = Column(Text, nullable=True)  # JSON list
+    potential_bugs = Column(Text, nullable=True)  # JSON list
+    security_findings = Column(Text, nullable=True)  # JSON list
+    root_cause_analysis = Column(Text, nullable=True)
+    recommendations = Column(Text, nullable=True)  # JSON list
+    engineering_report = Column(Text, nullable=True)  # Full enterprise markdown report
+    changed_files_count = Column(Integer, nullable=False, default=0)
+    additions = Column(Integer, nullable=False, default=0)
+    deletions = Column(Integer, nullable=False, default=0)
+    execution_id = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
 

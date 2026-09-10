@@ -32,6 +32,12 @@ export function AppLayout({ children }: AppLayoutProps) {
       ]
     },
     {
+      label: "Developer",
+      items: [
+        { href: "/github-agent", label: "GitHub Engineering Agent" },
+      ]
+    },
+    {
       label: "Life OS",
       items: [
         { href: "/life-os", label: "Command Center" },
