@@ -84,6 +84,9 @@ app.include_router(life_os_router)
 from .procurement_api import router as procurement_router
 app.include_router(procurement_router)
 
+from .github_api import router as github_router
+app.include_router(github_router)
+
 # ── Lifecycle Events ──────────────────────────────────────────────────────────
 
 @app.on_event("startup")
@@ -165,7 +168,7 @@ async def _seed_procurement_workflow():
             {"id": "e9-10",  "source": "n9",  "target": "n10"},
             {"id": "e10-11", "source": "n10", "target": "n11"},
         ]
-        await WorkflowRepository.create(db, name="Enterprise AI Procurement Orchestrator", nodes=nodes, edges=edges)
+        await WorkflowRepository.create(db, name="Enterprise AI Procurement Orchestrator", description="Enterprise AI Procurement Orchestrator workflow with multi-tier approval, budget checking, and PO generation", nodes=nodes, edges=edges)
         await db.commit()
         logger.info("🏢 Seeded Enterprise AI Procurement Orchestrator workflow")
 
